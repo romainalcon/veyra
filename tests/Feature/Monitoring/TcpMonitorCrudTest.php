@@ -2,6 +2,7 @@
 
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Probes\Contracts\DnsResolver;
 use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -110,11 +111,20 @@ test('pages expose the TCP target and the allowed ports', function () {
             ->where('types.1.value', 'tcp'));
 });
 
-test('viewers cannot create TCP monitors', function () {
-    $this->dns->set('db.example.com', ['93.184.215.40']);
+test('viewers are refused before validation and without DNS lookups', function (string $method) {
     $viewer = memberOf($this->organization, OrganizationRole::Viewer);
+    $monitor = Monitor::factory()->tcp()->create(['organization_id' => $this->organization->id]);
+    $dns = Mockery::spy(DnsResolver::class);
+    $this->app->instance(DnsResolver::class, $dns);
+
+    $url = $method === 'post'
+        ? route('organizations.monitors.store', $this->organization)
+        : route('organizations.monitors.update', [$this->organization, $monitor]);
 
     $this->actingAs($viewer)
-        ->post(route('organizations.monitors.store', $this->organization), tcpPayload())
-        ->assertForbidden();
-});
+        ->{$method}($url, tcpPayload(['host' => 'invalid host', 'port' => 1]))
+        ->assertForbidden()
+        ->assertSessionHasNoErrors();
+
+    $dns->shouldNotHaveReceived('resolve');
+})->with(['post', 'put']);

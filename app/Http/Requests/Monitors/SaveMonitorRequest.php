@@ -23,8 +23,9 @@ use Illuminate\Validation\Validator;
 use InvalidArgumentException;
 
 /**
- * Validates monitor creation and updates. Authorization is enforced in the
- * controller through MonitorPolicy. The type is chosen on creation and is
+ * Validates monitor creation and updates. Authorization (MonitorPolicy) runs
+ * before validation, so unauthorized users never trigger DNS lookups or see
+ * validation errors; the controller re-checks it. The type is chosen on creation and is
  * immutable afterwards; only the fields of that type are validated.
  */
 class SaveMonitorRequest extends FormRequest
@@ -47,6 +48,15 @@ class SaveMonitorRequest extends FormRequest
      * @var list<MonitorType>
      */
     public const CREATABLE_TYPES = [MonitorType::Http, MonitorType::Tcp];
+
+    public function authorize(): bool
+    {
+        $monitor = $this->route('monitor');
+
+        return $monitor instanceof Monitor
+            ? $this->user()?->can('update', [$monitor, $this->organization()]) === true
+            : $this->user()?->can('create', [Monitor::class, $this->organization()]) === true;
+    }
 
     protected function prepareForValidation(): void
     {
