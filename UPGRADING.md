@@ -15,6 +15,12 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.1.0
+Two migrations run automatically: `create_maintenance_tables` adds a `monitor_checks.in_maintenance` column (instant on MariaDB 11.4, no table rebuild) and maintenance tables; `create_status_page_tables` adds the status page tables. Take a backup first as usual.
+- New scheduled commands `veyra:maintenance:transition` (every minute) and `veyra:status-domains:verify` (hourly) run through the existing scheduler; nothing to configure.
+- Optional: `VEYRA_MAINTENANCE_MAX_HOURS` (default 168).
+- Custom status page domains need TLS on your reverse proxy: see "TLS and custom status page domains" in `docs/deployment/DOCKER.md` (Caddy, on-demand TLS) or `docs/deployment/VITO.md` (manual aliases). Without it, status pages remain available on `/status/{slug}`.
+
 ### 1.0.2
 The Compose file no longer defines the `storage` volume. After upgrading you may remove the now unused volume: `docker volume rm <project>_storage`. Application logs are available with `docker compose logs`.
 
