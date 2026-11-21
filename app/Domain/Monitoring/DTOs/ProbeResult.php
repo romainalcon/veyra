@@ -19,6 +19,7 @@ final readonly class ProbeResult
         public ?int $statusCode,
         public ?ProbeErrorCode $errorCode,
         public array $metadata = [],
+        public ?TlsCertificate $certificate = null,
     ) {}
 
     /**

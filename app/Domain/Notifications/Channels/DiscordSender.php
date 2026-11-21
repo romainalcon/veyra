@@ -56,9 +56,11 @@ class DiscordSender implements ChannelSender
         $fields = array_values(array_filter([
             ['name' => 'Monitor', 'value' => $message->monitorName, 'inline' => true],
             $message->cause ? ['name' => 'Cause', 'value' => mb_substr($message->cause, 0, 256), 'inline' => true] : null,
-            $message->durationSeconds !== null && $message->event !== NotificationEvent::Test
+            $message->durationSeconds !== null && ! in_array($message->event, [NotificationEvent::Test, NotificationEvent::CertificateExpiring, NotificationEvent::CertificateExpired], true)
                 ? ['name' => 'Duration', 'value' => NotificationMessage::humanDuration($message->durationSeconds), 'inline' => true]
                 : null,
+            $message->certificateExpiresAt ? ['name' => 'Expires', 'value' => $message->certificateExpiresAt.' UTC', 'inline' => true] : null,
+            $message->certificateIssuer ? ['name' => 'Issuer', 'value' => mb_substr($message->certificateIssuer, 0, 256), 'inline' => true] : null,
         ]));
 
         return [

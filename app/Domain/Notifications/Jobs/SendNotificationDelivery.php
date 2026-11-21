@@ -46,7 +46,7 @@ class SendNotificationDelivery implements ShouldBeUnique, ShouldQueue
 
     public function handle(SenderRegistry $senders): void
     {
-        $delivery = NotificationDelivery::query()->with(['channel', 'incident'])->find($this->deliveryId);
+        $delivery = NotificationDelivery::query()->with(['channel', 'incident', 'certificateAlert'])->find($this->deliveryId);
 
         if ($delivery === null || $delivery->status !== DeliveryStatus::Pending) {
             return;
@@ -58,8 +58,19 @@ class SendNotificationDelivery implements ShouldBeUnique, ShouldQueue
             return;
         }
 
-        $result = $senders->for($delivery->channel->type)
-            ->send($delivery->channel, MessageFactory::forIncident($delivery->incident, $delivery->event_type));
+        $message = match (true) {
+            $delivery->incident !== null => MessageFactory::forIncident($delivery->incident, $delivery->event_type),
+            $delivery->certificateAlert !== null => MessageFactory::forCertificateAlert($delivery->certificateAlert),
+            default => null,
+        };
+
+        if ($message === null) {
+            $this->finish($delivery, DeliveryStatus::Failed, 'Nothing to deliver.');
+
+            return;
+        }
+
+        $result = $senders->for($delivery->channel->type)->send($delivery->channel, $message);
 
         $attempts = $delivery->attempts + 1;
 

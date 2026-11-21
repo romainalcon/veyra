@@ -74,6 +74,10 @@ class PurgeExpiredHistory implements ShouldBeUnique, ShouldQueue
         $this->purgeInBatches(fn () => DB::table('notification_deliveries')
             ->where('created_at', '<', $now->subDays(self::DELIVERY_RETENTION_DAYS)), $startedAt);
 
+        // Alerts outlive their deliveries (cascade) only as long as the deliveries are kept.
+        $this->purgeInBatches(fn () => DB::table('tls_certificate_alerts')
+            ->where('created_at', '<', $now->subDays(self::DELIVERY_RETENTION_DAYS)), $startedAt);
+
         do {
             $deleted = SchedulerBeatLog::purge($now, self::BATCH_SIZE);
         } while ($deleted === self::BATCH_SIZE && ! $this->outOfTime($startedAt));

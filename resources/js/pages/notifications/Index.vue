@@ -211,6 +211,10 @@ const remove = (channel: NotificationChannelSummary) =>
                                     >{{ delivery.event }} ·
                                     {{ delivery.monitor }}</Link
                                 >
+                                <span v-else
+                                    >{{ delivery.event }} ·
+                                    {{ delivery.monitor }}</span
+                                >
                             </td>
                             <td class="px-4 py-2">
                                 <DeliveryStatus :delivery="delivery" />

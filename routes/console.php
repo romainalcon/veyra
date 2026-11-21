@@ -41,6 +41,7 @@ Schedule::command('veyra:status-domains:verify')->hourly()->withoutOverlapping()
 /*
  * Notifications: a single reminder for unacknowledged incidents.
  */
+Schedule::command('veyra:certificates:check')->hourly()->withoutOverlapping()->onOneServer();
 Schedule::command('veyra:incidents:remind')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
 
 /*

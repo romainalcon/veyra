@@ -38,6 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read MonitorHttpConfig|null $httpConfig
  * @property-read MonitorTcpConfig|null $tcpConfig
  * @property-read MonitorHeartbeatConfig|null $heartbeatConfig
+ * @property-read MonitorTlsCertificate|null $tlsCertificate
  * @property-read MonitorCheck|null $latestCheck
  * @property-read MonitorState|null $state
  */
@@ -93,6 +94,14 @@ class Monitor extends Model
     public function heartbeatConfig(): HasOne
     {
         return $this->hasOne(MonitorHeartbeatConfig::class);
+    }
+
+    /**
+     * @return HasOne<MonitorTlsCertificate, $this>
+     */
+    public function tlsCertificate(): HasOne
+    {
+        return $this->hasOne(MonitorTlsCertificate::class);
     }
 
     /**

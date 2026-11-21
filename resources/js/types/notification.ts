@@ -29,6 +29,6 @@ export type Delivery = {
     last_error: string | null;
     sent_at: string | null;
     monitor?: string;
-    incident_id?: string;
+    incident_id?: string | null;
     created_at?: string | null;
 };

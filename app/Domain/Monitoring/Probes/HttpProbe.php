@@ -2,16 +2,19 @@
 
 namespace App\Domain\Monitoring\Probes;
 
+use App\Domain\Monitoring\Certificates\CertificateParser;
 use App\Domain\Monitoring\DTOs\ExpectedStatuses;
 use App\Domain\Monitoring\DTOs\ProbeResult;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\ProbeErrorCode;
 use App\Domain\Monitoring\Models\MonitorHttpConfig;
 use App\Domain\Monitoring\Support\UrlRedactor;
+use Closure;
 use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Psr7\UriResolver;
+use GuzzleHttp\TransferStats;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Response;
@@ -69,6 +72,7 @@ class HttpProbe
         $currentUrl = $url;
         $originHost = UrlRedactor::host($url);
         $destination = null;
+        $certificate = null;
 
         try {
             while (true) {
@@ -77,7 +81,17 @@ class HttpProbe
                 // Custom headers (often credentials) are never sent to another host.
                 $hopHeaders = $destination->url->host === $originHost ? $headers : [];
 
-                $response = $this->send($destination, $method, $hopHeaders, $timeoutSeconds);
+                // Track the certificate of the monitored host itself, not of redirect targets.
+                $captureCertificate = $certificate === null
+                    && $destination->url->scheme === 'https'
+                    && $destination->url->host === $originHost;
+
+                $response = $this->send($destination, $method, $hopHeaders, $timeoutSeconds, $captureCertificate
+                    ? function (TransferStats $stats) use (&$certificate): void {
+                        // on_stats may fire more than once; never overwrite a parsed certificate with nothing.
+                        $certificate = CertificateParser::fromCertinfo($stats->getHandlerStats()['certinfo'] ?? null) ?? $certificate;
+                    }
+                    : null);
                 $status = $response->status();
                 $location = $response->header('Location');
 
@@ -95,8 +109,8 @@ class HttpProbe
                 $metadata = $this->metadata($redirects, $destination, $response);
 
                 return $expectedStatuses->contains($status)
-                    ? new ProbeResult(true, $this->elapsed($startedAt), $status, null, $metadata)
-                    : ProbeResult::failure(ProbeErrorCode::UnexpectedStatus, $this->elapsed($startedAt), $status, $metadata);
+                    ? new ProbeResult(true, $this->elapsed($startedAt), $status, null, $metadata, $certificate)
+                    : new ProbeResult(false, $this->elapsed($startedAt), $status, ProbeErrorCode::UnexpectedStatus, $metadata, $certificate);
             }
         } catch (DestinationRejected $exception) {
             return ProbeResult::failure($exception->errorCode, $this->elapsed($startedAt), null, ['redirects' => $redirects]);
@@ -125,9 +139,14 @@ class HttpProbe
      *
      * @return array<string, mixed>
      */
-    public function requestOptions(Destination $destination, int $timeoutSeconds): array
+    public function requestOptions(Destination $destination, int $timeoutSeconds, ?Closure $onStats = null): array
     {
         $curl = [];
+
+        if ($onStats !== null) {
+            // Exposes the presented chain (public data) to on_stats.
+            $curl[CURLOPT_CERTINFO] = true;
+        }
 
         if (! $destination->url->hostIsIp) {
             $ip = str_contains($destination->ip, ':') ? "[{$destination->ip}]" : $destination->ip;
@@ -144,6 +163,7 @@ class HttpProbe
             'http_errors' => false,
             'decode_content' => false,
             'curl' => $curl,
+            ...($onStats !== null ? ['on_stats' => $onStats] : []),
             'on_headers' => function (ResponseInterface $response): void {
                 if ((int) $response->getHeaderLine('Content-Length') > self::MAX_RESPONSE_BYTES) {
                     throw new ResponseTooLarge('Response exceeds the size limit.');
@@ -160,10 +180,10 @@ class HttpProbe
     /**
      * @param  array<string, string>  $headers
      */
-    private function send(Destination $destination, HttpMethod $method, array $headers, int $timeoutSeconds): Response
+    private function send(Destination $destination, HttpMethod $method, array $headers, int $timeoutSeconds, ?Closure $onStats = null): Response
     {
         return $this->http
-            ->withOptions($this->requestOptions($destination, $timeoutSeconds))
+            ->withOptions($this->requestOptions($destination, $timeoutSeconds, $onStats))
             ->withUserAgent($this->settings->userAgent)
             ->withHeaders($headers)
             ->send($method->value, $destination->url->url);

@@ -45,7 +45,7 @@ class NotificationChannelController extends Controller
 
         $deliveries = NotificationDelivery::query()
             ->where('organization_id', $organization->id)
-            ->with(['channel:id,name,type', 'incident.monitor:id,name,deleted_at'])
+            ->with(['channel:id,name,type', 'incident.monitor:id,name,deleted_at', 'certificateAlert.monitor:id,name,deleted_at'])
             ->latest()
             ->limit(50)
             ->get()
@@ -56,7 +56,7 @@ class NotificationChannelController extends Controller
                 'status' => $delivery->status->value,
                 'attempts' => $delivery->attempts,
                 'last_error' => $delivery->last_error,
-                'monitor' => $delivery->incident->monitor->name ?? 'Deleted monitor',
+                'monitor' => $delivery->monitorName(),
                 'incident_id' => $delivery->incident_id,
                 'created_at' => $delivery->created_at?->toIso8601String(),
                 'sent_at' => $delivery->sent_at?->toIso8601String(),

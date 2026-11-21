@@ -25,7 +25,9 @@
 | incident_events | id, incident_id, type, message, created_at |
 | notification_channels | id, organization_id, type, name, config_encrypted, enabled |
 | monitor_notification_channels | monitor_id, notification_channel_id |
-| notification_deliveries | id, incident_id, channel_id, event_type, status, attempts, sent_at |
+| monitor_tls_certificates | monitor_id (PK), fingerprint (SHA-256), subject, issuer, not_before, not_after (indexed), checked_at |
+| tls_certificate_alerts | id, organization_id, monitor_id, fingerprint, threshold_days, not_after, created_at — unique (monitor_id, fingerprint, threshold_days) |
+| notification_deliveries | id, incident_id (nullable), certificate_alert_id (nullable), channel_id, event_type, status, attempts, sent_at |
 | monitor_daily_stats | monitor_id, day, checks_count, success_count, failure_count, latency_avg_ms |
 | maintenance_windows | id, organization_id, title, description, starts_at, ends_at, cancelled_at, created_by |
 | maintenance_window_monitors | maintenance_window_id, monitor_id |
@@ -59,7 +61,7 @@
 - Added index `monitor_checks (monitor_id, scheduled_for)` for streak evaluation.
 
 ## Notifications and statistics (Sprint 4)
-- `notification_deliveries` is unique on `(incident_id, channel_id, event_type)` — the idempotency key of the delivery pipeline.
+- `notification_deliveries` is unique on `(incident_id, channel_id, event_type)` — the idempotency key of the delivery pipeline. Certificate deliveries are unique on `(certificate_alert_id, channel_id)`; a CHECK constraint requires exactly one of `incident_id` and `certificate_alert_id` (ADR-026).
 - `monitor_daily_stats` (PK `(monitor_id, day)`, UTC days) is maintained with `INSERT … SELECT … ON DUPLICATE KEY UPDATE`; it survives raw-check retention.
 - Retention deletes use `DELETE … LIMIT 1000` loops on indexed columns (`monitor_checks (monitor_id, checked_at)`, `monitor_dispatches (status, completed_at)`, `notification_deliveries (created_at)`). `tests/Integration/AggregationTest.php` covers 10 000 checks.
 

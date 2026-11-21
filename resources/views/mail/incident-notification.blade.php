@@ -17,6 +17,12 @@
 @if ($notification->resolvedAt)
 | Resolved | {{ $notification->resolvedAt }} UTC |
 @endif
+@if ($notification->certificateExpiresAt)
+| Certificate expires | {{ $notification->certificateExpiresAt }} UTC |
+@endif
+@if ($notification->certificateIssuer)
+| Issuer | {{ $notification->certificateIssuer }} |
+@endif
 </x-mail::table>
 
 <x-mail::button :url="$notification->url">

@@ -3,6 +3,7 @@
 namespace App\Domain\Monitoring\Jobs;
 
 use App\Domain\Monitoring\Actions\RecordProbeResult;
+use App\Domain\Monitoring\Certificates\RecordTlsCertificate;
 use App\Domain\Monitoring\Enums\DispatchStatus;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
@@ -30,7 +31,7 @@ class ExecuteProbe implements ShouldQueue
         $this->onQueue('probes');
     }
 
-    public function handle(ProbeRegistry $probes, RecordProbeResult $recordProbeResult): void
+    public function handle(ProbeRegistry $probes, RecordProbeResult $recordProbeResult, RecordTlsCertificate $recordTlsCertificate): void
     {
         $dispatch = MonitorDispatch::query()->with('monitor')->find($this->dispatchId);
 
@@ -63,6 +64,10 @@ class ExecuteProbe implements ShouldQueue
         }
 
         $recordProbeResult->handle($dispatch, $result);
+
+        if ($result->certificate !== null) {
+            $recordTlsCertificate->handle($monitor->id, $result->certificate);
+        }
     }
 
     /**

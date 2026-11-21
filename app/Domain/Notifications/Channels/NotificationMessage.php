@@ -19,6 +19,8 @@ final readonly class NotificationMessage
         public ?int $durationSeconds,
         public ?string $acknowledgedBy,
         public string $url,
+        public ?string $certificateExpiresAt = null,
+        public ?string $certificateIssuer = null,
     ) {}
 
     public function title(): string
@@ -34,6 +36,8 @@ final readonly class NotificationMessage
             NotificationEvent::Acknowledged => "{$this->acknowledgedBy} acknowledged the incident on {$this->monitorName}.",
             NotificationEvent::Reminder => "{$this->monitorName} has been down for ".self::humanDuration($this->durationSeconds).' and the incident is not acknowledged.',
             NotificationEvent::Test => "This is a test notification from {$this->organizationName}.",
+            NotificationEvent::CertificateExpiring => "The TLS certificate of {$this->monitorName} expires in ".self::humanDuration($this->durationSeconds).'. Renew it before visitors get errors.',
+            NotificationEvent::CertificateExpired => "The TLS certificate of {$this->monitorName} has expired. HTTPS checks fail until it is renewed.",
         };
     }
 

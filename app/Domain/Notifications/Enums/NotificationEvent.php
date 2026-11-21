@@ -10,6 +10,10 @@ enum NotificationEvent: string
     case Reminder = 'reminder';
     /** Manual "send test" from the channel settings (no incident). */
     case Test = 'test';
+    /** TLS certificate of an HTTPS monitor close to expiry (no incident). */
+    case CertificateExpiring = 'certificate_expiring';
+    /** TLS certificate of an HTTPS monitor expired (no incident). */
+    case CertificateExpired = 'certificate_expired';
 
     public function headline(): string
     {
@@ -19,6 +23,8 @@ enum NotificationEvent: string
             self::Acknowledged => 'ACKNOWLEDGED',
             self::Reminder => 'STILL DOWN',
             self::Test => 'TEST',
+            self::CertificateExpiring => 'CERTIFICATE EXPIRES SOON',
+            self::CertificateExpired => 'CERTIFICATE EXPIRED',
         };
     }
 
@@ -28,9 +34,9 @@ enum NotificationEvent: string
     public function color(): int
     {
         return match ($this) {
-            self::Opened, self::Reminder => 0xDC2626,
+            self::Opened, self::Reminder, self::CertificateExpired => 0xDC2626,
             self::Resolved => 0x16A34A,
-            self::Acknowledged => 0xD97706,
+            self::Acknowledged, self::CertificateExpiring => 0xD97706,
             self::Test => 0x6B7280,
         };
     }

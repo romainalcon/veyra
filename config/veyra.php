@@ -79,6 +79,18 @@ return [
         'user_agent' => 'Veyra-Uptime-Monitor/1.0',
     ],
 
+    /*
+    | TLS certificate expiry warnings for HTTPS monitors, in days before expiry
+    | (one warning per threshold and certificate, plus one on expiry).
+    */
+
+    'certificates' => [
+        'warning_days' => array_values(array_filter(array_map(
+            'intval',
+            explode(',', (string) env('VEYRA_CERTIFICATE_WARNING_DAYS', '14,7,1')),
+        ))),
+    ],
+
     'monitors' => [
         'max_per_hour' => (int) env('VEYRA_MONITORS_PER_HOUR', 30),
     ],
