@@ -4,6 +4,7 @@ namespace App\Domain\Monitoring\Jobs;
 
 use App\Domain\Monitoring\Actions\RecordProbeResult;
 use App\Domain\Monitoring\Enums\DispatchStatus;
+use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
 use App\Domain\Monitoring\Probes\HttpProbe;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,6 +35,13 @@ class ExecuteHttpProbe implements ShouldQueue
         $dispatch = MonitorDispatch::query()->with('monitor.httpConfig')->find($this->dispatchId);
 
         if ($dispatch === null || in_array($dispatch->status, [DispatchStatus::Completed, DispatchStatus::Skipped, DispatchStatus::Failed], true)) {
+            return;
+        }
+
+        // A redelivered job whose result is already stored must not probe again.
+        if (MonitorCheck::query()->where('dispatch_id', $dispatch->id)->exists()) {
+            $dispatch->update(['status' => DispatchStatus::Completed, 'completed_at' => $dispatch->completed_at ?? now()]);
+
             return;
         }
 

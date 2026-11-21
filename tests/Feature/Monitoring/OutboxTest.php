@@ -5,8 +5,10 @@ use App\Domain\Monitoring\Actions\ScheduleDueMonitors;
 use App\Domain\Monitoring\Enums\DispatchStatus;
 use App\Domain\Monitoring\Jobs\ExecuteHttpProbe;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
@@ -118,4 +120,30 @@ test('the scheduled command claims and publishes in one run', function () {
 
     Queue::assertPushedOn('probes', ExecuteHttpProbe::class);
     expect(MonitorDispatch::sole()->status)->toBe(DispatchStatus::Dispatched);
+});
+
+test('a fast worker completing the job is never overwritten by the relay', function () {
+    // The sync queue runs the job inside the relay: the worst-case ordering.
+    config(['queue.default' => 'sync']);
+    Http::fake(['*' => Http::response('', 200)]);
+    $dispatch = MonitorDispatch::factory()->create(['scheduled_for' => '2026-11-22 10:00:00']);
+
+    app(PublishPendingDispatches::class)->handle($this->now);
+
+    expect($dispatch->fresh()->status)->toBe(DispatchStatus::Completed);
+
+    // Ten minutes later the reaper must not re-run the probe.
+    app(PublishPendingDispatches::class)->handle($this->now->addMinutes(10));
+    Http::assertSentCount(1);
+});
+
+test('a redelivered job whose check already exists does not probe again', function () {
+    Http::fake();
+    $dispatch = MonitorDispatch::factory()->status(DispatchStatus::Dispatched)->create();
+    MonitorCheck::factory()->create(['monitor_id' => $dispatch->monitor_id, 'dispatch_id' => $dispatch->id]);
+
+    app()->call([new ExecuteHttpProbe($dispatch->id), 'handle']);
+
+    Http::assertNothingSent();
+    expect($dispatch->fresh()->status)->toBe(DispatchStatus::Completed);
 });

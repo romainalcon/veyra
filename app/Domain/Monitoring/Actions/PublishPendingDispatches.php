@@ -72,13 +72,15 @@ class PublishPendingDispatches
                     continue;
                 }
 
-                ExecuteHttpProbe::dispatch($dispatch->id);
-
+                // Mark first, then push: a worker finishing quickly must never have
+                // its "completed" status overwritten by this relay.
                 $dispatch->update([
                     'status' => DispatchStatus::Dispatched,
                     'attempts' => $dispatch->attempts + 1,
                     'dispatched_at' => $now,
                 ]);
+
+                ExecuteHttpProbe::dispatch($dispatch->id);
                 $counts['published']++;
             }
 

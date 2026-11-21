@@ -2,7 +2,7 @@
 
 Veyra is an open-core, self-hostable uptime monitoring platform for HTTP/HTTPS endpoints, with incidents, notifications, analytics and organizations.
 
-> Status: Sprint 4: e-mail/Discord notifications with retries and reminders, uptime/latency/incident analytics and batched retention, on top of confirmed states, incidents and real-time updates. Sprint 5 prepares the release (see `docs/ROADMAP.md`).
+> Status: V1 feature-complete (Sprints 1–5). Installation: `docs/INSTALL.md`; operations: `docs/operations/BACKUP.md`, `UPGRADING.md`; security: `docs/SECURITY_REVIEW.md`; load baseline: `docs/benchmarks/`.
 
 ## Stack
 Laravel 13 · PHP 8.4 · Vue 3 + TypeScript · Inertia 3 · Tailwind CSS 4 + shadcn-vue · MariaDB 11.4+ · Redis · Horizon · Reverb · Pest · Vitest.
@@ -35,4 +35,6 @@ npm run check         # ESLint, Prettier, vue-tsc, Vitest
 `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/MONITORING.md`, `docs/SECURITY.md`, `docs/ROADMAP.md`, `docs/DECISIONS.md`.
 
 ## License
-To be decided (see ADR-005).
+Veyra Community Edition is licensed under the **GNU Affero General Public License v3.0 only** (`AGPL-3.0-only`, see `LICENSE`).
+
+If you run a modified version of Veyra as a network service, the AGPL requires you to offer its source code to the users of that service; set `VEYRA_SOURCE_URL` to your repository so the link in the interface points to it. Optional Cloud modules, if any, will live under `extensions/cloud` with their own license.

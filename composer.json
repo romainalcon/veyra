@@ -8,7 +8,7 @@
         "uptime",
         "laravel"
     ],
-    "license": "MIT",
+    "license": "AGPL-3.0-only",
     "require": {
         "php": "^8.4",
         "inertiajs/inertia-laravel": "^3.0",

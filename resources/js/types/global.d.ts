@@ -29,6 +29,11 @@ declare module '@inertiajs/core' {
             auth: Auth;
             organizations: OrganizationSummary[];
             currentOrganization: CurrentOrganization | null;
+            system?: {
+                version: string;
+                sourceUrl: string | null;
+                monitoring: { paused: boolean; reasons: string[] };
+            };
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

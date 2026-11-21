@@ -73,6 +73,9 @@ RUN composer dump-autoload --no-dev --optimize --no-scripts \
 # ---------------------------------------------------------------------------
 FROM base AS app
 
+ARG VEYRA_VERSION=local
+ENV VEYRA_VERSION=${VEYRA_VERSION}
+
 COPY --from=vendor /var/www/html/vendor ./vendor
 COPY . .
 COPY --from=assets /var/www/html/public/build ./public/build

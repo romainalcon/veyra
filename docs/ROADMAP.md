@@ -23,9 +23,12 @@
 - [x] Aggregation and batched retention.
 
 ## Sprint 5 — Release
-- [ ] MariaDB integration tests, concurrency/SSRF tests, load test baseline.
-- [ ] Public Docker Compose deployment and Vito Deploy guide.
-- [ ] Backups, restore instructions, health checks, security review.
+- [x] MariaDB integration tests, concurrency/SSRF tests, load test baseline.
+- [x] Public Docker Compose deployment and Vito Deploy guide.
+- [x] Backups, restore instructions, health checks, security review.
+
+## Sprint 5 notes
+- Docker distribution is validated in CI (`.github/workflows/docker.yml`) once the repository is pushed; it has not been run on a local Docker host.
 
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.

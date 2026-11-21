@@ -1,0 +1,95 @@
+name: Docker
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stack:
+    name: Build, start, smoke test, backup/restore
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      COMPOSE: docker compose --env-file .env.docker -f compose.yaml -f deploy/docker/compose.ci.yaml
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Generate .env.docker
+        run: |
+          cp deploy/docker/.env.docker.example .env.docker
+          key="base64:$(openssl rand -base64 32)"
+          reverb_key="$(openssl rand -hex 16)"
+          sed -i \
+            -e "s|^APP_KEY=.*|APP_KEY=${key}|" \
+            -e "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 16)|" \
+            -e "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 16)|" \
+            -e "s|^REVERB_APP_KEY=.*|REVERB_APP_KEY=${reverb_key}|" \
+            -e "s|^VITE_REVERB_APP_KEY=.*|VITE_REVERB_APP_KEY=${reverb_key}|" \
+            -e "s|^REVERB_APP_SECRET=.*|REVERB_APP_SECRET=$(openssl rand -hex 16)|" \
+            -e "s|^VEYRA_HEALTH_TOKEN=.*|VEYRA_HEALTH_TOKEN=ci-health-token|" \
+            -e "s|^MAIL_MAILER=.*|MAIL_MAILER=log|" \
+            .env.docker
+          echo "VEYRA_VERSION=ci-${GITHUB_SHA::7}" >> .env.docker
+
+      - name: Validate compose
+        run: $COMPOSE config --quiet
+
+      - name: Build images
+        run: $COMPOSE build
+
+      - name: Start the stack
+        run: $COMPOSE up -d --wait --wait-timeout 300
+
+      - name: Health
+        run: |
+          curl -fsS http://localhost:8000/health
+          curl -fsS -H "Authorization: Bearer ci-health-token" http://localhost:8000/health | tee health.json
+          grep -q '"name":"database","status":"ok"' health.json
+
+      - name: Doctor
+        run: $COMPOSE exec -T app php artisan veyra:doctor || true
+
+      - name: Smoke test (scheduled check through Horizon)
+        run: |
+          $COMPOSE exec -T app php artisan tinker --execute '
+            $u = App\Models\User::forceCreate(["name" => "CI", "email" => "ci@example.com", "password" => bcrypt(Illuminate\Support\Str::random(32)), "email_verified_at" => now()]);
+            $o = app(App\Domain\Organizations\Actions\CreateOrganization::class)->handle($u, new App\Domain\Organizations\DTOs\OrganizationData("CI"));
+            app(App\Domain\Monitoring\Actions\CreateMonitor::class)->handle($o, new App\Domain\Monitoring\DTOs\MonitorData(
+              "httpbin", "http://httpbin:8080/status/200", App\Domain\Monitoring\Enums\HttpMethod::Get,
+              App\Domain\Monitoring\Enums\MonitorInterval::OneMinute, 5, App\Domain\Monitoring\DTOs\ExpectedStatuses::default(), true, [], null));'
+          for i in $(seq 1 30); do
+            count=$($COMPOSE exec -T app php artisan tinker --execute 'echo App\Domain\Monitoring\Models\MonitorCheck::where("success", true)->count();' | tail -n 1)
+            echo "successful checks: ${count}"
+            [ "${count}" -ge 1 ] && exit 0
+            sleep 5
+          done
+          $COMPOSE logs horizon scheduler | tail -n 100
+          exit 1
+
+      - name: Backup and restore drill
+        run: |
+          ENV_FILE=.env.docker ./deploy/docker/backup.sh ./ci-backups
+          $COMPOSE exec -T app php artisan tinker --execute 'App\Models\User::query()->delete();'
+          dump=$(ls -1t ci-backups/*.sql.gz | head -n 1)
+          ENV_FILE=.env.docker ./deploy/docker/restore.sh "${dump}" --yes
+          users=$($COMPOSE exec -T app php artisan tinker --execute 'echo App\Models\User::where("email", "ci@example.com")->count();' | tail -n 1)
+          test "${users}" = "1"
+          curl -fsS http://localhost:8000/health
+
+      - name: Logs on failure
+        if: failure()
+        run: $COMPOSE logs --tail 200
+
+      - name: Tear down
+        if: always()
+        run: $COMPOSE down -v

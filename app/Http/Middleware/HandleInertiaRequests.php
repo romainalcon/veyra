@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationMember;
+use App\Domain\System\MonitoringStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -50,6 +51,11 @@ class HandleInertiaRequests extends Middleware
                 ])
                 ->all(),
             'currentOrganization' => fn (): ?array => $this->currentOrganization($request, $user),
+            'system' => fn (): array => [
+                'version' => (string) config('veyra.version'),
+                'sourceUrl' => config('veyra.source_url'),
+                'monitoring' => $user === null ? ['paused' => false, 'reasons' => []] : app(MonitoringStatus::class)->current(),
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

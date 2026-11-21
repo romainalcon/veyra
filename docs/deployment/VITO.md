@@ -33,6 +33,22 @@ Then set `REVERB_HOST=127.0.0.1`, `REVERB_PORT=8080`, `REVERB_SCHEME=http` (serv
 - Keep MariaDB and Redis bound to localhost or a private network.
 - Set `VEYRA_ADMIN_EMAILS` to open `/horizon` to instance administrators only.
 
+## Health checks and monitoring of the instance
+- `GET /health` returns `{status, version}` (HTTP 503 when the database is down; `degraded` when Redis, Horizon or the scheduler are stopped). Add `Authorization: Bearer $VEYRA_HEALTH_TOKEN` for details. Point an external uptime check at it — preferably from another host.
+- `php8.4 artisan veyra:doctor` after each configuration change.
+
+## Updates and rollback
+1. Back up the database (`deploy/vito/backup.sh` or Vito backups).
+2. Deploy the new tag in Vito (runs `deploy/vito/deploy.sh`).
+3. Check `/health` and `veyra:doctor`.
+4. Rollback: redeploy the previous tag and restore the backup if migrations changed the schema.
+
+## Backups
+See `docs/operations/BACKUP.md`. Keep the site's `.env` (APP_KEY) in your secrets manager.
+
+## Reverse proxy
+Vito's Nginx terminates TLS: set `TRUSTED_PROXIES=127.0.0.1` and `SESSION_SECURE_COOKIE=true`.
+
 The paths in `deploy/vito/` (`/home/vito/veyra.example.com`, `php8.4`) are examples; adapt them to the site created in Vito.
 
 ## Notifications (Sprint 4)

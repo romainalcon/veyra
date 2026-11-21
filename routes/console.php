@@ -3,6 +3,11 @@
 use Illuminate\Support\Facades\Schedule;
 
 /*
+ * Scheduler liveness for /health and the "monitoring paused" banner.
+ */
+Schedule::command('veyra:heartbeat')->everyMinute();
+
+/*
  * Monitoring: claim due monitors into the MariaDB outbox and relay pending
  * dispatches to the Horizon `probes` queue. Missed runs are safe: the next run
  * catches up without replaying every missed slot.

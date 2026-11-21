@@ -1,17 +1,22 @@
 # Veyra Community Edition — Docker Compose stack.
 #
 #   cp deploy/docker/.env.docker.example .env.docker   # then fill in secrets
-#   docker compose --env-file .env.docker up -d --build
+#   docker compose --env-file .env.docker up -d --wait
+#
+# Images: ${VEYRA_IMAGE_PREFIX}/veyra-app and veyra-web, tag ${VEYRA_VERSION}.
+# Set VEYRA_IMAGE_PREFIX=ghcr.io/<owner> to pull published releases, or keep
+# the defaults and run `docker compose build` to build locally.
 #
 # See docs/deployment/DOCKER.md. All application roles use the same image.
 
 x-app: &app
-  image: ${VEYRA_IMAGE:-veyra/app:local}
+  image: ${VEYRA_IMAGE_PREFIX:-veyra}/veyra-app:${VEYRA_VERSION:-local}
   build:
     context: .
     dockerfile: deploy/docker/Dockerfile
     target: app
     args: &vite-args
+      VEYRA_VERSION: ${VEYRA_VERSION:-local}
       VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY:-}
       VITE_REVERB_HOST: ${VITE_REVERB_HOST:-localhost}
       VITE_REVERB_PORT: ${VITE_REVERB_PORT:-8000}
@@ -30,6 +35,8 @@ x-app: &app
     REVERB_HOST: reverb
     REVERB_PORT: 8080
     REVERB_SCHEME: http
+    # Only the internal nginx (`web`) reaches php-fpm.
+    TRUSTED_PROXIES: "*"
   volumes:
     - storage:/var/www/html/storage
   depends_on:
@@ -61,7 +68,7 @@ services:
       retries: 3
 
   web:
-    image: ${VEYRA_WEB_IMAGE:-veyra/web:local}
+    image: ${VEYRA_IMAGE_PREFIX:-veyra}/veyra-web:${VEYRA_VERSION:-local}
     build:
       context: .
       dockerfile: deploy/docker/Dockerfile
@@ -76,7 +83,7 @@ services:
       reverb:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/up || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

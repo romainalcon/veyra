@@ -40,16 +40,22 @@ class RequestManualCheck
             return false;
         }
 
+        // Mark first, then push, so a fast worker's "completed" status is never overwritten.
+        MonitorDispatch::query()->whereKey($id)->update([
+            'status' => DispatchStatus::Dispatched,
+            'attempts' => 1,
+            'dispatched_at' => now(),
+        ]);
+
         try {
             ExecuteHttpProbe::dispatch($id);
-
-            MonitorDispatch::query()->whereKey($id)->update([
-                'status' => DispatchStatus::Dispatched,
-                'attempts' => 1,
-                'dispatched_at' => now(),
-            ]);
         } catch (Throwable $exception) {
-            // The row stays pending: the scheduler will publish it.
+            // Back to pending: the scheduler's relay will publish it.
+            MonitorDispatch::query()->whereKey($id)->where('status', DispatchStatus::Dispatched)->update([
+                'status' => DispatchStatus::Pending,
+                'attempts' => 0,
+                'dispatched_at' => null,
+            ]);
             Log::warning('veyra.manual_check.publish_failed', ['dispatch_id' => $id, 'exception' => $exception::class]);
         }
 

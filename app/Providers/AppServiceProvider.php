@@ -7,13 +7,16 @@ use App\Domain\Incidents\Events\IncidentOpened;
 use App\Domain\Incidents\Events\IncidentResolved;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Probes\Contracts\DnsResolver;
+use App\Domain\Monitoring\Probes\HttpProbe;
 use App\Domain\Monitoring\Probes\ProbeSettings;
 use App\Domain\Monitoring\Probes\SystemDnsResolver;
 use App\Domain\Notifications\Listeners\QueueNotificationsOnIncidentEvent;
 use App\Domain\Notifications\Models\NotificationChannel;
+use App\Domain\System\Benchmark\SimulatedProbe;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +34,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(DnsResolver::class, SystemDnsResolver::class);
         $this->app->bind(ProbeSettings::class, fn (): ProbeSettings => ProbeSettings::fromConfig());
+
+        // Load benchmarks only (veyra:benchmark): never available in production.
+        $simulatedProbe = config('veyra.benchmark_probe');
+        if (is_string($simulatedProbe) && $simulatedProbe !== '' && ! $this->app->environment('production')) {
+            $this->app->bind(HttpProbe::class, fn (): SimulatedProbe => SimulatedProbe::fromSpec($simulatedProbe));
+        }
     }
 
     /**
@@ -38,6 +47,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->configureTrustedProxies();
+
         Event::listen([IncidentOpened::class, IncidentResolved::class, IncidentAcknowledged::class], QueueNotificationsOnIncidentEvent::class);
 
         $this->configureDefaults();
@@ -64,6 +75,18 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    /**
+     * Reverse proxies (Docker nginx, Vito/Nginx, load balancers) allowed to set X-Forwarded-*.
+     */
+    protected function configureTrustedProxies(): void
+    {
+        $proxies = config('veyra.trusted_proxies');
+
+        if (is_string($proxies) && $proxies !== '') {
+            TrustProxies::at($proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
     }
 
     protected function configureRateLimiting(): void

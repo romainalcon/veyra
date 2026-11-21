@@ -10,10 +10,16 @@ use App\Http\Controllers\Notifications\NotificationChannelController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
+use App\Http\Controllers\System\HealthController;
 use App\Http\Middleware\ResolveOrganization;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard')->name('home');
+
+Route::get('health', HealthController::class)
+    ->middleware('throttle:60,1')
+    ->withoutMiddleware(['web'])
+    ->name('health');
 
 Route::get('invitations/{token}', [InvitationAcceptanceController::class, 'show'])
     ->middleware('throttle:30,1')

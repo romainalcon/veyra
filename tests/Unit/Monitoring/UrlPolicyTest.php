@@ -39,4 +39,16 @@ test('unsafe or malformed URLs are rejected', function (string $url, ProbeErrorC
     'ssh port' => ['http://example.com:22', ProbeErrorCode::ForbiddenDestination],
     'redis port' => ['http://example.com:6379', ProbeErrorCode::ForbiddenDestination],
     'too long' => ['https://example.com/'.str_repeat('a', 2050), ProbeErrorCode::InvalidUrl],
+    'decimal host' => ['http://2130706433/', ProbeErrorCode::InvalidUrl],
+    'hex host' => ['http://0x7f.1/', ProbeErrorCode::InvalidUrl],
+    'localhost' => ['http://localhost/', ProbeErrorCode::ForbiddenDestination],
+    'localhost subdomain' => ['http://api.localhost/', ProbeErrorCode::ForbiddenDestination],
+    'mdns' => ['http://nas.local/', ProbeErrorCode::ForbiddenDestination],
 ]);
+
+test('private host name suffixes are accepted only with the private-network opt-in', function () {
+    expect((new UrlPolicy([80], allowPrivateHostnames: true))->parse('http://nas.local/')->host)->toBe('nas.local');
+
+    expect(fn () => (new UrlPolicy([80], allowPrivateHostnames: true))->parse('http://localhost/'))
+        ->toThrow(DestinationRejected::class);
+});

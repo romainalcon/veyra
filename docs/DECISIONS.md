@@ -13,7 +13,7 @@
 **Decision:** Docker Compose for public Community distribution; Vito Deploy for private installations. Same application code.
 
 ## ADR-005 — Open Core
-**Decision:** Community core and optional Cloud extensions share a codebase but have explicit interfaces. Exact licensing is pending.
+**Decision:** Community core and optional Cloud extensions share a codebase but have explicit interfaces. The Community core is licensed under **AGPL-3.0-only** (decided in Sprint 5); optional Cloud modules under `extensions/cloud` may use a separate commercial license. A contribution policy (DCO or CLA) must be defined before accepting external contributions, and trademark/domain availability for "Veyra" still needs verification.
 
 ## ADR-006 — Scheduling reliability
 **Decision:** MariaDB-backed atomic scheduling and outbox; idempotent Horizon jobs and ordered state transitions.
@@ -68,3 +68,7 @@
 ## ADR-019 — Uptime over observed checks with explicit coverage
 **Decision:** Uptime is computed only over observed checks; coverage (observed ÷ expected) is reported alongside, and periods without data are "No data".
 **Why:** A worker or scheduler outage must not masquerade as downtime nor inflate uptime to 100 %.
+
+## ADR-020 — Release operations
+**Decision:** `/health` (public status, token-protected details), a scheduler heartbeat and a "monitoring paused" banner expose worker/scheduler outages explicitly; `veyra:doctor` validates production configuration; backups are logical MariaDB dumps plus the APP_KEY; images are published to GHCR on `vX.Y.Z` tags with provenance and SBOM; the Docker stack is smoke-tested and backup/restore-drilled in CI.
+**Why:** The V1 acceptance requires that a probe-worker outage never masquerades as downtime and that a clean install can be operated and restored without manual knowledge.

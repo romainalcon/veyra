@@ -1,0 +1,14 @@
+# CI-only override: a local HTTP target for the smoke test. Private networks
+# are allowed for probes here ONLY because the target is the httpbin service.
+services:
+  httpbin:
+    image: mccutchen/go-httpbin:v2.15.0
+    networks: [backend]
+
+  horizon:
+    environment:
+      VEYRA_PROBES_ALLOW_PRIVATE_NETWORKS: "true"
+
+  app:
+    environment:
+      VEYRA_PROBES_ALLOW_PRIVATE_NETWORKS: "true"

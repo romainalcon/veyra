@@ -17,6 +17,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Release
+    |--------------------------------------------------------------------------
+    |
+    | VEYRA_VERSION is injected when building release images. Veyra is
+    | licensed under the AGPL-3.0: users interacting with an instance over a
+    | network must be able to obtain its source code (section 13), hence the
+    | source link shown in the interface.
+    |
+    */
+
+    'version' => env('VEYRA_VERSION', 'dev'),
+
+    'source_url' => env('VEYRA_SOURCE_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Public Registration
     |--------------------------------------------------------------------------
     |
@@ -94,6 +110,49 @@ return [
     | such as the Horizon dashboard in non-local environments.
     |
     */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Health Endpoint
+    |--------------------------------------------------------------------------
+    |
+    | GET /health returns a minimal public status; detailed checks require
+    | "Authorization: Bearer <VEYRA_HEALTH_TOKEN>".
+    |
+    */
+
+    'health_token' => env('VEYRA_HEALTH_TOKEN'),
+
+    /*
+    | Reverse proxies allowed to set X-Forwarded-* headers ("*" or a list).
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
+    | Simulated probe "latency_ms:failure_rate" used by veyra:benchmark only;
+    | ignored in production.
+    */
+
+    'benchmark_probe' => env('VEYRA_BENCHMARK_PROBE'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Content Security Policy
+    |--------------------------------------------------------------------------
+    |
+    | Extra `connect-src` origins: the browser-facing Reverb WebSocket endpoint
+    | (derived from VITE_REVERB_*) unless VEYRA_CSP_CONNECT_SRC overrides it.
+    |
+    */
+
+    'csp' => [
+        'connect_src' => array_values(array_filter(env('VEYRA_CSP_CONNECT_SRC')
+            ? explode(' ', (string) env('VEYRA_CSP_CONNECT_SRC'))
+            : (env('VITE_REVERB_HOST')
+                ? [(env('VITE_REVERB_SCHEME', 'https') === 'https' ? 'wss://' : 'ws://').env('VITE_REVERB_HOST').':'.env('VITE_REVERB_PORT', 443)]
+                : []))),
+    ],
 
     'admin_emails' => array_values(array_filter(array_map(
         'trim',

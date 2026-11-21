@@ -45,8 +45,17 @@ jobs:
           extensions: pdo_mysql, redis, pcntl, intl, zip, bcmath
           coverage: none
 
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('composer.lock') }}
+
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Audit PHP dependencies
+        run: composer audit
 
       - name: Prepare environment
         run: |
@@ -97,6 +106,9 @@ jobs:
           cache: npm
 
       - run: npm ci --no-audit --no-fund
+
+      - name: Audit production JS dependencies
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Generate Wayfinder routes
         run: php artisan wayfinder:generate --with-form
