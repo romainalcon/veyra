@@ -13,7 +13,7 @@
 **Decision:** Docker Compose for public Community distribution; Vito Deploy for private installations. Same application code.
 
 ## ADR-005 — Open Core
-**Decision:** Community core and optional Cloud extensions share a codebase but have explicit interfaces. The Community core is licensed under **AGPL-3.0-only** (decided in Sprint 5); optional Cloud modules under `extensions/cloud` may use a separate commercial license. A contribution policy (DCO or CLA) must be defined before accepting external contributions, and trademark/domain availability for "Veyra" still needs verification.
+**Decision:** Community core and optional Cloud extensions share a codebase but have explicit interfaces. The Community core is licensed under **AGPL-3.0-only** (confirmed for the 1.0.0 release, source at https://github.com/romainalcon/veyra); optional Cloud modules under `extensions/cloud` may use a separate commercial license. A contribution policy (DCO or CLA) must be defined before accepting external contributions, and trademark/domain availability for "Veyra" still needs verification.
 
 ## ADR-006 — Scheduling reliability
 **Decision:** MariaDB-backed atomic scheduling and outbox; idempotent Horizon jobs and ordered state transitions.

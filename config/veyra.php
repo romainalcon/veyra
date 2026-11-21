@@ -29,7 +29,7 @@ return [
 
     'version' => env('VEYRA_VERSION', 'dev'),
 
-    'source_url' => env('VEYRA_SOURCE_URL'),
+    'source_url' => env('VEYRA_SOURCE_URL', 'https://github.com/romainalcon/veyra'),
 
     /*
     |--------------------------------------------------------------------------

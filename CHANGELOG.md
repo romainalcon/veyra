@@ -4,7 +4,7 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
-## [1.0.0] — unreleased
+## [1.0.0] — 2026-11-21
 
 First Community release.
 
@@ -19,3 +19,6 @@ First Community release.
 
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
+
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/romainalcon/veyra/releases/tag/v1.0.0

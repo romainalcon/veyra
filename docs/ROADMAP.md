@@ -28,7 +28,7 @@
 - [x] Backups, restore instructions, health checks, security review.
 
 ## Sprint 5 notes
-- Docker distribution is validated in CI (`.github/workflows/docker.yml`) once the repository is pushed; it has not been run on a local Docker host.
+- Docker distribution validated in CI (`.github/workflows/docker.yml`): build, start, `/health`, scheduled check through Horizon and backup/restore drill passed on 2026-11-21.
 
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
