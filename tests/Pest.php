@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Maintenance\Services\MaintenanceSchedule;
 use App\Domain\Monitoring\Actions\ApplyMonitorState;
 use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Enums\ProbeErrorCode;
@@ -53,7 +54,8 @@ function memberOf(Organization $organization, OrganizationRole $role): User
 
 /**
  * Record a raw check for the monitor and apply it to the confirmed state,
- * as ExecuteHttpProbe + ApplyMonitorStateJob would.
+ * as ExecuteHttpProbe + ApplyMonitorStateJob would (including the
+ * maintenance flag set by RecordProbeResult).
  */
 function recordCheck(Monitor $monitor, bool $success, string $scheduledFor, ?int $statusCode = null): ?MonitorStatus
 {
@@ -64,6 +66,7 @@ function recordCheck(Monitor $monitor, bool $success, string $scheduledFor, ?int
         'success' => $success,
         'status_code' => $statusCode ?? ($success ? 200 : 503),
         'error_code' => $success ? null : ProbeErrorCode::UnexpectedStatus,
+        'in_maintenance' => app(MaintenanceSchedule::class)->covers($monitor->id, CarbonImmutable::parse($scheduledFor)),
     ]);
 
     return app(ApplyMonitorState::class)->handle($monitor->id);

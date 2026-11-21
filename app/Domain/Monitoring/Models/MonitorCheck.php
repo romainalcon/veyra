@@ -25,9 +25,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $status_code
  * @property ProbeErrorCode|null $error_code
  * @property array<string, scalar|null>|null $metadata
+ * @property bool $in_maintenance
  * @property CarbonImmutable|null $created_at
  */
-#[Fillable(['monitor_id', 'dispatch_id', 'scheduled_for', 'checked_at', 'success', 'duration_ms', 'status_code', 'error_code', 'metadata'])]
+#[Fillable(['monitor_id', 'dispatch_id', 'scheduled_for', 'checked_at', 'success', 'duration_ms', 'status_code', 'error_code', 'metadata', 'in_maintenance'])]
 #[UseFactory(MonitorCheckFactory::class)]
 class MonitorCheck extends Model
 {
@@ -49,6 +50,7 @@ class MonitorCheck extends Model
             'status_code' => 'integer',
             'error_code' => ProbeErrorCode::class,
             'metadata' => 'array',
+            'in_maintenance' => 'boolean',
         ];
     }
 

@@ -8,12 +8,13 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Bounded, downsampled series for charts. Empty buckets are explicit
- * (`checks = 0`, null values) so the UI can show "no data".
+ * (`checks = 0`, null values) so the UI can show "no data". `maintenance`
+ * counts checks run during planned maintenance (excluded from the others).
  */
 class MonitorSeries
 {
     /**
-     * @return list<array{t: string, checks: int, successes: int, failures: int, latency_avg: int|null, latency_max: int|null}>
+     * @return list<array{t: string, checks: int, successes: int, failures: int, maintenance: int, latency_avg: int|null, latency_max: int|null}>
      */
     public function latency(Monitor $monitor, StatsRange $range, ?CarbonImmutable $now = null): array
     {
@@ -59,7 +60,7 @@ class MonitorSeries
     }
 
     /**
-     * @return list<array{t: string, checks: int, successes: int, failures: int, latency_avg: int|null, latency_max: int|null}>
+     * @return list<array{t: string, checks: int, successes: int, failures: int, maintenance: int, latency_avg: int|null, latency_max: int|null}>
      */
     private function buckets(Monitor $monitor, StatsRange $range, int $bucket, CarbonImmutable $now): array
     {
@@ -68,9 +69,9 @@ class MonitorSeries
 
         $rows = DB::table('monitor_checks')
             ->selectRaw('FLOOR(UNIX_TIMESTAMP(checked_at) / ?) * ? as bucket', [$bucket, $bucket])
-            ->selectRaw('COUNT(*) as checks, SUM(success = 1) as successes')
-            ->selectRaw('ROUND(AVG(CASE WHEN success = 1 THEN duration_ms END)) as latency_avg')
-            ->selectRaw('MAX(CASE WHEN success = 1 THEN duration_ms END) as latency_max')
+            ->selectRaw('SUM(in_maintenance = 0) as checks, SUM(success = 1 AND in_maintenance = 0) as successes, SUM(in_maintenance = 1) as maintenance')
+            ->selectRaw('ROUND(AVG(CASE WHEN success = 1 AND in_maintenance = 0 THEN duration_ms END)) as latency_avg')
+            ->selectRaw('MAX(CASE WHEN success = 1 AND in_maintenance = 0 THEN duration_ms END) as latency_max')
             ->where('monitor_id', $monitor->id)
             ->where('checked_at', '>=', $start)
             ->groupBy('bucket')
@@ -87,7 +88,7 @@ class MonitorSeries
     }
 
     /**
-     * @return list<array{t: string, checks: int, successes: int, failures: int, latency_avg: int|null, latency_max: int|null}>
+     * @return list<array{t: string, checks: int, successes: int, failures: int, maintenance: int, latency_avg: int|null, latency_max: int|null}>
      */
     private function daily(Monitor $monitor, StatsRange $range, CarbonImmutable $now): array
     {
@@ -106,6 +107,7 @@ class MonitorSeries
             $series[] = $this->point($day, $row === null ? null : (object) [
                 'checks' => $row->checks_count,
                 'successes' => $row->success_count,
+                'maintenance' => $row->maintenance_count,
                 'latency_avg' => $row->latency_avg_ms,
                 'latency_max' => $row->latency_max_ms,
             ]);
@@ -115,7 +117,7 @@ class MonitorSeries
     }
 
     /**
-     * @return array{t: string, checks: int, successes: int, failures: int, latency_avg: int|null, latency_max: int|null}
+     * @return array{t: string, checks: int, successes: int, failures: int, maintenance: int, latency_avg: int|null, latency_max: int|null}
      */
     private function point(CarbonImmutable $at, ?object $row): array
     {
@@ -127,6 +129,7 @@ class MonitorSeries
             'checks' => $checks,
             'successes' => $successes,
             'failures' => $checks - $successes,
+            'maintenance' => (int) ($row->maintenance ?? 0),
             'latency_avg' => isset($row->latency_avg) ? (int) $row->latency_avg : null,
             'latency_max' => isset($row->latency_max) ? (int) $row->latency_max : null,
         ];

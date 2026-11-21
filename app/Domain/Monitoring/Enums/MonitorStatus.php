@@ -13,6 +13,8 @@ enum MonitorStatus: string
     case Down = 'down';
     /** No (recent) data: never interpreted as downtime. */
     case Unknown = 'unknown';
+    /** Planned maintenance: checks keep running but never confirm a state. */
+    case Maintenance = 'maintenance';
 
     public function label(): string
     {
@@ -21,6 +23,7 @@ enum MonitorStatus: string
             self::Degraded => 'Degraded',
             self::Down => 'Down',
             self::Unknown => 'Unknown',
+            self::Maintenance => 'Maintenance',
         };
     }
 }

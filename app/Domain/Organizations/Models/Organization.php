@@ -3,6 +3,7 @@
 namespace App\Domain\Organizations\Models;
 
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Models\User;
@@ -30,6 +31,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, OrganizationMember> $members
  * @property-read Collection<int, OrganizationInvitation> $invitations
  * @property-read Collection<int, Monitor> $monitors
+ * @property-read Collection<int, MaintenanceWindow> $maintenanceWindows
  */
 #[Fillable(['name', 'slug', 'settings'])]
 #[UseFactory(OrganizationFactory::class)]
@@ -88,6 +90,14 @@ class Organization extends Model
     public function monitors(): HasMany
     {
         return $this->hasMany(Monitor::class);
+    }
+
+    /**
+     * @return HasMany<MaintenanceWindow, $this>
+     */
+    public function maintenanceWindows(): HasMany
+    {
+        return $this->hasMany(MaintenanceWindow::class);
     }
 
     /**
