@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\Incidents\IncidentController;
 use App\Http\Controllers\InvitationAcceptanceController;
+use App\Http\Controllers\Maintenance\MaintenanceWindowController;
 use App\Http\Controllers\Monitors\MonitorCheckController;
 use App\Http\Controllers\Monitors\MonitorController;
 use App\Http\Controllers\Monitors\MonitorStatusController;
@@ -75,6 +76,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('monitors/{monitor}/checks', [MonitorCheckController::class, 'store'])
                 ->middleware('throttle:manual-checks')
                 ->name('monitors.checks.store');
+
+            Route::get('maintenance', [MaintenanceWindowController::class, 'index'])->name('maintenance.index');
+            Route::get('maintenance/create', [MaintenanceWindowController::class, 'create'])->name('maintenance.create');
+            Route::post('maintenance', [MaintenanceWindowController::class, 'store'])
+                ->middleware('throttle:30,1')
+                ->name('maintenance.store');
+            Route::get('maintenance/{maintenanceWindow}/edit', [MaintenanceWindowController::class, 'edit'])->name('maintenance.edit');
+            Route::put('maintenance/{maintenanceWindow}', [MaintenanceWindowController::class, 'update'])
+                ->middleware('throttle:30,1')
+                ->name('maintenance.update');
+            Route::post('maintenance/{maintenanceWindow}/cancel', [MaintenanceWindowController::class, 'cancel'])
+                ->middleware('throttle:30,1')
+                ->name('maintenance.cancel');
+            Route::post('maintenance/{maintenanceWindow}/end', [MaintenanceWindowController::class, 'end'])
+                ->middleware('throttle:30,1')
+                ->name('maintenance.end');
 
             Route::get('incidents', [IncidentController::class, 'index'])->name('incidents.index');
             Route::get('incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');

@@ -1,6 +1,7 @@
 export * from './analytics';
 export * from './auth';
 export * from './incident';
+export * from './maintenance';
 export * from './navigation';
 export * from './notification';
 export * from './monitor';

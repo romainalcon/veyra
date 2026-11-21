@@ -2,7 +2,8 @@ import type { ChannelOption } from './notification';
 
 export type HttpMethod = 'GET' | 'HEAD';
 
-export type MonitorStatus = 'up' | 'degraded' | 'down' | 'unknown';
+export type MonitorStatus =
+    'up' | 'degraded' | 'down' | 'unknown' | 'maintenance';
 
 export type MonitorState = {
     status: MonitorStatus;
@@ -19,6 +20,7 @@ export type MonitorCheck = {
     error_code: string | null;
     error_label: string | null;
     redirects: number;
+    in_maintenance: boolean;
 };
 
 export type MonitorSummary = {
