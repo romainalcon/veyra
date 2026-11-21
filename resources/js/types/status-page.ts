@@ -50,3 +50,29 @@ export type StatusPageSnapshot = {
     maintenance: PublicMaintenance[];
     generated_at: string;
 };
+
+export type StatusPageSummary = {
+    id: string;
+    title: string;
+    slug: string;
+    is_published: boolean;
+    components_count: number;
+    public_url: string;
+};
+
+export type StatusPageComponentInput = {
+    monitor_id: string;
+    display_name: string;
+    group_name: string | null;
+};
+
+export type StatusPageDetail = StatusPageSummary & {
+    description: string | null;
+    show_uptime: boolean;
+    components: StatusPageComponentInput[];
+};
+
+export type StatusPageFormOptions = {
+    monitors: { id: string; name: string }[];
+    maxComponents: number;
+};

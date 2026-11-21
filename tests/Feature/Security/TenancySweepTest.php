@@ -5,6 +5,7 @@ use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\OrganizationInvitation;
+use App\Domain\StatusPages\Models\StatusPage;
 use App\Models\User;
 use Illuminate\Routing\Route as RouteDefinition;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,7 @@ test('every tenant route is unreachable for non-members', function () {
         'incident' => Incident::factory()->create(['monitor_id' => $monitor->id])->id,
         'notificationChannel' => NotificationChannel::factory()->create(['organization_id' => $victim->id])->id,
         'maintenanceWindow' => MaintenanceWindow::factory()->create(['organization_id' => $victim->id])->id,
+        'statusPage' => StatusPage::factory()->create(['organization_id' => $victim->id])->id,
     ];
 
     $routes = collect(Route::getRoutes()->getRoutes())
