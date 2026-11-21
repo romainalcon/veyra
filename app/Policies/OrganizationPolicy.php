@@ -7,9 +7,12 @@ use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationInvitation;
 use App\Domain\Organizations\Models\OrganizationMember;
 use App\Models\User;
+use App\Policies\Concerns\ResolvesOrganizationRole;
 
 class OrganizationPolicy
 {
+    use ResolvesOrganizationRole;
+
     public function view(User $user, Organization $organization): bool
     {
         return $this->roleOf($user, $organization) !== null;
@@ -71,22 +74,5 @@ class OrganizationPolicy
         }
 
         return $this->roleOf($user, $organization)?->canAssign($invitation->role) ?? false;
-    }
-
-    /**
-     * Reuse the membership resolved by the ResolveOrganization middleware when
-     * available, to avoid one query per authorization check.
-     */
-    private function roleOf(User $user, Organization $organization): ?OrganizationRole
-    {
-        if ($organization->relationLoaded('viewerMembership')) {
-            $membership = $organization->getRelation('viewerMembership');
-
-            if ($membership instanceof OrganizationMember && $membership->user_id === $user->id) {
-                return $membership->role;
-            }
-        }
-
-        return $user->roleIn($organization);
     }
 }

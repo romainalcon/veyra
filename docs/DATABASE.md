@@ -40,3 +40,9 @@
 - Do not copy PostgreSQL `PARTITION BY RANGE`, `timestamptz`, `jsonb` or partial-index examples into MariaDB migrations.
 - MariaDB's JSON is text-backed; benchmark JSON filtering before designing indexes on metadata.
 - Evaluate row volume, indexes, backup time and cleanup cost before considering monthly partitions.
+
+## Monitoring tables (Sprint 2)
+- New temporal columns use `DATETIME` (UTC) instead of `TIMESTAMP` to avoid the 2038 limit.
+- `monitor_checks` and `monitor_dispatches` have **no foreign key** to `monitors`: deleting an organization cascades to monitors and configs, then `PurgeMonitorHistory` (queue `maintenance`) deletes history in batches of 1000.
+- Monitors are soft deleted; their history is kept until retention (Sprint 4).
+- The scheduler relies on `FOR UPDATE SKIP LOCKED`, available since MariaDB 10.6; `tests/Integration/MonitorClaimingTest.php` verifies the server version and disjoint claiming.

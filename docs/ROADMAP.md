@@ -7,10 +7,10 @@
 - [ ] Users, organizations, invitations and roles with tenant isolation tests.
 
 ## Sprint 2 — HTTP monitoring
-- [ ] Monitor CRUD with GET/HEAD, intervals, timeouts, expected status, secure headers.
-- [ ] Safe HTTP probe with SSRF defenses and bounded redirects.
-- [ ] Atomic due-monitor scheduler, MariaDB outbox, Horizon `probes` queue.
-- [ ] Idempotent check persistence and history list.
+- [x] Monitor CRUD with GET/HEAD, intervals, timeouts, expected status, secure headers.
+- [x] Safe HTTP probe with SSRF defenses and bounded redirects.
+- [x] Atomic due-monitor scheduler, MariaDB outbox, Horizon `probes` queue.
+- [x] Idempotent check persistence and history list.
 
 ## Sprint 3 — Incidents and real time
 - [ ] UP/DOWN/DEGRADED/UNKNOWN state machine.

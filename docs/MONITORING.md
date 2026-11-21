@@ -32,3 +32,13 @@
 - Persist individual checks, update daily aggregates asynchronously.
 - Calculate uptime from observed checks with explicit UNKNOWN coverage; never treat gaps as healthy.
 - Provide bounded, downsampled chart series to the frontend.
+
+## Implementation (Sprint 2)
+- **Outbox**: `veyra:monitors:dispatch` runs every 10 s (`withoutOverlapping`, `onOneServer`).
+  1. `ScheduleDueMonitors` claims up to 500 due monitors with `SELECT … FOR UPDATE SKIP LOCKED`, inserts one `monitor_dispatches` row per slot (`insertOrIgnore` on unique `(monitor_id, scheduled_for)`) and advances `next_check_at` in the same transaction. After an outage, missed slots are skipped (`next = now + interval`), never replayed in bulk.
+  2. `PublishPendingDispatches` pushes `ExecuteHttpProbe` to `probes` inside the transaction (a Redis failure rolls back and keeps rows `pending`). Rows `dispatched` for more than 5 min are redelivered; after 3 attempts they become `failed`; rows older than `max(interval, 5 min)` become `skipped`. No check is written for skipped/failed dispatches.
+- **Job**: `ExecuteHttpProbe` (1 try, 45 s timeout) skips paused/deleted monitors; `RecordProbeResult` inserts the check with a unique `dispatch_id`, so replays are no-ops.
+- **Manual checks** ("Check now") use the same outbox with `trigger = manual`.
+- **Probe**: see `app/Domain/Monitoring/Probes/HttpProbe.php`. Every hop is validated by `DestinationGuard`, the connection is pinned with `CURLOPT_RESOLVE`, redirects are followed manually (max 3), environment proxies are ignored, custom headers are dropped on cross-host redirects and responses are capped at 1 MiB.
+- **Error codes**: `invalid_url`, `forbidden_destination`, `dns_failure`, `connection_failed`, `timeout`, `tls_error`, `too_many_redirects`, `response_too_large`, `unexpected_status`, `unexpected_error`.
+- The UI shows the latest **raw** check; confirmed UP/DOWN states arrive in Sprint 3.

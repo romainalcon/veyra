@@ -11,3 +11,13 @@ Encrypt notification credentials and sensitive HTTP headers. Redact credentials 
 
 ## Operational controls
 Use rate limits, idempotency keys, bounded queue retries, health checks, audited administrative changes, secure session cookies, CSRF protection, and backups with restore drills. Reverb private channels must verify tenant membership.
+
+## Probe destinations (implemented in Sprint 2)
+- Always blocked: loopback, unspecified, link-local (incl. `169.254.169.254`), `fd00:ec2::254`, `100.100.100.200`, multicast, broadcast/reserved, documentation and benchmark ranges, NAT64, 6to4, Teredo, IPv4-compatible/mapped IPv6 (mapped addresses are normalized and re-checked).
+- Private networks (RFC 1918, CGNAT `100.64.0.0/10`, ULA `fc00::/7`) are blocked unless the operator sets `VEYRA_PROBES_ALLOW_PRIVATE_NETWORKS=true`. This is an instance setting, never an organization setting, and it is forced off when `VEYRA_EDITION=cloud`.
+- Ports: `VEYRA_PROBES_ALLOWED_PORTS` (default `80,443,8080,8443`). Methods: GET/HEAD. No credentials in URLs.
+- A host is refused if **any** of its A/AAAA records is forbidden.
+- Custom headers are stored with Laravel encryption (`encrypted:array`), shown by name only, never returned to the browser, never logged, and not forwarded across hosts on redirect.
+- Logs use `UrlRedactor` (no query string, no credentials) and never include exception messages from cURL.
+- Rate limits: monitor creation (`VEYRA_MONITORS_PER_HOUR`, default 30/user), manual checks (6/min per user, 1 per 30 s per monitor).
+- Application checks do not replace network egress filtering of the Horizon workers (see deployment guides).

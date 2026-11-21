@@ -2,7 +2,7 @@
 
 Veyra is an open-core, self-hostable uptime monitoring platform for HTTP/HTTPS endpoints, with incidents, notifications, analytics and organizations.
 
-> Status: Sprint 1 (foundations): authentication, organizations, roles, invitations, application shell, quality tooling and deployment scaffolding. HTTP monitoring arrives in Sprint 2 (see `docs/ROADMAP.md`).
+> Status: Sprint 2: HTTP/HTTPS monitors with SSRF-safe probes, a MariaDB outbox scheduler and check history, on top of the Sprint 1 foundations. Confirmed states and incidents arrive in Sprint 3 (see `docs/ROADMAP.md`).
 
 ## Stack
 Laravel 13 · PHP 8.4 · Vue 3 + TypeScript · Inertia 3 · Tailwind CSS 4 + shadcn-vue · MariaDB 11.4+ · Redis · Horizon · Reverb · Pest · Vitest.
@@ -14,6 +14,7 @@ Requirements: PHP 8.4, Composer 2, Node.js 22, MariaDB 11.4+, Redis.
 cp .env.example .env            # set DB_* / REDIS_* / REVERB_* values
 composer setup                  # install, key, migrate, build
 composer dev                    # server, Horizon, Reverb, logs and Vite
+php artisan schedule:work       # in another terminal: runs the monitor scheduler
 ```
 
 Create the databases `veyra` and `veyra_testing` (utf8mb4) first. `php artisan db:seed` creates `test@example.com` / `password` with an `acme` organization.

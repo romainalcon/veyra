@@ -1,0 +1,53 @@
+/**
+ * Client-side mirror of App\Domain\Monitoring\DTOs\ExpectedStatuses::parse.
+ * Used for instant feedback only; the server remains authoritative.
+ */
+export function parseExpectedStatuses(
+    expression: string,
+): { from: number; to: number }[] | null {
+    const parts = expression
+        .split(',')
+        .map((part) => part.trim())
+        .filter((part) => part !== '');
+
+    if (parts.length === 0 || parts.length > 20) {
+        return null;
+    }
+
+    const ranges: { from: number; to: number }[] = [];
+
+    for (const part of parts) {
+        const match = /^(\d{3})(?:\s*-\s*(\d{3}))?$/.exec(part);
+
+        if (!match) {
+            return null;
+        }
+
+        const from = Number(match[1]);
+        const to = match[2] ? Number(match[2]) : from;
+
+        if (from < 100 || to > 599 || from > to) {
+            return null;
+        }
+
+        ranges.push({ from, to });
+    }
+
+    return ranges;
+}
+
+export function formatDuration(ms: number | null): string {
+    if (ms === null) {
+        return '—';
+    }
+
+    return ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${ms} ms`;
+}
+
+export function formatInterval(seconds: number): string {
+    return seconds >= 3600 ? `${seconds / 3600} h` : `${seconds / 60} min`;
+}
+
+export function formatDateTime(iso: string | null): string {
+    return iso ? new Date(iso).toLocaleString() : '—';
+}

@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\InvitationAcceptanceController;
+use App\Http\Controllers\Monitors\MonitorCheckController;
+use App\Http\Controllers\Monitors\MonitorController;
+use App\Http\Controllers\Monitors\MonitorStatusController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
@@ -50,6 +53,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('throttle:invitations')
                 ->name('invitations.store');
             Route::delete('invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitations.destroy');
+
+            Route::get('monitors', [MonitorController::class, 'index'])->name('monitors.index');
+            Route::get('monitors/create', [MonitorController::class, 'create'])->name('monitors.create');
+            Route::post('monitors', [MonitorController::class, 'store'])
+                ->middleware('throttle:monitors')
+                ->name('monitors.store');
+            Route::get('monitors/{monitor}', [MonitorController::class, 'show'])->name('monitors.show');
+            Route::get('monitors/{monitor}/edit', [MonitorController::class, 'edit'])->name('monitors.edit');
+            Route::put('monitors/{monitor}', [MonitorController::class, 'update'])->name('monitors.update');
+            Route::delete('monitors/{monitor}', [MonitorController::class, 'destroy'])->name('monitors.destroy');
+            Route::patch('monitors/{monitor}/enabled', MonitorStatusController::class)->name('monitors.enabled');
+            Route::post('monitors/{monitor}/checks', [MonitorCheckController::class, 'store'])
+                ->middleware('throttle:manual-checks')
+                ->name('monitors.checks.store');
         });
 });
 

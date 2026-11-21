@@ -36,7 +36,12 @@ class OrganizationController extends Controller
     {
         Gate::authorize('view', $organization);
 
-        return Inertia::render('organizations/Dashboard');
+        return Inertia::render('organizations/Dashboard', [
+            'monitorCounts' => [
+                'total' => $organization->monitors()->count(),
+                'paused' => $organization->monitors()->where('enabled', false)->count(),
+            ],
+        ]);
     }
 
     public function edit(Organization $organization): Response

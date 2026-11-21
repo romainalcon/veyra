@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organizations\Models;
 
+use App\Domain\Monitoring\Models\Monitor;
 use App\Models\User;
 use App\Policies\OrganizationPolicy;
 use Database\Factories\OrganizationFactory;
@@ -26,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, User> $users
  * @property-read Collection<int, OrganizationMember> $members
  * @property-read Collection<int, OrganizationInvitation> $invitations
+ * @property-read Collection<int, Monitor> $monitors
  */
 #[Fillable(['name', 'slug', 'settings'])]
 #[UseFactory(OrganizationFactory::class)]
@@ -76,5 +78,13 @@ class Organization extends Model
     public function invitations(): HasMany
     {
         return $this->hasMany(OrganizationInvitation::class);
+    }
+
+    /**
+     * @return HasMany<Monitor, $this>
+     */
+    public function monitors(): HasMany
+    {
+        return $this->hasMany(Monitor::class);
     }
 }

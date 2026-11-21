@@ -40,3 +40,11 @@
 
 ## ADR-012 — Invitations
 **Decision:** Pending invitations store only a SHA-256 hash of a 64-character random token, expire after `VEYRA_INVITATION_TTL_HOURS` (default 168), are unique per (organization, e-mail) and are deleted when accepted or revoked. Acceptance locks the row, requires a verified account with the invited e-mail. The invitation mail is queued encrypted on `notifications`. When public registration is disabled (`VEYRA_REGISTRATION_ENABLED=false`), only invited e-mails may register.
+
+## ADR-013 — SSRF strategy and private networks
+**Decision:** Validate scheme, port, every DNS answer and every redirect hop in the application (`DestinationGuard`), pin the connection to the validated IP with `CURLOPT_RESOLVE`, follow redirects manually and ignore environment proxies. Private networks are reachable only through the instance-level opt-in `VEYRA_PROBES_ALLOW_PRIVATE_NETWORKS` (forced off on Cloud); loopback, link-local and metadata endpoints are never reachable.
+**Why:** Self-hosted users legitimately monitor internal services, while the default and Cloud must not allow internal scanning. Network egress filtering remains required in addition.
+
+## ADR-014 — Scheduling outbox and catch-up rules
+**Decision:** Due monitors are claimed with `SKIP LOCKED` into `monitor_dispatches` in the same transaction that advances `next_check_at`; a relay publishes rows to Redis and redelivers stale ones (3 attempts max). Missed slots are skipped, stale dispatches are marked `skipped`, and no check is recorded in either case.
+**Why:** MariaDB stays the source of truth; Redis loss or worker outages cannot lose schedules or fabricate failures ("missing data is UNKNOWN, never DOWN").
