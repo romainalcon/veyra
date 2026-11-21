@@ -97,11 +97,16 @@ COPY . .
 COPY --from=assets /var/www/html/public/build ./public/build
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 
+# Also creates writable config/data dirs in www-data's home (/var/www) for
+# CLI tools such as `php artisan tinker` (PsySH), which fail when they
+# cannot write there.
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scripts \
     && rm /usr/bin/composer \
     && rm -rf node_modules tests .github .claude .idea \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && mkdir -p /var/www/.config /var/www/.local/share \
+    && chown -R www-data:www-data /var/www/.config /var/www/.local
 
 COPY deploy/docker/entrypoint.sh /usr/local/bin/veyra-entrypoint
 RUN chmod +x /usr/local/bin/veyra-entrypoint
