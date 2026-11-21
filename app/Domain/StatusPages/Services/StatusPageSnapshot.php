@@ -6,6 +6,7 @@ use App\Domain\Incidents\Enums\IncidentEventType;
 use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Incidents\Models\IncidentEvent;
+use App\Domain\Localization\SupportedLocales;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Models\Monitor;
@@ -52,14 +53,21 @@ class StatusPageSnapshot
         );
     }
 
-    public static function cacheKey(StatusPage $statusPage): string
+    /**
+     * The snapshot holds translated text, hence one entry per language.
+     */
+    public static function cacheKey(StatusPage $statusPage, ?string $locale = null): string
     {
-        return "status-pages:{$statusPage->id}:snapshot";
+        $locale ??= app()->getLocale();
+
+        return "status-pages:{$statusPage->id}:snapshot:{$locale}";
     }
 
     public static function forget(StatusPage $statusPage): void
     {
-        Cache::forget(self::cacheKey($statusPage));
+        foreach (SupportedLocales::codes() as $locale) {
+            Cache::forget(self::cacheKey($statusPage, $locale));
+        }
     }
 
     /**

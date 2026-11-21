@@ -20,6 +20,7 @@ import {
     SidebarFooter,
     SidebarHeader,
 } from '@/components/ui/sidebar';
+import { useTranslations } from '@/lib/i18n';
 import { dashboard, edit } from '@/routes/organizations';
 import { index as incidents } from '@/routes/organizations/incidents';
 import { index as maintenance } from '@/routes/organizations/maintenance';
@@ -30,6 +31,7 @@ import { index as statusPages } from '@/routes/organizations/status-pages';
 import type { NavItem } from '@/types';
 
 const page = usePage();
+const { t } = useTranslations();
 
 const mainNavItems = computed<NavItem[]>(() => {
     const organization = page.props.currentOrganization;
@@ -40,43 +42,51 @@ const mainNavItems = computed<NavItem[]>(() => {
 
     return [
         {
-            title: 'Dashboard',
+            id: 'dashboard',
+            title: t('Dashboard'),
             href: dashboard(organization.slug),
             icon: LayoutGrid,
         },
         {
-            title: 'Monitors',
+            id: 'monitors',
+            title: t('Monitors'),
             href: monitors(organization.slug),
             icon: Activity,
         },
         {
-            title: 'Incidents',
+            id: 'incidents',
+            title: t('Incidents'),
             href: incidents(organization.slug),
             icon: Siren,
             badge: organization.openIncidents,
         },
         {
-            title: 'Maintenance',
+            id: 'maintenance',
+            title: t('Maintenance'),
             href: maintenance(organization.slug),
             icon: Wrench,
         },
         {
-            title: 'Status pages',
+            id: 'status-pages',
+            title: t('Status pages'),
             href: statusPages(organization.slug),
             icon: Globe,
         },
         {
-            title: 'Notifications',
+            id: 'notifications',
+            title: t('Notifications'),
             href: notificationChannels(organization.slug),
             icon: Bell,
         },
         {
-            title: 'Members',
+            id: 'members',
+            title: t('Members'),
             href: members(organization.slug),
             icon: Users,
         },
         {
-            title: 'Settings',
+            id: 'settings',
+            title: t('Settings'),
             href: edit(organization.slug),
             icon: Settings,
         },

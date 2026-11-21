@@ -19,6 +19,9 @@ import type {
     MaintenanceWindow,
     Paginated,
 } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 defineProps<{
     upcoming: MaintenanceWindow[];
@@ -33,7 +36,7 @@ const organization = computed(
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Maintenance', href: index(organization.value.slug) },
+        { title: t('Maintenance'), href: index(organization.value.slug) },
     ],
 });
 
@@ -41,10 +44,10 @@ const statusLabels: Record<
     MaintenanceStatus,
     { label: string; variant: 'default' | 'secondary' | 'outline' }
 > = {
-    active: { label: 'In progress', variant: 'default' },
-    scheduled: { label: 'Scheduled', variant: 'outline' },
-    completed: { label: 'Completed', variant: 'secondary' },
-    cancelled: { label: 'Cancelled', variant: 'secondary' },
+    active: { label: t('In progress'), variant: 'default' },
+    scheduled: { label: t('Scheduled'), variant: 'outline' },
+    completed: { label: t('Completed'), variant: 'secondary' },
+    cancelled: { label: t('Cancelled'), variant: 'secondary' },
 };
 
 const params = (window: MaintenanceWindow) =>
@@ -61,23 +64,26 @@ const paginationLabel = (label: string) =>
 </script>
 
 <template>
-    <Head title="Maintenance" />
+    <Head :title="t('Maintenance')" />
 
     <div class="flex flex-1 flex-col gap-6 p-4">
         <div class="flex items-center justify-between gap-4">
             <div>
                 <h1 class="text-xl font-semibold tracking-tight">
-                    Maintenance
+                    {{ t('Maintenance') }}
                 </h1>
                 <p class="text-sm text-muted-foreground">
-                    Planned windows suppress incidents and notifications and are
-                    excluded from uptime.
+                    {{
+                        t(
+                            'Planned windows suppress incidents and notifications and are excluded from uptime.',
+                        )
+                    }}
                 </p>
             </div>
             <Button v-if="canManage" as-child>
                 <Link :href="create(organization.slug)">
                     <Plus class="size-4" />
-                    New window
+                    {{ t('New window') }}
                 </Link>
             </Button>
         </div>
@@ -85,7 +91,9 @@ const paginationLabel = (label: string) =>
         <InputError :message="page.props.errors?.window" />
 
         <section class="space-y-3">
-            <h2 class="text-base font-medium">Upcoming and in progress</h2>
+            <h2 class="text-base font-medium">
+                {{ t('Upcoming and in progress') }}
+            </h2>
             <div
                 v-if="upcoming.length === 0"
                 class="flex flex-col items-center justify-center rounded-xl border border-dashed p-10 text-center"
@@ -97,7 +105,7 @@ const paginationLabel = (label: string) =>
                     <Wrench class="size-6 text-muted-foreground" />
                 </div>
                 <p class="text-sm text-muted-foreground">
-                    No maintenance planned.
+                    {{ t('No maintenance planned.') }}
                 </p>
             </div>
             <ul
@@ -127,7 +135,7 @@ const paginationLabel = (label: string) =>
                             {{
                                 window.monitors
                                     .map((monitor) => monitor.name)
-                                    .join(', ') || 'No monitors'
+                                    .join(', ') || t('No monitors')
                             }}
                         </p>
                     </div>
@@ -135,7 +143,7 @@ const paginationLabel = (label: string) =>
                         <Button variant="outline" size="sm" as-child>
                             <Link :href="edit(params(window))">
                                 <Pencil class="size-4" />
-                                Edit
+                                {{ t('Edit') }}
                             </Link>
                         </Button>
                         <Button
@@ -146,7 +154,7 @@ const paginationLabel = (label: string) =>
                             @click="endWindow(window)"
                         >
                             <Square class="size-4" />
-                            End now
+                            {{ t('End now') }}
                         </Button>
                         <Button
                             v-else
@@ -156,7 +164,7 @@ const paginationLabel = (label: string) =>
                             @click="cancelWindow(window)"
                         >
                             <X class="size-4" />
-                            Cancel
+                            {{ t('Cancel') }}
                         </Button>
                     </div>
                 </li>
@@ -164,7 +172,7 @@ const paginationLabel = (label: string) =>
         </section>
 
         <section v-if="past.data.length" class="space-y-3">
-            <h2 class="text-base font-medium">History</h2>
+            <h2 class="text-base font-medium">{{ t('History') }}</h2>
             <ul
                 class="divide-y rounded-lg border text-sm"
                 data-test="maintenance-history"
@@ -187,7 +195,7 @@ const paginationLabel = (label: string) =>
             <nav
                 v-if="past.last_page > 1"
                 class="flex flex-wrap gap-1"
-                aria-label="Pagination"
+                :aria-label="t('Pagination')"
             >
                 <template v-for="link in past.links" :key="link.label">
                     <Button

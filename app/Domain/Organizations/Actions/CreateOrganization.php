@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organizations\Actions;
 
+use App\Domain\Localization\SupportedLocales;
 use App\Domain\Organizations\DTOs\OrganizationData;
 use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Domain\Organizations\Models\Organization;
@@ -12,7 +13,8 @@ use Illuminate\Support\Str;
 class CreateOrganization
 {
     /**
-     * Create an organization and make the creator its first owner.
+     * Create an organization and make the creator its first owner. Without an
+     * explicit choice, the organization takes the language of the request.
      */
     public function handle(User $creator, OrganizationData $data): Organization
     {
@@ -20,6 +22,7 @@ class CreateOrganization
             $organization = Organization::create([
                 'name' => $data->name,
                 'slug' => $this->uniqueSlug($data->name),
+                'locale' => SupportedLocales::resolve($data->locale ?? app()->getLocale()),
             ]);
 
             $organization->members()->create([

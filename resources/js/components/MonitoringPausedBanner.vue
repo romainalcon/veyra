@@ -2,17 +2,28 @@
 import { usePage } from '@inertiajs/vue3';
 import { PauseCircle } from '@lucide/vue';
 import { computed } from 'vue';
+import { useTranslations } from '@/lib/i18n';
 
 const page = usePage();
+const { t } = useTranslations();
 const monitoring = computed(() => page.props.system?.monitoring);
 
-const reasons = computed(() =>
-    (monitoring.value?.reasons ?? [])
-        .map((reason) =>
-            reason === 'scheduler' ? 'the scheduler' : 'the Horizon workers',
-        )
-        .join(' and '),
-);
+/*
+ * Whole sentences per case, so that each language can phrase them freely.
+ */
+const message = computed(() => {
+    const reasons = monitoring.value?.reasons ?? [];
+
+    if (reasons.length > 1) {
+        return t(
+            'because the scheduler and the Horizon workers are not running.',
+        );
+    }
+
+    return reasons[0] === 'scheduler'
+        ? t('because the scheduler is not running.')
+        : t('because the Horizon workers are not running.');
+});
 </script>
 
 <template>
@@ -24,10 +35,13 @@ const reasons = computed(() =>
     >
         <PauseCircle class="mt-0.5 size-4 shrink-0" />
         <p>
-            <span class="font-medium">Checks are paused</span> because
-            {{ reasons }} {{ monitoring.reasons.length > 1 ? 'are' : 'is' }} not
-            running. Monitor states show <strong>Unknown</strong>: this is not
-            an outage of your services.
+            <span class="font-medium">{{ t('Checks are paused') }}</span>
+            {{ message }}
+            {{
+                t(
+                    'Monitor states show Unknown: this is not an outage of your services.',
+                )
+            }}
         </p>
     </div>
 </template>

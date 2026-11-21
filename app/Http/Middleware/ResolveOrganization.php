@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Localization\SupportedLocales;
 use App\Domain\Organizations\Models\Organization;
 use App\Models\User;
 use Closure;
@@ -11,7 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Resolves the tenant from the `{organization}` route parameter and ensures the
  * authenticated user is a member. Non-members receive a 404 so that the
- * existence of other organizations is never disclosed.
+ * existence of other organizations is never disclosed. Members then see the
+ * interface in the organization language (ADR-027).
  */
 class ResolveOrganization
 {
@@ -33,6 +35,7 @@ class ResolveOrganization
 
         $organization->setRelation('viewerMembership', $membership);
         $request->attributes->set('currentOrganization', $organization);
+        app()->setLocale(SupportedLocales::resolve($organization->locale));
         $request->session()->put(self::SESSION_LAST_ORGANIZATION, $organization->slug);
 
         return $next($request);

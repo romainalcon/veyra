@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from "@/lib/i18n"
 import type { HTMLAttributes } from "vue"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "./utils"
@@ -14,7 +15,7 @@ const { toggleSidebar } = useSidebar()
   <button
     data-sidebar="rail"
     data-slot="sidebar-rail"
-    aria-label="Toggle Sidebar"
+    :aria-label="t('Toggle sidebar')"
     :tabindex="-1"
     title="Toggle Sidebar"
     :class="cn(

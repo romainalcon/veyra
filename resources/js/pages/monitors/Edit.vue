@@ -9,6 +9,9 @@ import type {
     MonitorDetail,
     MonitorFormOptions,
 } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<MonitorFormOptions & { monitor: MonitorDetail }>();
 
@@ -19,13 +22,13 @@ const organization = computed(
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Monitors', href: index(organization.value.slug) },
+        { title: t('Monitors'), href: index(organization.value.slug) },
         {
             title: props.monitor.name,
             href: show([organization.value.slug, props.monitor.id]),
         },
         {
-            title: 'Edit',
+            title: t('Edit'),
             href: edit([organization.value.slug, props.monitor.id]),
         },
     ],
@@ -33,10 +36,10 @@ setLayoutProps({
 </script>
 
 <template>
-    <Head :title="`Edit ${monitor.name}`" />
+    <Head :title="t('Edit :name', { name: monitor.name })" />
 
     <div class="mx-auto w-full max-w-3xl px-4 py-6">
-        <Heading title="Edit monitor" />
+        <Heading :title="t('Edit monitor')" />
         <MonitorForm
             :channels="channels"
             :intervals="intervals"
@@ -47,7 +50,7 @@ setLayoutProps({
             :max-grace-minutes="maxGraceMinutes"
             :monitor="monitor"
             :action="update.form([organization.slug, monitor.id])"
-            submit-label="Save changes"
+            :submit-label="t('Save changes')"
         />
     </div>
 </template>

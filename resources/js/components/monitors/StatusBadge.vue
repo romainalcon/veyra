@@ -3,6 +3,9 @@ import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { MonitorStatus } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<{ status: MonitorStatus }>();
 
@@ -39,6 +42,6 @@ const style = computed(() => styles[props.status] ?? styles.unknown);
         data-test="status-badge"
     >
         <span class="size-1.5 rounded-full bg-current" aria-hidden="true" />
-        {{ style.label }}
+        {{ t(style.label) }}
     </Badge>
 </template>

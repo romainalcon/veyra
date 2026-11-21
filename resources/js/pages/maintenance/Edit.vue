@@ -9,6 +9,9 @@ import type {
     MaintenanceMonitorOption,
     MaintenanceWindow,
 } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<{
     window: MaintenanceWindow;
@@ -23,7 +26,7 @@ const organization = computed(
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Maintenance', href: index(organization.value.slug) },
+        { title: t('Maintenance'), href: index(organization.value.slug) },
         {
             title: props.window.title,
             href: edit([organization.value.slug, props.window.id]),
@@ -33,16 +36,16 @@ setLayoutProps({
 </script>
 
 <template>
-    <Head :title="`Edit ${window.title}`" />
+    <Head :title="t('Edit :name', { name: window.title })" />
 
     <div class="mx-auto w-full max-w-3xl px-4 py-6">
-        <Heading title="Edit maintenance window" />
+        <Heading :title="t('Edit maintenance window')" />
         <MaintenanceForm
             :window="window"
             :monitors="monitors"
             :max-duration-hours="maxDurationHours"
             :action="update.form([organization.slug, window.id])"
-            submit-label="Save changes"
+            :submit-label="t('Save changes')"
         />
     </div>
 </template>

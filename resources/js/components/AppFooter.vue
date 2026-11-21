@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useTranslations } from '@/lib/i18n';
 
 const page = usePage();
 const system = computed(() => page.props.system);
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -20,7 +22,7 @@ const system = computed(() => page.props.system);
                 class="hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
-                >Source code</a
+                >{{ t('Source code') }}</a
             >
         </template>
     </footer>

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organizations\Actions;
 
+use App\Domain\Localization\SupportedLocales;
 use App\Domain\Organizations\DTOs\InvitationData;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationInvitation;
@@ -34,7 +35,8 @@ class InviteMember
         ));
 
         Notification::route('mail', $data->email)
-            ->notify(new OrganizationInvitationNotification($organization->name, $inviter->name, $data->role, $plainToken));
+            ->notify((new OrganizationInvitationNotification($organization->name, $inviter->name, $data->role, $plainToken))
+                ->locale(SupportedLocales::resolve($organization->locale)));
 
         return $invitation;
     }

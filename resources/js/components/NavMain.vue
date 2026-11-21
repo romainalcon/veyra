@@ -9,6 +9,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { useTranslations } from '@/lib/i18n';
 import type { NavItem } from '@/types';
 
 defineProps<{
@@ -16,13 +17,14 @@ defineProps<{
 }>();
 
 const { isCurrentUrl } = useCurrentUrl();
+const { t } = useTranslations();
 </script>
 
 <template>
     <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>Platform</SidebarGroupLabel>
+        <SidebarGroupLabel>{{ t('Platform') }}</SidebarGroupLabel>
         <SidebarMenu>
-            <SidebarMenuItem v-for="item in items" :key="item.title">
+            <SidebarMenuItem v-for="item in items" :key="item.id ?? item.title">
                 <SidebarMenuButton
                     as-child
                     :is-active="isCurrentUrl(item.href)"
@@ -36,7 +38,7 @@ const { isCurrentUrl } = useCurrentUrl();
                 <SidebarMenuBadge
                     v-if="item.badge"
                     class="bg-red-600 text-white"
-                    :data-test="`nav-badge-${item.title.toLowerCase()}`"
+                    :data-test="`nav-badge-${item.id ?? item.title.toLowerCase()}`"
                     >{{ item.badge }}</SidebarMenuBadge
                 >
             </SidebarMenuItem>

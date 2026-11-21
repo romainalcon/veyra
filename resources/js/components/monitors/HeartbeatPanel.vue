@@ -17,6 +17,9 @@ import {
 import { formatDateTime } from '@/lib/monitoring';
 import { store as regenerate } from '@/routes/organizations/monitors/ping-token';
 import type { MonitorDetail } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<{
     monitor: MonitorDetail;
@@ -41,15 +44,15 @@ const exampleUrl = computed(
 );
 const examples = computed(() => [
     {
-        label: 'Ping on success',
+        label: t('Ping on success'),
         code: `curl -fsS -m 10 --retry 3 -o /dev/null ${exampleUrl.value}`,
     },
     {
-        label: 'Report a failure',
+        label: t('Report a failure'),
         code: `curl -fsS -m 10 --retry 3 -o /dev/null ${exampleUrl.value}/fail`,
     },
     {
-        label: 'Cron job (pings only when the job succeeds)',
+        label: t('Cron job (pings only when the job succeeds)'),
         code: `0 * * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 -o /dev/null ${exampleUrl.value}`,
     },
 ]);
@@ -76,19 +79,19 @@ const copy = async () => {
         data-test="heartbeat-panel"
     >
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 class="text-sm font-medium">Ping URL</h2>
+            <h2 class="text-sm font-medium">{{ t('Ping URL') }}</h2>
             <p class="text-sm text-muted-foreground">
-                Last ping:
+                {{ t('Last ping:') }}
                 <span class="text-foreground">{{
                     heartbeat.last_ping_at
                         ? formatDateTime(heartbeat.last_ping_at)
-                        : 'never'
+                        : t('never')
                 }}</span>
                 <Badge
                     v-if="heartbeat.last_ping_at && heartbeat.last_ping_failed"
                     variant="destructive"
                     class="ml-2"
-                    >Failure reported</Badge
+                    >{{ t('Failure reported') }}</Badge
                 >
             </p>
         </div>
@@ -102,24 +105,28 @@ const copy = async () => {
                 <Button variant="outline" size="sm" @click="copy">
                     <Check v-if="copied" />
                     <Copy v-else />
-                    {{ copied ? 'Copied' : 'Copy' }}
+                    {{ copied ? t('Copied') : t('Copy') }}
                 </Button>
             </div>
             <p class="text-xs text-muted-foreground">
-                Copy it now: it is not stored and will not be shown again. Call
-                it with GET, POST or HEAD when the job succeeds, or append
-                <code>/fail</code> to report a failure.
+                {{
+                    t(
+                        'Copy it now: it is not stored and will not be shown again. Call it with GET, POST or HEAD when the job succeeds, or append /fail to report a failure.',
+                    )
+                }}
             </p>
         </div>
         <p v-else class="text-sm text-muted-foreground">
             <code class="break-all"
                 >{{ heartbeat.ping_url_prefix }}••••••••</code
             >
-            — the secret part is only shown when the URL is issued.
+            — {{ t('the secret part is only shown when the URL is issued.') }}
         </p>
 
         <details class="text-sm" data-test="ping-examples">
-            <summary class="cursor-pointer font-medium">Examples</summary>
+            <summary class="cursor-pointer font-medium">
+                {{ t('Examples') }}
+            </summary>
             <div class="mt-3 space-y-3">
                 <div v-for="example in examples" :key="example.label">
                     <p class="text-xs text-muted-foreground">
@@ -140,7 +147,7 @@ const copy = async () => {
                     data-test="regenerate-ping-url"
                 >
                     <KeyRound />
-                    New ping URL
+                    {{ t('New ping URL') }}
                 </Button>
             </DialogTrigger>
             <DialogContent>
@@ -151,22 +158,29 @@ const copy = async () => {
                     v-slot="{ processing }"
                 >
                     <DialogHeader class="space-y-3">
-                        <DialogTitle>Issue a new ping URL?</DialogTitle>
+                        <DialogTitle>{{
+                            t('Issue a new ping URL?')
+                        }}</DialogTitle>
                         <DialogDescription>
-                            The current URL stops working immediately. Update
-                            every job that pings it.
+                            {{
+                                t(
+                                    'The current URL stops working immediately. Update every job that pings it.',
+                                )
+                            }}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter class="gap-2">
                         <DialogClose as-child>
-                            <Button variant="secondary">Cancel</Button>
+                            <Button variant="secondary">{{
+                                t('Cancel')
+                            }}</Button>
                         </DialogClose>
                         <Button
                             type="submit"
                             :disabled="processing"
                             data-test="confirm-regenerate-ping-url"
                         >
-                            Issue new URL
+                            {{ t('Issue new URL') }}
                         </Button>
                     </DialogFooter>
                 </Form>

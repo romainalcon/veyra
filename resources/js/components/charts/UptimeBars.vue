@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { formatUptime, uptimeTone } from '@/lib/analytics';
+import { useTranslations } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { UptimeDay } from '@/types';
 
@@ -14,8 +15,16 @@ const toneClass: Record<ReturnType<typeof uptimeTone>, string> = {
     bad: 'bg-red-500',
 };
 
+const { t, tc } = useTranslations();
+
 const describe = (day: Day) =>
-    `${day.day}: ${formatUptime(day.uptime)}${day.uptime !== null && day.coverage !== null && day.coverage < 0.9 ? ` (partial data, ${Math.round(day.coverage * 100)}% of expected checks)` : ''}`;
+    day.uptime !== null && day.coverage !== null && day.coverage < 0.9
+        ? t(':day: :uptime (partial data, :percent% of expected checks)', {
+              day: day.day,
+              uptime: formatUptime(day.uptime),
+              percent: Math.round(day.coverage * 100),
+          })
+        : `${day.day}: ${formatUptime(day.uptime)}`;
 </script>
 
 <template>
@@ -23,7 +32,11 @@ const describe = (day: Day) =>
         <div
             class="flex h-8 items-stretch gap-px"
             role="img"
-            :aria-label="`Daily uptime over the last ${days.length} days`"
+            :aria-label="
+                t('Daily uptime over the last :count days', {
+                    count: days.length,
+                })
+            "
             data-test="uptime-bars"
         >
             <div
@@ -44,8 +57,8 @@ const describe = (day: Day) =>
             />
         </div>
         <div class="flex justify-between text-xs text-muted-foreground">
-            <span>{{ days.length }} days ago</span>
-            <span>Today</span>
+            <span>{{ tc(':count day ago|:count days ago', days.length) }}</span>
+            <span>{{ t('Today') }}</span>
         </div>
     </div>
 </template>

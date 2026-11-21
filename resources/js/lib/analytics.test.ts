@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { coverageNote, formatUptime, uptimeTone } from '@/lib/analytics';
+import { setLocale } from '@/lib/i18n';
 
 describe('formatUptime', () => {
     it('never shows missing data as a percentage', () => {
@@ -48,5 +49,16 @@ describe('coverageNote', () => {
                 checks: 10,
             }),
         ).toBeNull();
+    });
+});
+
+describe('formatUptime in French', () => {
+    afterEach(() => setLocale('en'));
+
+    it('uses the French decimal separator and spacing', () => {
+        setLocale('fr');
+
+        expect(formatUptime(99.95)).toMatch(/^99,95\s%$/);
+        expect(formatUptime(null)).toBe('Aucune donnée');
     });
 });

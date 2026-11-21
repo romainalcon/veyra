@@ -8,6 +8,9 @@ import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { formatDateTime, formatElapsed } from '@/lib/monitoring';
 import { index, show } from '@/routes/organizations/incidents';
 import type { CurrentOrganization, IncidentSummary, Paginated } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 defineProps<{
     incidents: Paginated<IncidentSummary>;
@@ -20,9 +23,9 @@ const organization = computed(
 );
 
 const filters = [
-    { value: 'all', label: 'All' },
-    { value: 'open', label: 'Open' },
-    { value: 'resolved', label: 'Resolved' },
+    { value: 'all', label: t('All') },
+    { value: 'open', label: t('Open') },
+    { value: 'resolved', label: t('Resolved') },
 ] as const;
 
 const paginationLabel = (label: string) =>
@@ -33,23 +36,30 @@ useOrganizationRealtime(organization.value.id, {
 });
 
 setLayoutProps({
-    breadcrumbs: [{ title: 'Incidents', href: index(organization.value.slug) }],
+    breadcrumbs: [
+        { title: t('Incidents'), href: index(organization.value.slug) },
+    ],
 });
 </script>
 
 <template>
-    <Head title="Incidents" />
+    <Head :title="t('Incidents')" />
 
     <div class="flex flex-1 flex-col gap-4 p-4">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <h1 class="text-xl font-semibold tracking-tight">Incidents</h1>
+                <h1 class="text-xl font-semibold tracking-tight">
+                    {{ t('Incidents') }}
+                </h1>
                 <p class="text-sm text-muted-foreground">
-                    Opened after 3 consecutive failed checks, resolved after 2
-                    successes.
+                    {{
+                        t(
+                            'Opened after 3 consecutive failed checks, resolved after 2 successes.',
+                        )
+                    }}
                 </p>
             </div>
-            <nav class="flex gap-1" aria-label="Filter incidents">
+            <nav class="flex gap-1" :aria-label="t('Filter incidents')">
                 <Button
                     v-for="option in filters"
                     :key="option.value"
@@ -76,9 +86,9 @@ setLayoutProps({
             data-test="incidents-empty-state"
         >
             <CheckCircle2 class="mb-3 size-8 text-emerald-600" />
-            <h2 class="text-lg font-semibold">No incidents</h2>
+            <h2 class="text-lg font-semibold">{{ t('No incidents') }}</h2>
             <p class="mt-1 text-sm text-muted-foreground">
-                Nothing to report for this filter.
+                {{ t('Nothing to report for this filter.') }}
             </p>
         </div>
 
@@ -103,12 +113,12 @@ setLayoutProps({
                             >
                                 {{
                                     incident.status === 'open'
-                                        ? 'Open'
-                                        : 'Resolved'
+                                        ? t('Open')
+                                        : t('Resolved')
                                 }}
                             </Badge>
                             <span class="truncate">{{
-                                incident.monitor?.name ?? 'Deleted monitor'
+                                incident.monitor?.name ?? t('Deleted monitor')
                             }}</span>
                         </p>
                         <p class="truncate text-sm text-muted-foreground">
@@ -122,8 +132,10 @@ setLayoutProps({
                         <span>{{
                             formatElapsed(incident.duration_seconds)
                         }}</span>
-                        <Badge v-if="incident.acknowledged_at" variant="outline"
-                            >Acknowledged</Badge
+                        <Badge
+                            v-if="incident.acknowledged_at"
+                            variant="outline"
+                            >{{ t('Acknowledged') }}</Badge
                         >
                     </div>
                 </Link>
@@ -133,7 +145,7 @@ setLayoutProps({
         <nav
             v-if="incidents.last_page > 1"
             class="flex flex-wrap gap-1"
-            aria-label="Pagination"
+            :aria-label="t('Pagination')"
         >
             <template v-for="link in incidents.links" :key="link.label">
                 <Button

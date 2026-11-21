@@ -18,7 +18,7 @@ enum IncidentEventType: string
 
     public function label(): string
     {
-        return match ($this) {
+        return (string) __(match ($this) {
             self::Opened => 'Incident opened',
             self::Acknowledged => 'Acknowledged',
             self::Note => 'Note',
@@ -29,7 +29,7 @@ enum IncidentEventType: string
             self::MaintenanceEnded => 'Planned maintenance ended',
             self::Resolved => 'Resolved',
             self::MonitorDeleted => 'Monitor deleted',
-        };
+        });
     }
 
     /**

@@ -117,7 +117,7 @@ final class MonitorPresenter
             'duration_ms' => $check->duration_ms,
             'status_code' => $check->status_code,
             'error_code' => $check->error_code?->value,
-            'error_label' => $check->error_code?->label(),
+            'error_label' => $check->error_code === null ? null : (string) __($check->error_code->label()),
             'redirects' => (int) ($check->metadata['redirects'] ?? 0),
             'in_maintenance' => $check->in_maintenance,
         ];

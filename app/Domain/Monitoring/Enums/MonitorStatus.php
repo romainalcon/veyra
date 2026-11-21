@@ -18,12 +18,12 @@ enum MonitorStatus: string
 
     public function label(): string
     {
-        return match ($this) {
+        return (string) __(match ($this) {
             self::Up => 'Up',
             self::Degraded => 'Degraded',
             self::Down => 'Down',
             self::Unknown => 'Unknown',
             self::Maintenance => 'Maintenance',
-        };
+        });
     }
 }

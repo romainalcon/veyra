@@ -15,9 +15,9 @@ enum NotificationEvent: string
     /** TLS certificate of an HTTPS monitor expired (no incident). */
     case CertificateExpired = 'certificate_expired';
 
-    public function headline(): string
+    public function headline(?string $locale = null): string
     {
-        return match ($this) {
+        return (string) __(match ($this) {
             self::Opened => 'DOWN',
             self::Resolved => 'RESOLVED',
             self::Acknowledged => 'ACKNOWLEDGED',
@@ -25,7 +25,7 @@ enum NotificationEvent: string
             self::Test => 'TEST',
             self::CertificateExpiring => 'CERTIFICATE EXPIRES SOON',
             self::CertificateExpired => 'CERTIFICATE EXPIRED',
-        };
+        }, [], $locale);
     }
 
     /**

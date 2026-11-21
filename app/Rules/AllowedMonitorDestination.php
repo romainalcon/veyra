@@ -18,7 +18,7 @@ class AllowedMonitorDestination implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! is_string($value)) {
-            $fail('The URL must be a string.');
+            $fail(__('The URL must be a string.'));
 
             return;
         }
@@ -26,7 +26,7 @@ class AllowedMonitorDestination implements ValidationRule
         try {
             $this->guard->inspect($value);
         } catch (DestinationRejected $exception) {
-            $fail($exception->getMessage());
+            $fail($exception->translatedMessage());
         }
     }
 }

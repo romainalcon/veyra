@@ -56,7 +56,7 @@ class UrlPolicy
         $port = isset($parts['port']) ? (int) $parts['port'] : ($scheme === 'https' ? 443 : 80);
 
         if (! in_array($port, $this->allowedPorts, true)) {
-            throw new DestinationRejected(ProbeErrorCode::ForbiddenDestination, "Port {$port} is not allowed on this instance.");
+            throw new DestinationRejected(ProbeErrorCode::ForbiddenDestination, 'Port :port is not allowed on this instance.', ['port' => $port]);
         }
 
         return new ParsedUrl($url, $scheme, $host, $port, $hostIsIp);

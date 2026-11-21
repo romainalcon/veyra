@@ -17,6 +17,24 @@ enum ProbeErrorCode: string
     case HeartbeatFailed = 'heartbeat_failed';
     case HeartbeatMissed = 'heartbeat_missed';
 
+    /**
+     * Translates a stored incident cause ("Timed out", "Unexpected status
+     * code (503)"). Causes are persisted in English, the source language, and
+     * translated only when shown; unknown text is returned unchanged.
+     */
+    public static function translateCause(?string $cause, ?string $locale = null): ?string
+    {
+        if ($cause === null || preg_match('/^(.*?)( \(\d{3}\))?$/', $cause, $matches) !== 1) {
+            return $cause;
+        }
+
+        return ((string) __($matches[1], [], $locale)).($matches[2] ?? '');
+    }
+
+    /**
+     * English label, also persisted as the incident cause: translate it with
+     * __() or translateCause() when displaying it.
+     */
     public function label(): string
     {
         return match ($this) {

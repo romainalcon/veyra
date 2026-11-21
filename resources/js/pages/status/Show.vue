@@ -4,11 +4,14 @@ import { computed } from 'vue';
 import UptimeBars from '@/components/charts/UptimeBars.vue';
 import PublicStatusLabel from '@/components/status-pages/PublicStatusLabel.vue';
 import { formatUptime } from '@/lib/analytics';
+import { useTranslations } from '@/lib/i18n';
 import { formatDateTime } from '@/lib/monitoring';
 import { publicStatusStyle } from '@/lib/statusPage';
 import type { StatusPageSnapshot } from '@/types';
 
 const props = defineProps<{ snapshot: StatusPageSnapshot }>();
+
+const { t } = useTranslations();
 
 /*
  * Public pages never use the WebSocket: they poll the cached snapshot.
@@ -61,7 +64,7 @@ const updateLabel = {
             :data-status="snapshot.status"
             data-test="overall-status"
         >
-            {{ overall.headline }}
+            {{ t(overall.headline) }}
         </div>
 
         <section
@@ -74,7 +77,7 @@ const updateLabel = {
             <ol class="space-y-2 text-sm">
                 <li v-for="update in incident.updates" :key="update.key">
                     <span class="font-medium">{{
-                        updateLabel[update.type]
+                        t(updateLabel[update.type])
                     }}</span>
                     <span class="text-muted-foreground">
                         · {{ formatDateTime(update.at) }}</span
@@ -97,7 +100,8 @@ const updateLabel = {
         >
             <h2 class="font-medium">{{ window.title }}</h2>
             <p class="text-muted-foreground">
-                Until {{ formatDateTime(window.ends_at) }} ·
+                {{ t('Until :date', { date: formatDateTime(window.ends_at) }) }}
+                ·
                 {{ window.components.join(', ') }}
             </p>
             <p
@@ -129,8 +133,11 @@ const updateLabel = {
                         <span
                             v-if="snapshot.page.show_uptime"
                             class="text-sm text-muted-foreground"
-                            >{{ formatUptime(component.uptime_90d) }} · 90
-                            days</span
+                            >{{
+                                t(':uptime · 90 days', {
+                                    uptime: formatUptime(component.uptime_90d),
+                                })
+                            }}</span
                         >
                         <PublicStatusLabel :status="component.status" />
                     </div>
@@ -148,11 +155,13 @@ const updateLabel = {
             v-if="snapshot.groups.length === 0"
             class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
         >
-            No components are listed on this page yet.
+            {{ t('No components are listed on this page yet.') }}
         </p>
 
         <section v-if="plannedMaintenance.length" class="space-y-3">
-            <h2 class="text-base font-medium">Planned maintenance</h2>
+            <h2 class="text-base font-medium">
+                {{ t('Planned maintenance') }}
+            </h2>
             <ul class="divide-y rounded-lg border text-sm">
                 <li
                     v-for="window in plannedMaintenance"
@@ -176,12 +185,14 @@ const updateLabel = {
         </section>
 
         <section class="space-y-3">
-            <h2 class="text-base font-medium">Past incidents (14 days)</h2>
+            <h2 class="text-base font-medium">
+                {{ t('Past incidents (14 days)') }}
+            </h2>
             <p
                 v-if="pastIncidents.length === 0"
                 class="text-sm text-muted-foreground"
             >
-                No incidents reported.
+                {{ t('No incidents reported.') }}
             </p>
             <ul v-else class="divide-y rounded-lg border text-sm">
                 <li
@@ -208,8 +219,11 @@ const updateLabel = {
         </section>
 
         <p class="text-xs text-muted-foreground">
-            Updated {{ formatDateTime(snapshot.generated_at) }}. This page
-            refreshes automatically.
+            {{
+                t('Updated :date. This page refreshes automatically.', {
+                    date: formatDateTime(snapshot.generated_at),
+                })
+            }}
         </p>
     </div>
 </template>

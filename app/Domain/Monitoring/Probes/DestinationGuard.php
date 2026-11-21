@@ -38,7 +38,7 @@ class DestinationGuard
         ['host' => $host, 'isIp' => $hostIsIp] = HostPolicy::fromSettings($this->settings)->normalize($host);
 
         if (! in_array($port, $this->settings->tcpAllowedPorts, true)) {
-            throw new DestinationRejected(ProbeErrorCode::ForbiddenDestination, "Port {$port} is not allowed for TCP monitors on this instance.");
+            throw new DestinationRejected(ProbeErrorCode::ForbiddenDestination, 'Port :port is not allowed for TCP monitors on this instance.', ['port' => $port]);
         }
 
         return new Endpoint($host, $port, $hostIsIp, $this->resolveAllowed($host, $hostIsIp));

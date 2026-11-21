@@ -11,6 +11,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAppearance } from '@/composables/useAppearance';
 import type { Appearance } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
@@ -37,7 +40,7 @@ const select = (value: unknown) => {
             <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Change theme"
+                :aria-label="t('Change theme')"
                 data-test="appearance-toggle"
             >
                 <component :is="triggerIcon" class="size-4" />
@@ -55,7 +58,7 @@ const select = (value: unknown) => {
                     class="gap-2"
                 >
                     <component :is="option.icon" class="size-4" />
-                    {{ option.label }}
+                    {{ t(option.label) }}
                 </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
         </DropdownMenuContent>

@@ -112,7 +112,7 @@ class Monitor extends Model
         return match ($this->type) {
             MonitorType::Http => $this->httpConfig === null ? null : "{$this->httpConfig->method->value} {$this->httpConfig->url}",
             MonitorType::Tcp => $this->tcpConfig?->target(),
-            MonitorType::Heartbeat => 'Heartbeat every '.(HeartbeatPeriod::tryFrom($this->interval_seconds)?->label() ?? "{$this->interval_seconds} s"),
+            MonitorType::Heartbeat => (string) __('Heartbeat every :period', ['period' => HeartbeatPeriod::tryFrom($this->interval_seconds)?->label() ?? "{$this->interval_seconds} s"]),
         };
     }
 

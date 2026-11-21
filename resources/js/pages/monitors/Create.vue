@@ -5,6 +5,9 @@ import Heading from '@/components/Heading.vue';
 import MonitorForm from '@/components/monitors/MonitorForm.vue';
 import { create, index, store } from '@/routes/organizations/monitors';
 import type { CurrentOrganization, MonitorFormOptions } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 defineProps<MonitorFormOptions>();
 
@@ -15,19 +18,23 @@ const organization = computed(
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Monitors', href: index(organization.value.slug) },
-        { title: 'New monitor', href: create(organization.value.slug) },
+        { title: t('Monitors'), href: index(organization.value.slug) },
+        { title: t('New monitor'), href: create(organization.value.slug) },
     ],
 });
 </script>
 
 <template>
-    <Head title="New monitor" />
+    <Head :title="t('New monitor')" />
 
     <div class="mx-auto w-full max-w-3xl px-4 py-6">
         <Heading
-            title="New monitor"
-            description="Veyra checks HTTP endpoints and TCP ports from its own workers, or waits for pings from your scheduled jobs."
+            :title="t('New monitor')"
+            :description="
+                t(
+                    'Veyra checks HTTP endpoints and TCP ports from its own workers, or waits for pings from your scheduled jobs.',
+                )
+            "
         />
         <MonitorForm
             :channels="channels"
@@ -38,7 +45,7 @@ setLayoutProps({
             :heartbeat-periods="heartbeatPeriods"
             :max-grace-minutes="maxGraceMinutes"
             :action="store.form(organization.slug)"
-            submit-label="Create monitor"
+            :submit-label="t('Create monitor')"
         />
     </div>
 </template>

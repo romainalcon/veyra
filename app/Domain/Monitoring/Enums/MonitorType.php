@@ -15,10 +15,10 @@ enum MonitorType: string
 
     public function label(): string
     {
-        return match ($this) {
+        return (string) __(match ($this) {
             self::Http => 'HTTP(S)',
             self::Tcp => 'TCP port',
             self::Heartbeat => 'Heartbeat',
-        };
+        });
     }
 }

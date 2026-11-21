@@ -1,3 +1,5 @@
+import { currentLocale, t } from '@/lib/i18n';
+
 /**
  * Client-side mirror of App\Domain\Monitoring\DTOs\ExpectedStatuses::parse.
  * Used for instant feedback only; the server remains authoritative.
@@ -49,7 +51,7 @@ export function formatInterval(seconds: number): string {
 }
 
 export function formatDateTime(iso: string | null): string {
-    return iso ? new Date(iso).toLocaleString() : '—';
+    return iso ? new Date(iso).toLocaleString(currentLocale()) : '—';
 }
 
 export function formatElapsed(seconds: number): string {
@@ -67,5 +69,27 @@ export function formatElapsed(seconds: number): string {
 
     return hours < 24
         ? `${hours}h ${minutes % 60}m`
-        : `${Math.floor(hours / 24)}d ${hours % 24}h`;
+        : t(':daysd :hoursh', {
+              days: Math.floor(hours / 24),
+              hours: hours % 24,
+          });
+}
+
+const notificationEventLabels: Record<string, string> = {
+    opened: 'Down',
+    resolved: 'Resolved',
+    acknowledged: 'Acknowledged',
+    reminder: 'Still down',
+    test: 'Test',
+    certificate_expiring: 'Certificate expires soon',
+    certificate_expired: 'Certificate expired',
+};
+
+/**
+ * Label of a notification delivery event (`opened`, `certificate_expiring`…).
+ */
+export function notificationEventLabel(event: string): string {
+    const label = notificationEventLabels[event];
+
+    return label ? t(label) : event;
 }

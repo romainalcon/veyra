@@ -2,8 +2,10 @@
 
 namespace App\Http\Presenters;
 
+use App\Domain\Incidents\Enums\IncidentEventType;
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Incidents\Models\IncidentEvent;
+use App\Domain\Monitoring\Enums\ProbeErrorCode;
 
 final class IncidentPresenter
 {
@@ -17,7 +19,7 @@ final class IncidentPresenter
         return [
             'id' => $incident->id,
             'status' => $incident->status->value,
-            'cause' => $incident->cause,
+            'cause' => ProbeErrorCode::translateCause($incident->cause),
             'started_at' => $incident->started_at->toIso8601String(),
             'resolved_at' => $incident->resolved_at?->toIso8601String(),
             'acknowledged_at' => $incident->acknowledged_at?->toIso8601String(),
@@ -45,7 +47,8 @@ final class IncidentPresenter
                     'id' => $event->id,
                     'type' => $event->type->value,
                     'label' => $event->type->label(),
-                    'message' => $event->message,
+                    // The opening event carries the stored (English) cause.
+                    'message' => $event->type === IncidentEventType::Opened ? ProbeErrorCode::translateCause($event->message) : $event->message,
                     'user' => $event->user?->name,
                     'created_at' => $event->created_at->toIso8601String(),
                 ])

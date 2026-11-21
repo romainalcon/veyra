@@ -5,6 +5,7 @@ namespace App\Http\Requests\Monitors;
 use App\Domain\Monitoring\DTOs\ExpectedStatuses;
 use App\Domain\Monitoring\DTOs\HeartbeatTargetData;
 use App\Domain\Monitoring\DTOs\HttpTargetData;
+use App\Domain\Monitoring\DTOs\InvalidExpectedStatuses;
 use App\Domain\Monitoring\DTOs\MonitorData;
 use App\Domain\Monitoring\DTOs\TcpTargetData;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
@@ -22,7 +23,6 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
-use InvalidArgumentException;
 
 /**
  * Validates monitor creation and updates. Authorization (MonitorPolicy) runs
@@ -138,7 +138,7 @@ class SaveMonitorRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 if ($this->monitorType() !== MonitorType::Heartbeat && (int) $this->input('timeout') >= (int) $this->input('interval')) {
-                    $validator->errors()->add('timeout', 'The timeout must be shorter than the interval.');
+                    $validator->errors()->add('timeout', __('The timeout must be shorter than the interval.'));
                 }
 
                 match ($this->monitorType()) {
@@ -163,7 +163,7 @@ class SaveMonitorRequest extends FormRequest
         try {
             app(DestinationGuard::class)->inspectEndpoint((string) $this->input('host'), (int) $this->input('port'));
         } catch (DestinationRejected $exception) {
-            $validator->errors()->add('host', $exception->getMessage());
+            $validator->errors()->add('host', $exception->translatedMessage());
         }
     }
 
@@ -171,8 +171,8 @@ class SaveMonitorRequest extends FormRequest
     {
         try {
             ExpectedStatuses::parse((string) $this->input('expected_statuses'));
-        } catch (InvalidArgumentException $exception) {
-            $validator->errors()->add('expected_statuses', $exception->getMessage());
+        } catch (InvalidExpectedStatuses $exception) {
+            $validator->errors()->add('expected_statuses', $exception->translatedMessage());
         }
 
         $seen = [];
@@ -185,7 +185,7 @@ class SaveMonitorRequest extends FormRequest
             }
 
             if (isset($seen[$name])) {
-                $validator->errors()->add("headers.{$index}.name", 'Each header may only be set once.');
+                $validator->errors()->add("headers.{$index}.name", __('Each header may only be set once.'));
             }
 
             $seen[$name] = true;
@@ -209,7 +209,7 @@ class SaveMonitorRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'port.in' => 'This port is not allowed for TCP monitors on this instance.',
+            'port.in' => __('This port is not allowed for TCP monitors on this instance.'),
         ];
     }
 

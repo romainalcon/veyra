@@ -14,6 +14,9 @@ import type {
     StatusPageFormOptions,
 } from '@/types';
 import type { RouteFormDefinition } from '@/wayfinder';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<
     StatusPageFormOptions & {
@@ -56,7 +59,7 @@ const onTitleInput = () => {
 };
 
 const monitorName = (id: string) =>
-    props.monitors.find((monitor) => monitor.id === id)?.name ?? 'Unknown';
+    props.monitors.find((monitor) => monitor.id === id)?.name ?? t('Unknown');
 
 const availableMonitors = computed(() =>
     props.monitors
@@ -105,20 +108,20 @@ const remove = (index: number) => components.value.splice(index, 1);
     >
         <div class="grid gap-4 sm:grid-cols-2">
             <div class="grid gap-2">
-                <Label for="title">Title</Label>
+                <Label for="title">{{ t('Title') }}</Label>
                 <Input
                     id="title"
                     v-model="title"
                     name="title"
                     required
                     maxlength="120"
-                    placeholder="Acme status"
+                    :placeholder="t('Acme status')"
                     @input="onTitleInput"
                 />
                 <InputError :message="errors.title" />
             </div>
             <div class="grid gap-2">
-                <Label for="slug">Public address</Label>
+                <Label for="slug">{{ t('Public address') }}</Label>
                 <div class="flex items-center gap-1 text-sm">
                     <span class="text-muted-foreground">/status/</span>
                     <Input
@@ -138,7 +141,7 @@ const remove = (index: number) => components.value.splice(index, 1);
         </div>
 
         <div class="grid gap-2">
-            <Label for="description">Description (optional)</Label>
+            <Label for="description">{{ t('Description (optional)') }}</Label>
             <textarea
                 id="description"
                 name="description"
@@ -161,7 +164,9 @@ const remove = (index: number) => components.value.splice(index, 1);
                     class="size-4 accent-primary"
                     data-test="publish-checkbox"
                 />
-                <span>Published (anyone with the link can view it)</span>
+                <span>{{
+                    t('Published (anyone with the link can view it)')
+                }}</span>
             </label>
             <label class="flex items-center gap-3 text-sm">
                 <input type="hidden" name="show_uptime" value="0" />
@@ -172,15 +177,18 @@ const remove = (index: number) => components.value.splice(index, 1);
                     value="1"
                     class="size-4 accent-primary"
                 />
-                <span>Show 90-day uptime</span>
+                <span>{{ t('Show 90-day uptime') }}</span>
             </label>
         </div>
 
         <fieldset class="space-y-3">
-            <legend class="text-sm font-medium">Components</legend>
+            <legend class="text-sm font-medium">{{ t('Components') }}</legend>
             <p class="text-xs text-muted-foreground">
-                Each component shows one monitor under a public name. Monitor
-                names, URLs and incident causes are never published.
+                {{
+                    t(
+                        'Each component shows one monitor under a public name. Monitor names, URLs and incident causes are never published.',
+                    )
+                }}
             </p>
 
             <ul
@@ -202,8 +210,11 @@ const remove = (index: number) => components.value.splice(index, 1);
                         <Label
                             :for="`component-name-${index}`"
                             class="text-xs text-muted-foreground"
-                            >Public name ·
-                            {{ monitorName(component.monitor_id) }}</Label
+                            >{{
+                                t('Public name · :monitor', {
+                                    monitor: monitorName(component.monitor_id),
+                                })
+                            }}</Label
                         >
                         <Input
                             :id="`component-name-${index}`"
@@ -223,14 +234,14 @@ const remove = (index: number) => components.value.splice(index, 1);
                         <Label
                             :for="`component-group-${index}`"
                             class="text-xs text-muted-foreground"
-                            >Group (optional)</Label
+                            >{{ t('Group (optional)') }}</Label
                         >
                         <Input
                             :id="`component-group-${index}`"
                             v-model="component.group_name"
                             :name="`components[${index}][group_name]`"
                             maxlength="100"
-                            placeholder="Core services"
+                            :placeholder="t('Core services')"
                         />
                     </div>
                     <div class="flex gap-1 sm:pt-5">
@@ -239,7 +250,7 @@ const remove = (index: number) => components.value.splice(index, 1);
                             variant="ghost"
                             size="icon"
                             :disabled="index === 0"
-                            aria-label="Move up"
+                            :aria-label="t('Move up')"
                             @click="move(index, -1)"
                         >
                             <ArrowUp class="size-4" />
@@ -249,7 +260,7 @@ const remove = (index: number) => components.value.splice(index, 1);
                             variant="ghost"
                             size="icon"
                             :disabled="index === components.length - 1"
-                            aria-label="Move down"
+                            :aria-label="t('Move down')"
                             @click="move(index, 1)"
                         >
                             <ArrowDown class="size-4" />
@@ -258,7 +269,7 @@ const remove = (index: number) => components.value.splice(index, 1);
                             type="button"
                             variant="ghost"
                             size="icon"
-                            aria-label="Remove"
+                            :aria-label="t('Remove')"
                             @click="remove(index)"
                         >
                             <X class="size-4" />
@@ -270,7 +281,7 @@ const remove = (index: number) => components.value.splice(index, 1);
                 v-else
                 class="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground"
             >
-                No components yet.
+                {{ t('No components yet.') }}
             </p>
 
             <div
@@ -284,10 +295,10 @@ const remove = (index: number) => components.value.splice(index, 1);
                     id="monitor-to-add"
                     v-model="monitorToAdd"
                     :options="[
-                        { value: '', label: 'Select a monitor…' },
+                        { value: '', label: t('Select a monitor…') },
                         ...availableMonitors,
                     ]"
-                    aria-label="Monitor to add"
+                    :aria-label="t('Monitor to add')"
                 />
                 <Button
                     type="button"
@@ -297,7 +308,7 @@ const remove = (index: number) => components.value.splice(index, 1);
                     @click="addComponent"
                 >
                     <Plus class="size-4" />
-                    Add
+                    {{ t('Add') }}
                 </Button>
             </div>
             <InputError :message="errors.components" />

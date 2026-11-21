@@ -16,13 +16,23 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
+import { useTranslations } from '@/lib/i18n';
 import { create, dashboard } from '@/routes/organizations';
+import type { OrganizationRole } from '@/types';
 
 const page = usePage();
 const { isMobile } = useSidebar();
+const { t } = useTranslations();
 
 const currentOrganization = computed(() => page.props.currentOrganization);
 const organizations = computed(() => page.props.organizations ?? []);
+
+const roleLabels: Record<OrganizationRole, string> = {
+    owner: 'Owner',
+    admin: 'Admin',
+    member: 'Member',
+    viewer: 'Viewer',
+};
 </script>
 
 <template>
@@ -46,14 +56,14 @@ const organizations = computed(() => page.props.organizations ?? []);
                             <span class="truncate font-semibold">
                                 {{
                                     currentOrganization?.name ??
-                                    'Select organization'
+                                    t('Select organization')
                                 }}
                             </span>
                             <span
                                 v-if="currentOrganization"
-                                class="truncate text-xs text-muted-foreground capitalize"
+                                class="truncate text-xs text-muted-foreground"
                             >
-                                {{ currentOrganization.role }}
+                                {{ t(roleLabels[currentOrganization.role]) }}
                             </span>
                         </div>
                         <ChevronsUpDown class="ml-auto size-4" />
@@ -67,7 +77,7 @@ const organizations = computed(() => page.props.organizations ?? []);
                     :side-offset="4"
                 >
                     <DropdownMenuLabel class="text-xs text-muted-foreground">
-                        Organizations
+                        {{ t('Organizations') }}
                     </DropdownMenuLabel>
                     <DropdownMenuItem
                         v-for="organization in organizations"
@@ -97,9 +107,9 @@ const organizations = computed(() => page.props.organizations ?? []);
                             class="flex w-full cursor-pointer items-center gap-2 p-2"
                         >
                             <Plus class="size-4" />
-                            <span class="text-muted-foreground"
-                                >New organization</span
-                            >
+                            <span class="text-muted-foreground">{{
+                                t('New organization')
+                            }}</span>
                         </Link>
                     </DropdownMenuItem>
                 </DropdownMenuContent>

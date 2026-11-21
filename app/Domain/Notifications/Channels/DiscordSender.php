@@ -54,13 +54,13 @@ class DiscordSender implements ChannelSender
     public function payload(NotificationMessage $message): array
     {
         $fields = array_values(array_filter([
-            ['name' => 'Monitor', 'value' => $message->monitorName, 'inline' => true],
-            $message->cause ? ['name' => 'Cause', 'value' => mb_substr($message->cause, 0, 256), 'inline' => true] : null,
+            ['name' => $message->translate('Monitor'), 'value' => $message->monitorName, 'inline' => true],
+            $message->cause ? ['name' => $message->translate('Cause'), 'value' => mb_substr($message->cause, 0, 256), 'inline' => true] : null,
             $message->durationSeconds !== null && ! in_array($message->event, [NotificationEvent::Test, NotificationEvent::CertificateExpiring, NotificationEvent::CertificateExpired], true)
-                ? ['name' => 'Duration', 'value' => NotificationMessage::humanDuration($message->durationSeconds), 'inline' => true]
+                ? ['name' => $message->translate('Duration'), 'value' => NotificationMessage::humanDuration($message->durationSeconds, $message->locale), 'inline' => true]
                 : null,
-            $message->certificateExpiresAt ? ['name' => 'Expires', 'value' => $message->certificateExpiresAt.' UTC', 'inline' => true] : null,
-            $message->certificateIssuer ? ['name' => 'Issuer', 'value' => mb_substr($message->certificateIssuer, 0, 256), 'inline' => true] : null,
+            $message->certificateExpiresAt ? ['name' => $message->translate('Expires'), 'value' => $message->certificateExpiresAt.' UTC', 'inline' => true] : null,
+            $message->certificateIssuer ? ['name' => $message->translate('Issuer'), 'value' => mb_substr($message->certificateIssuer, 0, 256), 'inline' => true] : null,
         ]));
 
         return [
