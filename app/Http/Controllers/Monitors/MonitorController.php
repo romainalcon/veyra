@@ -74,7 +74,7 @@ class MonitorController extends Controller
     {
         Gate::authorize('view', [$monitor, $organization]);
 
-        $monitor->load(['httpConfig', 'tcpConfig', 'heartbeatConfig', 'latestCheck', 'state']);
+        $monitor->load(['httpConfig', 'tcpConfig', 'heartbeatConfig', 'tlsCertificate', 'latestCheck', 'state']);
 
         $checks = $monitor->checks()
             ->orderByDesc('checked_at')
@@ -125,7 +125,7 @@ class MonitorController extends Controller
     {
         Gate::authorize('update', [$monitor, $organization]);
 
-        $monitor->load(['httpConfig', 'tcpConfig', 'heartbeatConfig']);
+        $monitor->load(['httpConfig', 'tcpConfig', 'heartbeatConfig', 'tlsCertificate']);
 
         return Inertia::render('monitors/Edit', [
             ...MonitorPresenter::formOptions($organization),

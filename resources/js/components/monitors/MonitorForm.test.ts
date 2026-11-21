@@ -41,6 +41,7 @@ const tcpMonitor: MonitorDetail = {
     host: 'db.example.com',
     port: 22,
     heartbeat: null,
+    certificate: null,
     notification_channel_ids: [],
     next_check_at: null,
     created_at: null,

@@ -33,6 +33,27 @@ const pingUrl = computed(
 const heartbeat = computed(() => props.monitor.heartbeat);
 const copied = ref(false);
 
+/** Examples use the real URL only while it is shown, a placeholder otherwise. */
+const exampleUrl = computed(
+    () =>
+        pingUrl.value ??
+        `${heartbeat.value?.ping_url_prefix ?? ''}<your-ping-token>`,
+);
+const examples = computed(() => [
+    {
+        label: 'Ping on success',
+        code: `curl -fsS -m 10 --retry 3 -o /dev/null ${exampleUrl.value}`,
+    },
+    {
+        label: 'Report a failure',
+        code: `curl -fsS -m 10 --retry 3 -o /dev/null ${exampleUrl.value}/fail`,
+    },
+    {
+        label: 'Cron job (pings only when the job succeeds)',
+        code: `0 * * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 -o /dev/null ${exampleUrl.value}`,
+    },
+]);
+
 const copy = async () => {
     if (!pingUrl.value) {
         return;
@@ -96,6 +117,20 @@ const copy = async () => {
             >
             — the secret part is only shown when the URL is issued.
         </p>
+
+        <details class="text-sm" data-test="ping-examples">
+            <summary class="cursor-pointer font-medium">Examples</summary>
+            <div class="mt-3 space-y-3">
+                <div v-for="example in examples" :key="example.label">
+                    <p class="text-xs text-muted-foreground">
+                        {{ example.label }}
+                    </p>
+                    <pre
+                        class="mt-1 overflow-x-auto rounded-md border bg-muted/40 px-3 py-2 text-xs"
+                    ><code>{{ example.code }}</code></pre>
+                </div>
+            </div>
+        </details>
 
         <Dialog v-if="canUpdate">
             <DialogTrigger as-child>

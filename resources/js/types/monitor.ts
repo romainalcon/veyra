@@ -40,6 +40,19 @@ export type MonitorSummary = {
     state: MonitorState;
 };
 
+export type CertificateStatus = 'valid' | 'expiring' | 'expired';
+
+/** Last TLS certificate seen by an HTTPS monitor (public data only). */
+export type MonitorCertificate = {
+    subject: string | null;
+    issuer: string | null;
+    not_before: string;
+    not_after: string;
+    checked_at: string;
+    days_left: number;
+    status: CertificateStatus;
+};
+
 export type MonitorDetail = MonitorSummary & {
     timeout_seconds: number;
     expected_statuses: string | null;
@@ -53,6 +66,7 @@ export type MonitorDetail = MonitorSummary & {
         last_ping_failed: boolean;
         ping_url_prefix: string;
     } | null;
+    certificate: MonitorCertificate | null;
     notification_channel_ids: string[];
     next_check_at: string | null;
     created_at: string | null;

@@ -45,7 +45,7 @@
 - [x] Heartbeat monitors: secret per-monitor ping URL (`/ping/{token}`, GET/POST/HEAD, sessionless, rate-limited, token hashed at rest and regenerable), period + grace, optional `/fail` signal (ADR-025).
 - [x] Heartbeat deadline evaluation through the outbox: a missed ping is recorded only when the evaluation runs on time and the scheduler was alive for the whole window; otherwise no check is written (UNKNOWN, never DOWN).
 - [x] TLS certificate expiry for HTTPS monitors: certificate `notAfter`/issuer captured by the probe, warnings at 14/7/1 days and on expiry, sent to the monitor's channels once per certificate and threshold (deliveries no longer tied only to incidents) (ADR-026).
-- [ ] UI: type picker on creation, type-specific forms and detail pages (ping URL with copy/regenerate and curl/cron examples, last ping, certificate panel); status pages and analytics work unchanged for every type.
+- [x] UI: type picker on creation, type-specific forms and detail pages (ping URL with copy/regenerate and curl/cron examples, last ping, certificate panel); status pages and analytics work unchanged for every type.
 - [ ] Docs: MONITORING, DATABASE, SECURITY, DECISIONS, CHANGELOG/UPGRADING for 1.2.
 
 ## Done means

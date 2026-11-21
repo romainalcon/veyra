@@ -2,6 +2,7 @@
 
 namespace App\Http\Presenters;
 
+use App\Domain\Monitoring\Certificates\CheckCertificateExpiry;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorInterval;
@@ -9,10 +10,12 @@ use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
+use App\Domain\Monitoring\Models\MonitorTlsCertificate;
 use App\Domain\Monitoring\Probes\ProbeSettings;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Requests\Monitors\SaveMonitorRequest;
+use Carbon\CarbonImmutable;
 
 /**
  * Explicit, whitelisted Inertia representations. Header values never leave
@@ -67,9 +70,38 @@ final class MonitorPresenter
                 // The token is never stored in plain text: only the URL shape is shown.
                 'ping_url_prefix' => url('ping').'/',
             ],
+            'certificate' => $monitor->type === MonitorType::Http && $monitor->tlsCertificate !== null
+                ? self::certificate($monitor->tlsCertificate)
+                : null,
             'notification_channel_ids' => $monitor->notificationChannels()->pluck('notification_channels.id')->all(),
             'next_check_at' => $monitor->next_check_at?->toIso8601String(),
             'created_at' => $monitor->created_at?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Public facts of the last certificate seen. `status` is `expiring` from
+     * the first warning threshold (ADR-026) and `expired` once `not_after` passed.
+     *
+     * @return array{subject: string|null, issuer: string|null, not_before: string, not_after: string, checked_at: string, days_left: int, status: 'valid'|'expiring'|'expired'}
+     */
+    public static function certificate(MonitorTlsCertificate $certificate, ?CarbonImmutable $now = null): array
+    {
+        $now ??= CarbonImmutable::now();
+        $threshold = CheckCertificateExpiry::thresholdFor($certificate->not_after, $now, CheckCertificateExpiry::thresholds());
+
+        return [
+            'subject' => $certificate->subject,
+            'issuer' => $certificate->issuer,
+            'not_before' => $certificate->not_before->toIso8601String(),
+            'not_after' => $certificate->not_after->toIso8601String(),
+            'checked_at' => $certificate->checked_at->toIso8601String(),
+            'days_left' => (int) floor($now->diffInDays($certificate->not_after, false)),
+            'status' => match (true) {
+                $threshold === 0 => 'expired',
+                $threshold !== null => 'expiring',
+                default => 'valid',
+            },
         ];
     }
 

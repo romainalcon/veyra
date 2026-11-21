@@ -3,6 +3,7 @@ import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Pause, Pencil, Play, RefreshCw, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
+import CertificatePanel from '@/components/monitors/CertificatePanel.vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
 import HeartbeatPanel from '@/components/monitors/HeartbeatPanel.vue';
 import MonitorStatsPanel from '@/components/monitors/MonitorStatsPanel.vue';
@@ -61,6 +62,12 @@ setLayoutProps({
         { title: props.monitor.name, href: show(params.value) },
     ],
 });
+
+const isHttps = computed(
+    () =>
+        props.monitor.type === 'http' &&
+        (props.monitor.url ?? '').toLowerCase().startsWith('https://'),
+);
 
 const isFirstPage = computed(() => props.checks.prev_cursor === null);
 const activeIncident = computed(
@@ -236,6 +243,8 @@ const remove = () => router.visit(destroy(params.value));
             :organization-slug="organization.slug"
             :can-update="can.update"
         />
+
+        <CertificatePanel v-if="isHttps" :certificate="monitor.certificate" />
 
         <Deferred data="stats">
             <template #fallback>
