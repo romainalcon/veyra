@@ -4,6 +4,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-11-21
+
 ### Fixed
 - Docker Compose: removed the shared `storage` volume, whose concurrent first mount by several services could fail (`mkdir …/logs: file exists`); application containers log to stderr.
 - Docker image: `php artisan tinker` failed because PsySH could not write its configuration in the `www-data` home directory.
@@ -29,6 +31,7 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/romainalcon/veyra/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/romainalcon/veyra/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/romainalcon/veyra/releases/tag/v1.0.0
