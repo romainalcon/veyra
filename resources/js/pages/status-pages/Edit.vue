@@ -3,6 +3,7 @@ import { Head, router, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { ExternalLink, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
+import StatusPageDomainSettings from '@/components/status-pages/StatusPageDomainSettings.vue';
 import StatusPageForm from '@/components/status-pages/StatusPageForm.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -79,6 +80,10 @@ const remove = () => router.visit(destroy(params.value));
             :max-components="maxComponents"
             :action="update.form(params)"
             submit-label="Save changes"
+        />
+        <StatusPageDomainSettings
+            :params="params"
+            :domain="statusPage.domain"
         />
     </div>
 </template>

@@ -58,6 +58,7 @@ export type StatusPageSummary = {
     is_published: boolean;
     components_count: number;
     public_url: string;
+    custom_url: string | null;
 };
 
 export type StatusPageComponentInput = {
@@ -66,9 +67,20 @@ export type StatusPageComponentInput = {
     group_name: string | null;
 };
 
+export type StatusPageDomain = {
+    name: string;
+    verified: boolean;
+    verified_at: string | null;
+    checked_at: string | null;
+    failures: number;
+    txt_name: string;
+    txt_value: string;
+};
+
 export type StatusPageDetail = StatusPageSummary & {
     description: string | null;
     show_uptime: boolean;
+    domain: StatusPageDomain | null;
     components: StatusPageComponentInput[];
 };
 
