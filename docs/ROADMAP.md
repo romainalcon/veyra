@@ -56,6 +56,7 @@
 - [x] App shell (navigation, menus, banners, footer) and organization settings translated.
 - [x] Every application page translated (monitors, incidents, maintenance, status page management, notifications, members, authentication, profile), including enum labels, stored incident causes (translated on display) and domain validation errors.
 - [x] Coverage tests: every `t()`/`__()` literal and enum label must exist in `lang/fr.json`, with the same placeholders.
+- [x] Landing page on `/` for guests behind `VEYRA_LANDING_PAGE` (off by default); signed-in users keep the dashboard redirect (ADR-028).
 
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.

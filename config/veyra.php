@@ -61,6 +61,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Landing Page
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, guests visiting "/" see the public Veyra landing page.
+    | Disabled by default so that self-hosted instances send their visitors
+    | straight to the login page (see docs/DECISIONS.md, ADR-028).
+    |
+    */
+
+    'landing_page' => (bool) env('VEYRA_LANDING_PAGE', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Organization Invitations
     |--------------------------------------------------------------------------
     */

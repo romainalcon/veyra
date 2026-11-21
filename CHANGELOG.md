@@ -10,6 +10,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 - E-mail and Discord notifications and member invitations are written in the organization language.
 - Complete French translation of the interface: every page, status and type label, incident cause, validation error, e-mail and notification.
 
+- **Landing page** — with `VEYRA_LANDING_PAGE=true`, guests visiting `/` see a public presentation of Veyra (features, self-hosting quick start), in English or French. Signed-in users still go straight to their dashboard; with the flag off (default), guests are sent to the login page (ADR-028).
+
 ### Changed
 - Dates, percentages and numbers are formatted according to the active language.
 

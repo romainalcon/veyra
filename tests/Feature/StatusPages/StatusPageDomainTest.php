@@ -166,7 +166,8 @@ test('unverified or unpublished domains are not served', function () {
 test('the instance host is never taken over', function () {
     verifiedDomain($this->page);
 
-    $this->get('https://veyra.example.net/')->assertRedirect('/dashboard');
+    // The application answers (guests are sent to the login page), not the status page.
+    $this->get('https://veyra.example.net/')->assertRedirect('/login');
 });
 
 test('removing the domain stops serving it immediately', function () {
