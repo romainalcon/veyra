@@ -107,6 +107,12 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('status-pages', fn (Request $request): Limit => Limit::perMinute(120)->by('status-pages:'.$request->ip()));
 
+        RateLimiter::for('status-pages-create', function (Request $request): Limit {
+            $user = $request->user();
+
+            return Limit::perHour(10)->by('status-pages-create:'.($user instanceof User ? $user->id : (string) $request->ip()));
+        });
+
         RateLimiter::for('notification-tests', function (Request $request): Limit {
             $channel = $request->route('notificationChannel');
 

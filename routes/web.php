@@ -12,6 +12,7 @@ use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
 use App\Http\Controllers\StatusPages\PublicStatusPageController;
+use App\Http\Controllers\StatusPages\StatusPageController;
 use App\Http\Controllers\System\HealthController;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandlePublicInertiaRequests;
@@ -117,6 +118,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('incidents/{incident}/public-updates', [IncidentController::class, 'postPublicUpdate'])
                 ->middleware('throttle:30,1')
                 ->name('incidents.public-updates.store');
+
+            Route::get('status-pages', [StatusPageController::class, 'index'])->name('status-pages.index');
+            Route::get('status-pages/create', [StatusPageController::class, 'create'])->name('status-pages.create');
+            Route::post('status-pages', [StatusPageController::class, 'store'])
+                ->middleware('throttle:status-pages-create')
+                ->name('status-pages.store');
+            Route::get('status-pages/{statusPage}/edit', [StatusPageController::class, 'edit'])->name('status-pages.edit');
+            Route::put('status-pages/{statusPage}', [StatusPageController::class, 'update'])
+                ->middleware('throttle:30,1')
+                ->name('status-pages.update');
+            Route::delete('status-pages/{statusPage}', [StatusPageController::class, 'destroy'])->name('status-pages.destroy');
 
             Route::get('notification-channels', [NotificationChannelController::class, 'index'])->name('notification-channels.index');
             Route::post('notification-channels', [NotificationChannelController::class, 'store'])

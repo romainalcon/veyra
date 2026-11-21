@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/vue3';
 import {
     Activity,
     Bell,
+    Globe,
     LayoutGrid,
     Settings,
     Siren,
@@ -25,6 +26,7 @@ import { index as maintenance } from '@/routes/organizations/maintenance';
 import { index as members } from '@/routes/organizations/members';
 import { index as monitors } from '@/routes/organizations/monitors';
 import { index as notificationChannels } from '@/routes/organizations/notification-channels';
+import { index as statusPages } from '@/routes/organizations/status-pages';
 import type { NavItem } from '@/types';
 
 const page = usePage();
@@ -57,6 +59,11 @@ const mainNavItems = computed<NavItem[]>(() => {
             title: 'Maintenance',
             href: maintenance(organization.slug),
             icon: Wrench,
+        },
+        {
+            title: 'Status pages',
+            href: statusPages(organization.slug),
+            icon: Globe,
         },
         {
             title: 'Notifications',
