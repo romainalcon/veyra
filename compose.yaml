@@ -37,8 +37,10 @@ x-app: &app
     REVERB_SCHEME: http
     # Only the internal nginx (`web`) reaches php-fpm.
     TRUSTED_PROXIES: "*"
-  volumes:
-    - storage:/var/www/html/storage
+    # Logs go to stderr (`docker compose logs`); sessions and cache live in
+    # Redis. No shared storage volume: concurrent first mounts of a shared
+    # named volume race when Docker copies the image content into it.
+    LOG_CHANNEL: stderr
   depends_on:
     mariadb:
       condition: service_healthy
@@ -157,6 +159,5 @@ networks:
   egress: {}
 
 volumes:
-  storage:
   mariadb:
   redis:

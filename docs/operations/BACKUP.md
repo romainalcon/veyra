@@ -5,7 +5,7 @@
 |---|---|---|
 | MariaDB database | All business data: users, organizations, monitors, checks, incidents, channels | `deploy/docker/backup.sh` (Docker) or `deploy/vito/backup.sh` / Vito database backups |
 | `APP_KEY` (`.env.docker` / `.env`) | Encrypts custom monitor headers, notification channel secrets and sessions. **A dump restored with another key loses these secrets.** | Store the env file in a password manager or secrets vault, separately from the dumps |
-| `storage` volume | Logs only in V1 | Optional |
+| Application logs | Written to stderr in Docker (`docker compose logs`), to `storage/logs` on Vito | Ship them to your log system if needed |
 | Redis | Transient queues and cache; rebuilt automatically (the MariaDB outbox republishes pending dispatches) | Not needed |
 
 ## Schedule

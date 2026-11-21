@@ -4,6 +4,9 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Fixed
+- Docker Compose: removed the shared `storage` volume, whose concurrent first mount by several services could fail (`mkdir …/logs: file exists`); application containers log to stderr.
+
 ## [1.0.1] — 2026-11-21
 
 ### Fixed
