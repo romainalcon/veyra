@@ -3,7 +3,9 @@ import { formatUptime, uptimeTone } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import type { UptimeDay } from '@/types';
 
-defineProps<{ days: UptimeDay[] }>();
+type Day = Pick<UptimeDay, 'day' | 'uptime' | 'coverage'>;
+
+defineProps<{ days: Day[] }>();
 
 const toneClass: Record<ReturnType<typeof uptimeTone>, string> = {
     none: 'bg-muted',
@@ -12,7 +14,7 @@ const toneClass: Record<ReturnType<typeof uptimeTone>, string> = {
     bad: 'bg-red-500',
 };
 
-const describe = (day: UptimeDay) =>
+const describe = (day: Day) =>
     `${day.day}: ${formatUptime(day.uptime)}${day.uptime !== null && day.coverage !== null && day.coverage < 0.9 ? ` (partial data, ${Math.round(day.coverage * 100)}% of expected checks)` : ''}`;
 </script>
 

@@ -105,6 +105,8 @@ class AppServiceProvider extends ServiceProvider
                 ->by('monitors:'.($user instanceof User ? $user->id : (string) $request->ip()));
         });
 
+        RateLimiter::for('status-pages', fn (Request $request): Limit => Limit::perMinute(120)->by('status-pages:'.$request->ip()));
+
         RateLimiter::for('notification-tests', function (Request $request): Limit {
             $channel = $request->route('notificationChannel');
 

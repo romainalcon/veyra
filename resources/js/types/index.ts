@@ -6,4 +6,5 @@ export * from './navigation';
 export * from './notification';
 export * from './monitor';
 export * from './organization';
+export * from './status-page';
 export * from './ui';
