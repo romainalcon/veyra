@@ -38,6 +38,12 @@ class MonitorFactory extends Factory
         return $this->afterCreating(function (Monitor $monitor): void {
             MonitorState::ensureFor($monitor->id);
 
+            if ($monitor->type === MonitorType::Tcp) {
+                $monitor->tcpConfig()->create(['host' => 'example.com', 'port' => 443]);
+
+                return;
+            }
+
             if ($monitor->type !== MonitorType::Http) {
                 return;
             }
@@ -65,6 +71,16 @@ class MonitorFactory extends Factory
     public function ofType(MonitorType $type): static
     {
         return $this->state(fn (): array => ['type' => $type]);
+    }
+
+    /**
+     * A TCP monitor; the default target is example.com:443.
+     */
+    public function tcp(?string $host = null, ?int $port = null): static
+    {
+        return $this->ofType(MonitorType::Tcp)->afterCreating(function (Monitor $monitor) use ($host, $port): void {
+            $monitor->tcpConfig()->update(array_filter(['host' => $host, 'port' => $port], fn (mixed $value): bool => $value !== null));
+        });
     }
 
     public function paused(): static

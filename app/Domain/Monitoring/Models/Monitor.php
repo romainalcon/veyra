@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $deleted_at
  * @property-read Organization $organization
  * @property-read MonitorHttpConfig|null $httpConfig
+ * @property-read MonitorTcpConfig|null $tcpConfig
  * @property-read MonitorCheck|null $latestCheck
  * @property-read MonitorState|null $state
  */
@@ -74,6 +75,26 @@ class Monitor extends Model
     public function httpConfig(): HasOne
     {
         return $this->hasOne(MonitorHttpConfig::class);
+    }
+
+    /**
+     * @return HasOne<MonitorTcpConfig, $this>
+     */
+    public function tcpConfig(): HasOne
+    {
+        return $this->hasOne(MonitorTcpConfig::class);
+    }
+
+    /**
+     * Human-readable destination, for lists and headers.
+     */
+    public function target(): ?string
+    {
+        return match ($this->type) {
+            MonitorType::Http => $this->httpConfig === null ? null : "{$this->httpConfig->method->value} {$this->httpConfig->url}",
+            MonitorType::Tcp => $this->tcpConfig?->target(),
+            MonitorType::Heartbeat => null,
+        };
     }
 
     /**

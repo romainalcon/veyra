@@ -31,7 +31,7 @@ class MonitorController extends Controller
         Gate::authorize('viewAny', [Monitor::class, $organization]);
 
         $monitors = $organization->monitors()
-            ->with(['httpConfig', 'latestCheck', 'state'])
+            ->with(['httpConfig', 'tcpConfig', 'latestCheck', 'state'])
             ->orderBy('name')
             ->paginate(25)
             ->through(fn (Monitor $monitor): array => MonitorPresenter::summary($monitor));
@@ -64,7 +64,7 @@ class MonitorController extends Controller
     {
         Gate::authorize('view', [$monitor, $organization]);
 
-        $monitor->load(['httpConfig', 'latestCheck', 'state']);
+        $monitor->load(['httpConfig', 'tcpConfig', 'latestCheck', 'state']);
 
         $checks = $monitor->checks()
             ->orderByDesc('checked_at')
@@ -111,7 +111,7 @@ class MonitorController extends Controller
     {
         Gate::authorize('update', [$monitor, $organization]);
 
-        $monitor->load('httpConfig');
+        $monitor->load(['httpConfig', 'tcpConfig']);
 
         return Inertia::render('monitors/Edit', [
             ...MonitorPresenter::formOptions($organization),

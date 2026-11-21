@@ -5,10 +5,13 @@ namespace App\Http\Presenters;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Enums\MonitorStatus;
+use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
+use App\Domain\Monitoring\Probes\ProbeSettings;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
+use App\Http\Requests\Monitors\SaveMonitorRequest;
 
 /**
  * Explicit, whitelisted Inertia representations. Header values never leave
@@ -26,6 +29,8 @@ final class MonitorPresenter
         return [
             'id' => $monitor->id,
             'name' => $monitor->name,
+            'type' => $monitor->type->value,
+            'target' => $monitor->target(),
             'url' => $config?->url,
             'method' => $config?->method->value,
             'enabled' => $monitor->enabled,
@@ -52,6 +57,8 @@ final class MonitorPresenter
             'expected_statuses' => $config?->expected_statuses->toExpression(),
             'follow_redirects' => $config->follow_redirects ?? true,
             'header_names' => $config?->headerNames() ?? [],
+            'host' => $monitor->tcpConfig?->host,
+            'port' => $monitor->tcpConfig?->port,
             'notification_channel_ids' => $monitor->notificationChannels()->pluck('notification_channels.id')->all(),
             'next_check_at' => $monitor->next_check_at?->toIso8601String(),
             'created_at' => $monitor->created_at?->toIso8601String(),
@@ -95,6 +102,11 @@ final class MonitorPresenter
                 ->all(),
             'intervals' => MonitorInterval::options(),
             'methods' => array_map(fn (HttpMethod $method): string => $method->value, HttpMethod::cases()),
+            'types' => array_map(fn (MonitorType $type): array => [
+                'value' => $type->value,
+                'label' => $type->label(),
+            ], SaveMonitorRequest::CREATABLE_TYPES),
+            'tcpPorts' => app(ProbeSettings::class)->tcpAllowedPorts,
         ];
     }
 }

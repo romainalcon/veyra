@@ -8,6 +8,7 @@ use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorState;
 use App\Domain\Organizations\Models\Organization;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 class CreateMonitor
 {
@@ -21,7 +22,7 @@ class CreateMonitor
         return DB::transaction(function () use ($organization, $data): Monitor {
             $monitor = $organization->monitors()->create([
                 'name' => $data->name,
-                'type' => MonitorType::Http,
+                'type' => $data->type,
                 'enabled' => true,
                 'interval_seconds' => $data->interval->value,
                 'timeout_seconds' => $data->timeoutSeconds,
@@ -30,13 +31,15 @@ class CreateMonitor
 
             MonitorState::ensureFor($monitor->id);
 
-            $monitor->httpConfig()->create([
-                'url' => $data->url,
-                'method' => $data->method,
-                'expected_statuses' => $data->expectedStatuses,
-                'follow_redirects' => $data->followRedirects,
-                'headers_encrypted' => $data->headers === [] ? null : $data->headers,
-            ]);
+            match ($data->type) {
+                MonitorType::Http => $monitor->httpConfig()->create(
+                    ($data->http ?? throw new LogicException('Missing HTTP target.'))->toConfig() + ['headers_encrypted' => null],
+                ),
+                MonitorType::Tcp => $monitor->tcpConfig()->create(
+                    ($data->tcp ?? throw new LogicException('Missing TCP target.'))->toConfig(),
+                ),
+                MonitorType::Heartbeat => throw new LogicException('Heartbeat monitors are not supported yet.'),
+            };
 
             $this->syncMonitorChannels->handle($monitor, $data->notificationChannelIds);
 

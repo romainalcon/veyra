@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { parseExpectedStatuses } from '@/lib/monitoring';
-import type { MonitorDetail, MonitorFormOptions } from '@/types';
+import type { MonitorDetail, MonitorFormOptions, MonitorType } from '@/types';
 
 const props = defineProps<
     MonitorFormOptions & {
@@ -21,6 +21,8 @@ const props = defineProps<
 >();
 
 const isEdit = computed(() => props.monitor !== undefined);
+const monitorType = ref<MonitorType>(props.monitor?.type ?? 'http');
+const isHttp = computed(() => monitorType.value === 'http');
 const replaceHeaders = ref(!isEdit.value);
 
 const httpMethod = ref<string>(props.monitor?.method ?? 'GET');
@@ -48,6 +50,12 @@ const intervalOptions = computed(() =>
     })),
 );
 
+const currentTypeLabel = computed(
+    () =>
+        props.types.find((option) => option.value === monitorType.value)
+            ?.label ?? monitorType.value,
+);
+
 const methodOptions = computed(() =>
     props.methods.map((value) => ({ value, label: value })),
 );
@@ -60,6 +68,35 @@ const methodOptions = computed(() =>
         class="space-y-6"
         v-slot="{ errors, processing }"
     >
+        <fieldset v-if="!isEdit" class="grid gap-2">
+            <legend class="text-sm font-medium">Type</legend>
+            <div class="flex flex-wrap gap-2" role="radiogroup">
+                <label
+                    v-for="option in types"
+                    :key="option.value"
+                    class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                >
+                    <input
+                        v-model="monitorType"
+                        type="radio"
+                        name="type"
+                        :value="option.value"
+                        class="size-4 accent-primary"
+                        :data-test="`type-${option.value}`"
+                    />
+                    {{ option.label }}
+                </label>
+            </div>
+            <InputError :message="errors.type" />
+        </fieldset>
+        <p v-else class="text-sm text-muted-foreground">
+            Type:
+            <span class="font-medium text-foreground">{{
+                currentTypeLabel
+            }}</span>
+            (cannot be changed)
+        </p>
+
         <div class="grid gap-2">
             <Label for="name">Name</Label>
             <Input
@@ -73,7 +110,49 @@ const methodOptions = computed(() =>
             <InputError :message="errors.name" />
         </div>
 
-        <div class="grid gap-2 sm:grid-cols-[8rem_1fr]">
+        <div v-if="!isHttp" class="grid gap-2 sm:grid-cols-[1fr_8rem]">
+            <div class="grid gap-2">
+                <Label for="host">Host</Label>
+                <Input
+                    id="host"
+                    name="host"
+                    required
+                    maxlength="255"
+                    placeholder="mail.example.com"
+                    autocomplete="off"
+                    :default-value="monitor?.host ?? ''"
+                />
+                <InputError :message="errors.host" />
+            </div>
+            <div class="grid gap-2">
+                <Label for="port">Port</Label>
+                <Input
+                    id="port"
+                    name="port"
+                    type="number"
+                    min="1"
+                    max="65535"
+                    required
+                    list="tcp-ports"
+                    :default-value="monitor?.port ?? undefined"
+                />
+                <datalist id="tcp-ports">
+                    <option
+                        v-for="port in tcpPorts"
+                        :key="port"
+                        :value="port"
+                    />
+                </datalist>
+                <InputError :message="errors.port" />
+            </div>
+            <p class="text-xs text-muted-foreground sm:col-span-2">
+                Veyra opens a TCP connection and closes it immediately; nothing
+                is sent. Allowed ports on this instance:
+                {{ tcpPorts.join(', ') }}.
+            </p>
+        </div>
+
+        <div v-if="isHttp" class="grid gap-2 sm:grid-cols-[8rem_1fr]">
             <div class="grid gap-2">
                 <Label for="method">Method</Label>
                 <NativeSelect
@@ -123,7 +202,7 @@ const methodOptions = computed(() =>
                 />
                 <InputError :message="errors.timeout" />
             </div>
-            <div class="grid gap-2">
+            <div v-if="isHttp" class="grid gap-2">
                 <Label for="expected_statuses">Expected status codes</Label>
                 <Input
                     id="expected_statuses"
@@ -142,7 +221,11 @@ const methodOptions = computed(() =>
             </div>
         </div>
 
-        <label for="follow_redirects" class="flex items-center gap-3 text-sm">
+        <label
+            v-if="isHttp"
+            for="follow_redirects"
+            class="flex items-center gap-3 text-sm"
+        >
             <input type="hidden" name="follow_redirects" value="0" />
             <input
                 id="follow_redirects"
@@ -155,7 +238,7 @@ const methodOptions = computed(() =>
             <span>Follow redirects (up to 3, each one re-validated)</span>
         </label>
 
-        <div class="space-y-3">
+        <div v-if="isHttp" class="space-y-3">
             <div>
                 <Label>Custom headers</Label>
                 <p class="text-xs text-muted-foreground">

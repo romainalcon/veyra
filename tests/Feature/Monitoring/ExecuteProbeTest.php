@@ -10,6 +10,7 @@ use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
 use App\Domain\Monitoring\Probes\HttpMonitorProbe;
 use App\Domain\Monitoring\Probes\ProbeRegistry;
+use App\Domain\Monitoring\Probes\TcpProbe;
 use Illuminate\Support\Facades\Http;
 
 test('the job records one check and completes the dispatch', function () {
@@ -94,12 +95,13 @@ test('dispatches of a type without a probe are skipped, never recorded as failur
     expect($dispatch->fresh()->status)->toBe(DispatchStatus::Skipped)
         ->and(MonitorCheck::count())->toBe(0);
     Http::assertNothingSent();
-})->with([MonitorType::Tcp, MonitorType::Heartbeat]);
+})->with([MonitorType::Heartbeat]);
 
-test('an HTTP monitor without configuration is skipped without probing', function () {
+test('a monitor without its configuration is skipped without probing', function (MonitorType $type) {
     Http::fake();
-    $monitor = Monitor::factory()->create();
+    $monitor = Monitor::factory()->ofType($type)->create();
     $monitor->httpConfig()->delete();
+    $monitor->tcpConfig()->delete();
     $dispatch = MonitorDispatch::factory()->create(['monitor_id' => $monitor->id]);
 
     app()->call([new ExecuteProbe($dispatch->id), 'handle']);
@@ -107,8 +109,10 @@ test('an HTTP monitor without configuration is skipped without probing', functio
     expect($dispatch->fresh()->status)->toBe(DispatchStatus::Skipped)
         ->and(MonitorCheck::count())->toBe(0);
     Http::assertNothingSent();
-});
+})->with([MonitorType::Http, MonitorType::Tcp]);
 
-test('the probe registry resolves the HTTP probe', function () {
-    expect(app(ProbeRegistry::class)->for(MonitorType::Http))->toBeInstanceOf(HttpMonitorProbe::class);
+test('the probe registry resolves the probe of each type', function () {
+    expect(app(ProbeRegistry::class)->for(MonitorType::Http))->toBeInstanceOf(HttpMonitorProbe::class)
+        ->and(app(ProbeRegistry::class)->for(MonitorType::Tcp))->toBeInstanceOf(TcpProbe::class)
+        ->and(app(ProbeRegistry::class)->for(MonitorType::Heartbeat))->toBeNull();
 });

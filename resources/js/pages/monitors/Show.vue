@@ -103,7 +103,7 @@ const remove = () => router.visit(destroy(params.value));
                     >
                 </h1>
                 <p class="truncate text-sm text-muted-foreground">
-                    {{ monitor.method }} {{ monitor.url }}
+                    {{ monitor.target }}
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
@@ -195,7 +195,7 @@ const remove = () => router.visit(destroy(params.value));
                     {{ monitor.timeout_seconds }} s
                 </dd>
             </div>
-            <div>
+            <div v-if="monitor.type === 'http'">
                 <dt class="text-muted-foreground">Expected statuses</dt>
                 <dd class="mt-1">{{ monitor.expected_statuses }}</dd>
             </div>
@@ -208,6 +208,10 @@ const remove = () => router.visit(destroy(params.value));
                             : 'Paused'
                     }}
                 </dd>
+            </div>
+            <div v-if="monitor.type === 'tcp'">
+                <dt class="text-muted-foreground">Check</dt>
+                <dd class="mt-1">TCP connection</dd>
             </div>
             <div v-if="monitor.header_names.length" class="sm:col-span-4">
                 <dt class="text-muted-foreground">Custom headers</dt>
@@ -278,7 +282,12 @@ const remove = () => router.visit(destroy(params.value));
                             <th class="px-4 py-2 font-medium">Checked at</th>
                             <th class="px-4 py-2 font-medium">Result</th>
                             <th class="px-4 py-2 font-medium">Duration</th>
-                            <th class="px-4 py-2 font-medium">Redirects</th>
+                            <th
+                                v-if="monitor.type === 'http'"
+                                class="px-4 py-2 font-medium"
+                            >
+                                Redirects
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
@@ -300,7 +309,12 @@ const remove = () => router.visit(destroy(params.value));
                             <td class="px-4 py-2">
                                 {{ formatDuration(check.duration_ms) }}
                             </td>
-                            <td class="px-4 py-2">{{ check.redirects }}</td>
+                            <td
+                                v-if="monitor.type === 'http'"
+                                class="px-4 py-2"
+                            >
+                                {{ check.redirects }}
+                            </td>
                         </tr>
                     </tbody>
                 </table>

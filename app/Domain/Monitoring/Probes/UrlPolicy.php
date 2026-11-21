@@ -51,35 +51,7 @@ class UrlPolicy
             throw new DestinationRejected(ProbeErrorCode::InvalidUrl, 'Credentials in the URL are not allowed; use a custom header instead.');
         }
 
-        $host = strtolower(trim($parts['host'], '[]'));
-        $hostIsIp = filter_var($host, FILTER_VALIDATE_IP) !== false;
-
-        if (! $hostIsIp) {
-            $ascii = function_exists('idn_to_ascii') ? idn_to_ascii($host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46) : $host;
-
-            if ($ascii === false || preg_match('/^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.?$/', $ascii) !== 1) {
-                throw new DestinationRejected(ProbeErrorCode::InvalidUrl, 'The host name is not valid.');
-            }
-
-            $host = rtrim($ascii, '.');
-
-            // Numeric, octal or hex host names (e.g. 2130706433, 0177.0.0.1,
-            // 0x7f.1) are IP addresses in disguise for some resolvers.
-            $labels = explode('.', $host);
-            $tld = (string) end($labels);
-
-            if (preg_match('/^(0x[0-9a-f]*|[0-9]+)$/i', $tld) === 1) {
-                throw new DestinationRejected(ProbeErrorCode::InvalidUrl, 'Use a regular host name or a standard IP address.');
-            }
-
-            if ($host === 'localhost' || str_ends_with($host, '.localhost')) {
-                throw new DestinationRejected(ProbeErrorCode::ForbiddenDestination, 'Local host names are not allowed.');
-            }
-
-            if (! $this->allowPrivateHostnames && (str_ends_with($host, '.local') || str_ends_with($host, '.internal') || str_ends_with($host, '.lan'))) {
-                throw new DestinationRejected(ProbeErrorCode::ForbiddenDestination, 'Private host names are not allowed on this instance.');
-            }
-        }
+        ['host' => $host, 'isIp' => $hostIsIp] = (new HostPolicy($this->allowPrivateHostnames))->normalize($parts['host']);
 
         $port = isset($parts['port']) ? (int) $parts['port'] : ($scheme === 'https' ? 443 : 80);
 

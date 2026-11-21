@@ -2,6 +2,10 @@ import type { ChannelOption } from './notification';
 
 export type HttpMethod = 'GET' | 'HEAD';
 
+export type MonitorType = 'http' | 'tcp' | 'heartbeat';
+
+export type MonitorTypeOption = { value: MonitorType; label: string };
+
 export type MonitorStatus =
     'up' | 'degraded' | 'down' | 'unknown' | 'maintenance';
 
@@ -26,6 +30,8 @@ export type MonitorCheck = {
 export type MonitorSummary = {
     id: string;
     name: string;
+    type: MonitorType;
+    target: string | null;
     url: string | null;
     method: HttpMethod | null;
     enabled: boolean;
@@ -39,6 +45,8 @@ export type MonitorDetail = MonitorSummary & {
     expected_statuses: string | null;
     follow_redirects: boolean;
     header_names: string[];
+    host: string | null;
+    port: number | null;
     notification_channel_ids: string[];
     next_check_at: string | null;
     created_at: string | null;
@@ -50,6 +58,8 @@ export type MonitorFormOptions = {
     channels: ChannelOption[];
     intervals: IntervalOption[];
     methods: HttpMethod[];
+    types: MonitorTypeOption[];
+    tcpPorts: number[];
 };
 
 export type PaginationLink = {

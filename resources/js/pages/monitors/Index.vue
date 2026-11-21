@@ -89,7 +89,7 @@ setLayoutProps({
                             >
                         </p>
                         <p class="truncate text-sm text-muted-foreground">
-                            {{ monitor.method }} {{ monitor.url }}
+                            {{ monitor.target }}
                         </p>
                     </div>
                     <div

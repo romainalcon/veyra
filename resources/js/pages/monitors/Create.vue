@@ -33,6 +33,8 @@ setLayoutProps({
             :channels="channels"
             :intervals="intervals"
             :methods="methods"
+            :types="types"
+            :tcp-ports="tcpPorts"
             :action="store.form(organization.slug)"
             submit-label="Create monitor"
         />

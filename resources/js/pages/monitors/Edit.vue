@@ -41,6 +41,8 @@ setLayoutProps({
             :channels="channels"
             :intervals="intervals"
             :methods="methods"
+            :types="types"
+            :tcp-ports="tcpPorts"
             :monitor="monitor"
             :action="update.form([organization.slug, monitor.id])"
             submit-label="Save changes"

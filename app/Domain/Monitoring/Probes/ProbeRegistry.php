@@ -18,7 +18,8 @@ final class ProbeRegistry
     {
         return match ($type) {
             MonitorType::Http => $this->container->make(HttpMonitorProbe::class),
-            MonitorType::Tcp, MonitorType::Heartbeat => null,
+            MonitorType::Tcp => $this->container->make(TcpProbe::class),
+            MonitorType::Heartbeat => null,
         };
     }
 }

@@ -7,8 +7,10 @@ use App\Domain\Incidents\Events\IncidentOpened;
 use App\Domain\Incidents\Events\IncidentResolved;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Probes\Contracts\DnsResolver;
+use App\Domain\Monitoring\Probes\Contracts\TcpConnector;
 use App\Domain\Monitoring\Probes\HttpProbe;
 use App\Domain\Monitoring\Probes\ProbeSettings;
+use App\Domain\Monitoring\Probes\StreamTcpConnector;
 use App\Domain\Monitoring\Probes\SystemDnsResolver;
 use App\Domain\Notifications\Listeners\QueueNotificationsOnIncidentEvent;
 use App\Domain\Notifications\Models\NotificationChannel;
@@ -35,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(DnsResolver::class, SystemDnsResolver::class);
+        $this->app->bind(TcpConnector::class, StreamTcpConnector::class);
         $this->app->bind(TxtResolver::class, SystemTxtResolver::class);
         $this->app->bind(ProbeSettings::class, fn (): ProbeSettings => ProbeSettings::fromConfig());
 

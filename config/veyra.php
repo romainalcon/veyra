@@ -56,7 +56,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | HTTP Probes
+    | HTTP and TCP Probes
     |--------------------------------------------------------------------------
     |
     | Loopback, link-local, metadata, multicast and reserved ranges are always
@@ -70,6 +70,10 @@ return [
         'allowed_ports' => array_values(array_filter(array_map(
             'intval',
             explode(',', (string) env('VEYRA_PROBES_ALLOWED_PORTS', '80,443,8080,8443')),
+        ))),
+        'tcp_allowed_ports' => array_values(array_filter(array_map(
+            'intval',
+            explode(',', (string) env('VEYRA_PROBES_TCP_ALLOWED_PORTS', '22,25,80,443,465,587,993,995,3306,5432,6379')),
         ))),
         'max_redirects' => 3,
         'user_agent' => 'Veyra-Uptime-Monitor/1.0',

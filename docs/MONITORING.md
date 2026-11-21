@@ -87,3 +87,5 @@
 ## Monitor types (Sprint 7)
 - `http`, `tcp`, `heartbeat` share the outbox, check history, state machine and incidents (ADR-024). `ExecuteProbe` resolves the probe of the monitor's type through `ProbeRegistry`; a type without a probe or a monitor without its configuration is `skipped` (no check).
 - Thresholds per type: HTTP/TCP 3 failures → DOWN, 2 successes → UP; heartbeat 1 missed ping → DOWN, 1 ping → UP (`VEYRA_HEARTBEAT_DOWN_AFTER_MISSES`, `VEYRA_HEARTBEAT_UP_AFTER_PINGS`).
+- **TCP** (`TcpProbe`): `DestinationGuard::inspectEndpoint` validates the host (`HostPolicy`, shared with URLs), the port against `VEYRA_PROBES_TCP_ALLOWED_PORTS` and every resolved address before each check; `StreamTcpConnector` opens a plain TCP connection to the validated IP within the monitor timeout and closes it at once. Success = handshake completed; failures are `connection_failed`, `timeout`, `dns_failure`, `forbidden_destination` or `invalid_url` (invalid host). Checks have no status code; `resolved_ip` is kept in metadata.
+- The type is chosen on creation and is immutable.

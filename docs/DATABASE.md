@@ -16,6 +16,7 @@
 | organization_invitations | id, organization_id, email, role, token_hash, expires_at |
 | monitors | id, organization_id, name, type, enabled, interval_seconds, timeout_seconds, next_check_at, deleted_at |
 | monitor_http_configs | monitor_id, url, method, expected_statuses (json), follow_redirects, headers_encrypted |
+| monitor_tcp_configs | monitor_id, host, port |
 | monitor_states | monitor_id, status, consecutive_failures, consecutive_successes, last_checked_at, last_changed_at, last_applied_check_at |
 | monitor_checks | id, monitor_id, scheduled_for, checked_at, success, duration_ms, status_code, error_code, metadata (json) |
 | monitor_dispatches | id, monitor_id, scheduled_for, status, dispatched_at, attempts |
