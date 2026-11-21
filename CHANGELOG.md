@@ -4,6 +4,11 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-11-21
+
+### Fixed
+- Docker images: build the phpredis extension from its pinned, checksum-verified GitHub release instead of PECL, so builds no longer fail when pecl.php.net is unavailable (the 1.0.0 image publication failed for this reason; 1.0.0 has no published images).
+
 ## [1.0.0] — 2026-11-21
 
 First Community release.
@@ -20,5 +25,6 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/romainalcon/veyra/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/romainalcon/veyra/releases/tag/v1.0.0

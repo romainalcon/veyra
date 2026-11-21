@@ -15,5 +15,8 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.0.1
+Packaging fix only (Docker images); nothing to migrate.
+
 ### 1.0.0
 First release — nothing to migrate.
