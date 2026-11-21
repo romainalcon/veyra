@@ -111,6 +111,17 @@ class AppServiceProvider extends ServiceProvider
                 ->by('monitors:'.($user instanceof User ? $user->id : (string) $request->ip()));
         });
 
+        RateLimiter::for('heartbeat-pings', fn (Request $request): array => [
+            Limit::perMinute(30)->by('heartbeat-pings:'.hash('sha256', (string) $request->route('token'))),
+            Limit::perMinute(600)->by('heartbeat-pings-ip:'.$request->ip()),
+        ]);
+
+        RateLimiter::for('ping-tokens', function (Request $request): Limit {
+            $user = $request->user();
+
+            return Limit::perMinute(10)->by('ping-tokens:'.($user instanceof User ? $user->id : (string) $request->ip()));
+        });
+
         RateLimiter::for('status-pages', fn (Request $request): Limit => Limit::perMinute(120)->by('status-pages:'.$request->ip()));
 
         RateLimiter::for('status-pages-create', function (Request $request): Limit {

@@ -17,6 +17,7 @@
 | monitors | id, organization_id, name, type, enabled, interval_seconds, timeout_seconds, next_check_at, deleted_at |
 | monitor_http_configs | monitor_id, url, method, expected_statuses (json), follow_redirects, headers_encrypted |
 | monitor_tcp_configs | monitor_id, host, port |
+| monitor_heartbeat_configs | monitor_id, token_hash (unique, SHA-256), grace_seconds, last_ping_at, last_ping_failed |
 | monitor_states | monitor_id, status, consecutive_failures, consecutive_successes, last_checked_at, last_changed_at, last_applied_check_at |
 | monitor_checks | id, monitor_id, scheduled_for, checked_at, success, duration_ms, status_code, error_code, metadata (json) |
 | monitor_dispatches | id, monitor_id, scheduled_for, status, dispatched_at, attempts |
@@ -67,3 +68,8 @@
 - `maintenance_windows` is indexed by `(organization_id, starts_at)` and `(starts_at, ends_at)`; `maintenance_window_monitors` has PK `(maintenance_window_id, monitor_id)` and an index on `monitor_id`.
 - `status_pages.slug` and `status_pages.custom_domain` are globally unique (several NULL domains are allowed). `status_page_components` is unique on `(status_page_id, monitor_id)`.
 - Pivot and component rows cascade on hard deletes only (organization deletion); soft-deleted monitors are filtered out when building public pages.
+
+## Monitor types (Sprint 7)
+- `monitor_tcp_configs` and `monitor_heartbeat_configs` mirror `monitor_http_configs` (PK = `monitor_id`, cascade on hard delete).
+- `monitors.interval_seconds` is widened from `SMALLINT UNSIGNED` to `INT UNSIGNED` for heartbeat periods up to one week (non-destructive `ALTER`).
+- Heartbeat checks reference a `monitor_dispatches` row with `trigger = ping`; the unique `(monitor_id, scheduled_for)` key deduplicates pings within the same second.

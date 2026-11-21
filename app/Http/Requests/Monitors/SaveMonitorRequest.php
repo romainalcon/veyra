@@ -3,9 +3,11 @@
 namespace App\Http\Requests\Monitors;
 
 use App\Domain\Monitoring\DTOs\ExpectedStatuses;
+use App\Domain\Monitoring\DTOs\HeartbeatTargetData;
 use App\Domain\Monitoring\DTOs\HttpTargetData;
 use App\Domain\Monitoring\DTOs\MonitorData;
 use App\Domain\Monitoring\DTOs\TcpTargetData;
+use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Enums\MonitorType;
@@ -43,11 +45,16 @@ class SaveMonitorRequest extends FormRequest
     ];
 
     /**
-     * Types that can be created from the form (heartbeats arrive later in Sprint 7).
-     *
      * @var list<MonitorType>
      */
-    public const CREATABLE_TYPES = [MonitorType::Http, MonitorType::Tcp];
+    public const CREATABLE_TYPES = [MonitorType::Http, MonitorType::Tcp, MonitorType::Heartbeat];
+
+    public const MAX_GRACE_MINUTES = 1440;
+
+    /**
+     * Heartbeats are not probed; this placeholder keeps the column meaningful.
+     */
+    public const HEARTBEAT_TIMEOUT_SECONDS = 10;
 
     public function authorize(): bool
     {
@@ -82,8 +89,6 @@ class SaveMonitorRequest extends FormRequest
         $common = [
             'type' => ['required', Rule::enum(MonitorType::class)->only(self::CREATABLE_TYPES)],
             'name' => ['required', 'string', 'min:2', 'max:100'],
-            'interval' => ['required', 'integer', Rule::enum(MonitorInterval::class)],
-            'timeout' => ['required', 'integer', 'min:1', 'max:30'],
             'notification_channels_submitted' => ['nullable', 'boolean'],
             'notification_channel_ids' => ['array', 'max:50'],
             'notification_channel_ids.*' => [
@@ -93,14 +98,26 @@ class SaveMonitorRequest extends FormRequest
             ],
         ];
 
+        $probed = [
+            'interval' => ['required', 'integer', Rule::enum(MonitorInterval::class)],
+            'timeout' => ['required', 'integer', 'min:1', 'max:30'],
+        ];
+
         return match ($this->monitorType()) {
+            MonitorType::Heartbeat => [
+                ...$common,
+                'interval' => ['required', 'integer', Rule::enum(HeartbeatPeriod::class)],
+                'grace_minutes' => ['required', 'integer', 'min:1', 'max:'.self::MAX_GRACE_MINUTES],
+            ],
             MonitorType::Tcp => [
                 ...$common,
+                ...$probed,
                 'host' => ['required', 'string', 'max:255'],
                 'port' => ['required', 'integer', Rule::in(app(ProbeSettings::class)->tcpAllowedPorts)],
             ],
-            default => [
+            MonitorType::Http => [
                 ...$common,
+                ...$probed,
                 'url' => ['required', 'string', 'max:'.UrlPolicy::MAX_LENGTH, app(AllowedMonitorDestination::class)],
                 'method' => ['required', Rule::enum(HttpMethod::class)],
                 'expected_statuses' => ['required', 'string', 'max:200'],
@@ -120,13 +137,14 @@ class SaveMonitorRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                if ((int) $this->input('timeout') >= (int) $this->input('interval')) {
+                if ($this->monitorType() !== MonitorType::Heartbeat && (int) $this->input('timeout') >= (int) $this->input('interval')) {
                     $validator->errors()->add('timeout', 'The timeout must be shorter than the interval.');
                 }
 
                 match ($this->monitorType()) {
                     MonitorType::Tcp => $this->validateTcpEndpoint($validator),
-                    default => $this->validateHttpTarget($validator),
+                    MonitorType::Http => $this->validateHttpTarget($validator),
+                    MonitorType::Heartbeat => null,
                 };
             },
         ];
@@ -202,10 +220,11 @@ class SaveMonitorRequest extends FormRequest
         return new MonitorData(
             type: $type,
             name: trim((string) $this->validated('name')),
-            interval: MonitorInterval::from((int) $this->validated('interval')),
-            timeoutSeconds: (int) $this->validated('timeout'),
+            intervalSeconds: (int) $this->validated('interval'),
+            timeoutSeconds: $type === MonitorType::Heartbeat ? self::HEARTBEAT_TIMEOUT_SECONDS : (int) $this->validated('timeout'),
             http: $type === MonitorType::Http ? $this->httpTarget() : null,
             tcp: $type === MonitorType::Tcp ? new TcpTargetData((string) $this->validated('host'), (int) $this->validated('port')) : null,
+            heartbeat: $type === MonitorType::Heartbeat ? new HeartbeatTargetData((int) $this->validated('grace_minutes') * 60) : null,
             notificationChannelIds: $this->boolean('notification_channels_submitted')
                 ? array_values(array_map('strval', (array) $this->validated('notification_channel_ids', [])))
                 : null,

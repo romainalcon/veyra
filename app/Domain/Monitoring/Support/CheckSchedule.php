@@ -2,6 +2,7 @@
 
 namespace App\Domain\Monitoring\Support;
 
+use App\Domain\Monitoring\Enums\MonitorType;
 use Carbon\CarbonImmutable;
 
 final class CheckSchedule
@@ -16,6 +17,18 @@ final class CheckSchedule
         $next = $scheduledFor->addSeconds($intervalSeconds);
 
         return $next->greaterThan($now) ? $next : $now->addSeconds($intervalSeconds)->startOfSecond();
+    }
+
+    /**
+     * First evaluation after creation, an interval change or a resume.
+     * Probed monitors are checked right away; a heartbeat gets a full period
+     * plus its grace before a missing ping can be evaluated (ADR-025).
+     */
+    public static function initial(MonitorType $type, int $intervalSeconds, int $graceSeconds = 0, ?CarbonImmutable $now = null): CarbonImmutable
+    {
+        $now = ($now ?? CarbonImmutable::now())->startOfSecond();
+
+        return $type === MonitorType::Heartbeat ? $now->addSeconds($intervalSeconds + $graceSeconds) : $now;
     }
 
     /**

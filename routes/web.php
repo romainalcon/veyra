@@ -4,6 +4,8 @@ use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\Incidents\IncidentController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\Maintenance\MaintenanceWindowController;
+use App\Http\Controllers\Monitors\HeartbeatPingController;
+use App\Http\Controllers\Monitors\HeartbeatTokenController;
 use App\Http\Controllers\Monitors\MonitorCheckController;
 use App\Http\Controllers\Monitors\MonitorController;
 use App\Http\Controllers\Monitors\MonitorStatusController;
@@ -37,6 +39,21 @@ Route::get('status/{slug}', PublicStatusPageController::class)
     ->withoutMiddleware(['web'])
     ->middleware(['throttle:status-pages', HandleAppearance::class, HandlePublicInertiaRequests::class])
     ->name('status-pages.public');
+
+/*
+ * Heartbeat pings: no session, no cookies, no CSRF (cron jobs and scripts).
+ */
+Route::match(['GET', 'POST', 'HEAD'], 'ping/{token}', HeartbeatPingController::class)
+    ->where('token', '[A-Za-z0-9]{40}')
+    ->withoutMiddleware(['web'])
+    ->middleware('throttle:heartbeat-pings')
+    ->name('heartbeats.ping');
+
+Route::match(['GET', 'POST', 'HEAD'], 'ping/{token}/fail', [HeartbeatPingController::class, 'fail'])
+    ->where('token', '[A-Za-z0-9]{40}')
+    ->withoutMiddleware(['web'])
+    ->middleware('throttle:heartbeat-pings')
+    ->name('heartbeats.fail');
 
 /*
  * On-demand TLS "ask" endpoint for the reverse proxy (see docs/deployment).
@@ -100,6 +117,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('monitors/{monitor}/checks', [MonitorCheckController::class, 'store'])
                 ->middleware('throttle:manual-checks')
                 ->name('monitors.checks.store');
+            Route::post('monitors/{monitor}/ping-token', [HeartbeatTokenController::class, 'store'])
+                ->middleware('throttle:ping-tokens')
+                ->name('monitors.ping-token.store');
 
             Route::get('maintenance', [MaintenanceWindowController::class, 'index'])->name('maintenance.index');
             Route::get('maintenance/create', [MaintenanceWindowController::class, 'create'])->name('maintenance.create');

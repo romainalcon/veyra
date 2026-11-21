@@ -6,6 +6,7 @@ use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Events\MonitorStateChanged;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorState;
+use App\Domain\Monitoring\Support\CheckSchedule;
 use App\Domain\Realtime\OrganizationUpdate;
 use Illuminate\Support\Facades\DB;
 
@@ -14,8 +15,9 @@ class SetMonitorEnabled
     /**
      * Pausing stops scheduling (queued dispatches are skipped by the probe
      * job) and the state becomes UNKNOWN; an open incident stays open.
-     * Resuming schedules a check right away and restarts the streaks, so
-     * results from before the pause never confirm a transition.
+     * Resuming schedules a check right away (a heartbeat gets a full period
+     * plus grace) and restarts the streaks, so results from before the pause
+     * never confirm a transition.
      */
     public function handle(Monitor $monitor, bool $enabled): Monitor
     {
@@ -30,7 +32,9 @@ class SetMonitorEnabled
 
             $monitor->update([
                 'enabled' => $enabled,
-                'next_check_at' => $enabled ? now()->startOfSecond() : null,
+                'next_check_at' => $enabled
+                    ? CheckSchedule::initial($monitor->type, $monitor->interval_seconds, $monitor->heartbeatConfig->grace_seconds ?? 0)
+                    : null,
             ]);
 
             $state->update([

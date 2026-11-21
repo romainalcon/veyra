@@ -7,6 +7,7 @@ use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorState;
+use App\Domain\Monitoring\Support\HeartbeatToken;
 use App\Domain\Organizations\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -81,6 +82,24 @@ class MonitorFactory extends Factory
         return $this->ofType(MonitorType::Tcp)->afterCreating(function (Monitor $monitor) use ($host, $port): void {
             $monitor->tcpConfig()->update(array_filter(['host' => $host, 'port' => $port], fn (mixed $value): bool => $value !== null));
         });
+    }
+
+    /**
+     * A heartbeat monitor pinged with the given plain token.
+     */
+    public function heartbeat(string $token, int $periodSeconds = 3600, int $graceSeconds = 300): static
+    {
+        return $this->ofType(MonitorType::Heartbeat)
+            ->state(fn (): array => [
+                'interval_seconds' => $periodSeconds,
+                'next_check_at' => now()->addSeconds($periodSeconds + $graceSeconds),
+            ])
+            ->afterCreating(function (Monitor $monitor) use ($token, $graceSeconds): void {
+                $monitor->heartbeatConfig()->create([
+                    'token_hash' => HeartbeatToken::hash($token),
+                    'grace_seconds' => $graceSeconds,
+                ]);
+            });
     }
 
     public function paused(): static

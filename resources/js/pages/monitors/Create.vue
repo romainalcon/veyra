@@ -27,7 +27,7 @@ setLayoutProps({
     <div class="mx-auto w-full max-w-3xl px-4 py-6">
         <Heading
             title="New monitor"
-            description="Veyra checks the endpoint from its own workers and records every result."
+            description="Veyra checks HTTP endpoints and TCP ports from its own workers, or waits for pings from your scheduled jobs."
         />
         <MonitorForm
             :channels="channels"
@@ -35,6 +35,8 @@ setLayoutProps({
             :methods="methods"
             :types="types"
             :tcp-ports="tcpPorts"
+            :heartbeat-periods="heartbeatPeriods"
+            :max-grace-minutes="maxGraceMinutes"
             :action="store.form(organization.slug)"
             submit-label="Create monitor"
         />

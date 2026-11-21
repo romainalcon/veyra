@@ -14,6 +14,7 @@ enum ProbeErrorCode: string
     case ResponseTooLarge = 'response_too_large';
     case UnexpectedStatus = 'unexpected_status';
     case UnexpectedError = 'unexpected_error';
+    case HeartbeatFailed = 'heartbeat_failed';
 
     public function label(): string
     {
@@ -28,6 +29,7 @@ enum ProbeErrorCode: string
             self::ResponseTooLarge => 'Response too large',
             self::UnexpectedStatus => 'Unexpected status code',
             self::UnexpectedError => 'Unexpected error',
+            self::HeartbeatFailed => 'Failure reported by the job',
         };
     }
 }

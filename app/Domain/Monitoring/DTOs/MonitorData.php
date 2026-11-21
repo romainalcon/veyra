@@ -2,11 +2,12 @@
 
 namespace App\Domain\Monitoring\DTOs;
 
-use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Enums\MonitorType;
 
 /**
  * Validated monitor input. Exactly the target matching `type` is set.
+ * `intervalSeconds` is the check interval, or the expected ping period of a
+ * heartbeat.
  */
 final readonly class MonitorData
 {
@@ -16,10 +17,11 @@ final readonly class MonitorData
     public function __construct(
         public MonitorType $type,
         public string $name,
-        public MonitorInterval $interval,
+        public int $intervalSeconds,
         public int $timeoutSeconds,
         public ?HttpTargetData $http = null,
         public ?TcpTargetData $tcp = null,
+        public ?HeartbeatTargetData $heartbeat = null,
         public ?array $notificationChannelIds = null,
     ) {}
 }

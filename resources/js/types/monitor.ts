@@ -47,6 +47,12 @@ export type MonitorDetail = MonitorSummary & {
     header_names: string[];
     host: string | null;
     port: number | null;
+    heartbeat: {
+        grace_seconds: number;
+        last_ping_at: string | null;
+        last_ping_failed: boolean;
+        ping_url_prefix: string;
+    } | null;
     notification_channel_ids: string[];
     next_check_at: string | null;
     created_at: string | null;
@@ -60,6 +66,8 @@ export type MonitorFormOptions = {
     methods: HttpMethod[];
     types: MonitorTypeOption[];
     tcpPorts: number[];
+    heartbeatPeriods: IntervalOption[];
+    maxGraceMinutes: number;
 };
 
 export type PaginationLink = {

@@ -43,6 +43,8 @@ setLayoutProps({
             :methods="methods"
             :types="types"
             :tcp-ports="tcpPorts"
+            :heartbeat-periods="heartbeatPeriods"
+            :max-grace-minutes="maxGraceMinutes"
             :monitor="monitor"
             :action="update.form([organization.slug, monitor.id])"
             submit-label="Save changes"

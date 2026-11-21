@@ -66,13 +66,13 @@ test('TCP input is validated', function (array $overrides, string $field) {
     'timeout not below interval' => [['interval' => 60, 'timeout' => 60], 'timeout'],
 ]);
 
-test('heartbeat and unknown types cannot be created yet', function (string $type) {
+test('unknown types cannot be created', function (string $type) {
     $this->actingAs($this->user)
         ->post(route('organizations.monitors.store', $this->organization), tcpPayload(['type' => $type]))
         ->assertSessionHasErrors('type');
 
     expect(Monitor::count())->toBe(0);
-})->with(['heartbeat', 'ftp']);
+})->with(['ftp', 'dns']);
 
 test('a TCP monitor can be updated but its type cannot change', function () {
     $monitor = Monitor::factory()->tcp('example.com', 443)->create(['organization_id' => $this->organization->id]);
@@ -108,7 +108,8 @@ test('pages expose the TCP target and the allowed ports', function () {
     $this->get(route('organizations.monitors.create', $this->organization))
         ->assertInertia(fn (Assert $page) => $page
             ->where('tcpPorts', [22, 443, 5432])
-            ->where('types.1.value', 'tcp'));
+            ->where('types.1.value', 'tcp')
+            ->where('types.2.value', 'heartbeat'));
 });
 
 test('viewers are refused before validation and without DNS lookups', function (string $method) {

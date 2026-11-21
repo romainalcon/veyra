@@ -2,6 +2,7 @@
 
 namespace App\Http\Presenters;
 
+use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Enums\MonitorStatus;
@@ -59,6 +60,13 @@ final class MonitorPresenter
             'header_names' => $config?->headerNames() ?? [],
             'host' => $monitor->tcpConfig?->host,
             'port' => $monitor->tcpConfig?->port,
+            'heartbeat' => $monitor->heartbeatConfig === null ? null : [
+                'grace_seconds' => $monitor->heartbeatConfig->grace_seconds,
+                'last_ping_at' => $monitor->heartbeatConfig->last_ping_at?->toIso8601String(),
+                'last_ping_failed' => $monitor->heartbeatConfig->last_ping_failed,
+                // The token is never stored in plain text: only the URL shape is shown.
+                'ping_url_prefix' => url('ping').'/',
+            ],
             'notification_channel_ids' => $monitor->notificationChannels()->pluck('notification_channels.id')->all(),
             'next_check_at' => $monitor->next_check_at?->toIso8601String(),
             'created_at' => $monitor->created_at?->toIso8601String(),
@@ -107,6 +115,8 @@ final class MonitorPresenter
                 'label' => $type->label(),
             ], SaveMonitorRequest::CREATABLE_TYPES),
             'tcpPorts' => app(ProbeSettings::class)->tcpAllowedPorts,
+            'heartbeatPeriods' => HeartbeatPeriod::options(),
+            'maxGraceMinutes' => SaveMonitorRequest::MAX_GRACE_MINUTES,
         ];
     }
 }

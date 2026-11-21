@@ -7,11 +7,13 @@ use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Actions\CreateMonitor;
 use App\Domain\Monitoring\Actions\DeleteMonitor;
 use App\Domain\Monitoring\Actions\UpdateMonitor;
+use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Stats\MonitorSeries;
 use App\Domain\Monitoring\Stats\StatsRange;
 use App\Domain\Monitoring\Stats\UptimeCalculator;
+use App\Domain\Monitoring\Support\HeartbeatToken;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\IncidentPresenter;
@@ -31,7 +33,7 @@ class MonitorController extends Controller
         Gate::authorize('viewAny', [Monitor::class, $organization]);
 
         $monitors = $organization->monitors()
-            ->with(['httpConfig', 'tcpConfig', 'latestCheck', 'state'])
+            ->with(['httpConfig', 'tcpConfig', 'heartbeatConfig', 'latestCheck', 'state'])
             ->orderBy('name')
             ->paginate(25)
             ->through(fn (Monitor $monitor): array => MonitorPresenter::summary($monitor));
@@ -53,9 +55,17 @@ class MonitorController extends Controller
     {
         Gate::authorize('create', [Monitor::class, $organization]);
 
-        $monitor = $createMonitor->handle($organization, $request->toData());
+        $data = $request->toData();
+        $pingToken = $data->type === MonitorType::Heartbeat ? HeartbeatToken::generate() : null;
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Monitor created. The first check is on its way.')]);
+        $monitor = $createMonitor->handle($organization, $data, $pingToken);
+
+        if ($pingToken !== null) {
+            Inertia::flash('pingUrl', route('heartbeats.ping', $pingToken));
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('Monitor created. Copy the ping URL now: it is shown only once.')]);
+        } else {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('Monitor created. The first check is on its way.')]);
+        }
 
         return to_route('organizations.monitors.show', [$organization, $monitor]);
     }
@@ -64,7 +74,7 @@ class MonitorController extends Controller
     {
         Gate::authorize('view', [$monitor, $organization]);
 
-        $monitor->load(['httpConfig', 'tcpConfig', 'latestCheck', 'state']);
+        $monitor->load(['httpConfig', 'tcpConfig', 'heartbeatConfig', 'latestCheck', 'state']);
 
         $checks = $monitor->checks()
             ->orderByDesc('checked_at')
@@ -103,7 +113,11 @@ class MonitorController extends Controller
                 ];
             }),
             'checks' => $checks,
-            'can' => ['update' => $canManage, 'delete' => $canManage, 'checkNow' => $canManage],
+            'can' => [
+                'update' => $canManage,
+                'delete' => $canManage,
+                'checkNow' => $request->user()?->can('checkNow', [$monitor, $organization]) ?? false,
+            ],
         ]);
     }
 
@@ -111,7 +125,7 @@ class MonitorController extends Controller
     {
         Gate::authorize('update', [$monitor, $organization]);
 
-        $monitor->load(['httpConfig', 'tcpConfig']);
+        $monitor->load(['httpConfig', 'tcpConfig', 'heartbeatConfig']);
 
         return Inertia::render('monitors/Edit', [
             ...MonitorPresenter::formOptions($organization),

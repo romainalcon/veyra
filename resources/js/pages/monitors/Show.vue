@@ -4,6 +4,7 @@ import { Pause, Pencil, Play, RefreshCw, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
+import HeartbeatPanel from '@/components/monitors/HeartbeatPanel.vue';
 import MonitorStatsPanel from '@/components/monitors/MonitorStatsPanel.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
@@ -189,18 +190,29 @@ const remove = () => router.visit(destroy(params.value));
                 </dd>
             </div>
             <div>
-                <dt class="text-muted-foreground">Interval / timeout</dt>
-                <dd class="mt-1">
-                    {{ formatInterval(monitor.interval_seconds) }} /
-                    {{ monitor.timeout_seconds }} s
-                </dd>
+                <template v-if="monitor.heartbeat">
+                    <dt class="text-muted-foreground">Period / grace</dt>
+                    <dd class="mt-1">
+                        {{ formatInterval(monitor.interval_seconds) }} /
+                        {{ formatInterval(monitor.heartbeat.grace_seconds) }}
+                    </dd>
+                </template>
+                <template v-else>
+                    <dt class="text-muted-foreground">Interval / timeout</dt>
+                    <dd class="mt-1">
+                        {{ formatInterval(monitor.interval_seconds) }} /
+                        {{ monitor.timeout_seconds }} s
+                    </dd>
+                </template>
             </div>
             <div v-if="monitor.type === 'http'">
                 <dt class="text-muted-foreground">Expected statuses</dt>
                 <dd class="mt-1">{{ monitor.expected_statuses }}</dd>
             </div>
             <div>
-                <dt class="text-muted-foreground">Next check</dt>
+                <dt class="text-muted-foreground">
+                    {{ monitor.heartbeat ? 'Ping expected by' : 'Next check' }}
+                </dt>
                 <dd class="mt-1">
                     {{
                         monitor.enabled
@@ -218,6 +230,12 @@ const remove = () => router.visit(destroy(params.value));
                 <dd class="mt-1">{{ monitor.header_names.join(', ') }}</dd>
             </div>
         </dl>
+
+        <HeartbeatPanel
+            :monitor="monitor"
+            :organization-slug="organization.slug"
+            :can-update="can.update"
+        />
 
         <Deferred data="stats">
             <template #fallback>

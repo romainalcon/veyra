@@ -3,6 +3,7 @@
 namespace App\Domain\Monitoring\Models;
 
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
@@ -36,6 +37,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read Organization $organization
  * @property-read MonitorHttpConfig|null $httpConfig
  * @property-read MonitorTcpConfig|null $tcpConfig
+ * @property-read MonitorHeartbeatConfig|null $heartbeatConfig
  * @property-read MonitorCheck|null $latestCheck
  * @property-read MonitorState|null $state
  */
@@ -86,6 +88,14 @@ class Monitor extends Model
     }
 
     /**
+     * @return HasOne<MonitorHeartbeatConfig, $this>
+     */
+    public function heartbeatConfig(): HasOne
+    {
+        return $this->hasOne(MonitorHeartbeatConfig::class);
+    }
+
+    /**
      * Human-readable destination, for lists and headers.
      */
     public function target(): ?string
@@ -93,7 +103,7 @@ class Monitor extends Model
         return match ($this->type) {
             MonitorType::Http => $this->httpConfig === null ? null : "{$this->httpConfig->method->value} {$this->httpConfig->url}",
             MonitorType::Tcp => $this->tcpConfig?->target(),
-            MonitorType::Heartbeat => null,
+            MonitorType::Heartbeat => 'Heartbeat every '.(HeartbeatPeriod::tryFrom($this->interval_seconds)?->label() ?? "{$this->interval_seconds} s"),
         };
     }
 

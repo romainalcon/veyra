@@ -11,8 +11,11 @@ const props = {
     types: [
         { value: 'http' as const, label: 'HTTP(S)' },
         { value: 'tcp' as const, label: 'TCP port' },
+        { value: 'heartbeat' as const, label: 'Heartbeat' },
     ],
     tcpPorts: [22, 443],
+    heartbeatPeriods: [{ value: 3600, label: '1 hour' }],
+    maxGraceMinutes: 1440,
     submitLabel: 'Create monitor',
 };
 
@@ -37,6 +40,7 @@ const tcpMonitor: MonitorDetail = {
     header_names: [],
     host: 'db.example.com',
     port: 22,
+    heartbeat: null,
     notification_channel_ids: [],
     next_check_at: null,
     created_at: null,
@@ -58,6 +62,23 @@ describe('MonitorForm', () => {
         expect(wrapper.find('input[name="host"]').exists()).toBe(true);
         expect(wrapper.find('input[name="port"]').exists()).toBe(true);
         expect(wrapper.text()).toContain('22, 443');
+    });
+
+    it('asks heartbeats for a period and grace instead of a target', async () => {
+        const wrapper = mount(MonitorForm, { props });
+
+        await wrapper.get('[data-test="type-heartbeat"]').setValue(true);
+
+        expect(wrapper.find('input[name="url"]').exists()).toBe(false);
+        expect(wrapper.find('input[name="host"]').exists()).toBe(false);
+        expect(wrapper.find('input[name="timeout"]').exists()).toBe(false);
+        expect(wrapper.find('input[name="grace_minutes"]').exists()).toBe(true);
+        expect(
+            (
+                wrapper.get('select[name="interval"]')
+                    .element as HTMLSelectElement
+            ).value,
+        ).toBe('3600');
     });
 
     it('keeps the type fixed when editing', () => {

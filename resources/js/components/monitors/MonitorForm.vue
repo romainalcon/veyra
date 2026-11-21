@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
 import type { RouteFormDefinition } from '@/wayfinder';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import HeadersEditor from '@/components/monitors/HeadersEditor.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
@@ -23,6 +23,8 @@ const props = defineProps<
 const isEdit = computed(() => props.monitor !== undefined);
 const monitorType = ref<MonitorType>(props.monitor?.type ?? 'http');
 const isHttp = computed(() => monitorType.value === 'http');
+const isTcp = computed(() => monitorType.value === 'tcp');
+const isHeartbeat = computed(() => monitorType.value === 'heartbeat');
 const replaceHeaders = ref(!isEdit.value);
 
 const httpMethod = ref<string>(props.monitor?.method ?? 'GET');
@@ -44,10 +46,25 @@ const statusesValid = computed(
 );
 
 const intervalOptions = computed(() =>
-    props.intervals.map((option) => ({
-        value: String(option.value),
-        label: option.label,
-    })),
+    (isHeartbeat.value ? props.heartbeatPeriods : props.intervals).map(
+        (option) => ({
+            value: String(option.value),
+            label: option.label,
+        }),
+    ),
+);
+
+// Keep a valid choice when switching between probed monitors and heartbeats.
+watch(intervalOptions, (options) => {
+    if (!options.some((option) => option.value === interval.value)) {
+        interval.value = isHeartbeat.value ? '3600' : '60';
+    }
+});
+
+const graceMinutes = computed(() =>
+    props.monitor?.heartbeat
+        ? Math.round(props.monitor.heartbeat.grace_seconds / 60)
+        : 5,
 );
 
 const currentTypeLabel = computed(
@@ -110,7 +127,16 @@ const methodOptions = computed(() =>
             <InputError :message="errors.name" />
         </div>
 
-        <div v-if="!isHttp" class="grid gap-2 sm:grid-cols-[1fr_8rem]">
+        <p
+            v-if="isHeartbeat"
+            class="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground"
+        >
+            Your job calls a secret ping URL when it runs. If no ping arrives
+            within the period plus the grace time, the heartbeat is reported
+            down. The URL is shown once after saving.
+        </p>
+
+        <div v-if="isTcp" class="grid gap-2 sm:grid-cols-[1fr_8rem]">
             <div class="grid gap-2">
                 <Label for="host">Host</Label>
                 <Input
@@ -180,7 +206,9 @@ const methodOptions = computed(() =>
 
         <div class="grid gap-4 sm:grid-cols-3">
             <div class="grid gap-2">
-                <Label for="interval">Check every</Label>
+                <Label for="interval">{{
+                    isHeartbeat ? 'Expected every' : 'Check every'
+                }}</Label>
                 <NativeSelect
                     id="interval"
                     name="interval"
@@ -189,7 +217,20 @@ const methodOptions = computed(() =>
                 />
                 <InputError :message="errors.interval" />
             </div>
-            <div class="grid gap-2">
+            <div v-if="isHeartbeat" class="grid gap-2">
+                <Label for="grace_minutes">Grace time (minutes)</Label>
+                <Input
+                    id="grace_minutes"
+                    name="grace_minutes"
+                    type="number"
+                    min="1"
+                    :max="maxGraceMinutes"
+                    required
+                    :default-value="graceMinutes"
+                />
+                <InputError :message="errors.grace_minutes" />
+            </div>
+            <div v-else class="grid gap-2">
                 <Label for="timeout">Timeout (seconds)</Label>
                 <Input
                     id="timeout"
