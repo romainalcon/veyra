@@ -26,6 +26,14 @@ Schedule::command('veyra:monitors:detect-stale')
     ->onOneServer();
 
 /*
+ * Planned maintenance: enter/leave the MAINTENANCE state on time.
+ */
+Schedule::command('veyra:maintenance:transition')
+    ->everyMinute()
+    ->withoutOverlapping(expiresAt: 5)
+    ->onOneServer();
+
+/*
  * Notifications: a single reminder for unacknowledged incidents.
  */
 Schedule::command('veyra:incidents:remind')->everyFiveMinutes()->withoutOverlapping()->onOneServer();

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Monitoring\Actions;
 
+use App\Domain\Maintenance\Services\MaintenanceSchedule;
 use App\Domain\Monitoring\DTOs\ProbeResult;
 use App\Domain\Monitoring\Enums\DispatchStatus;
 use App\Domain\Monitoring\Jobs\ApplyMonitorStateJob;
@@ -12,9 +13,12 @@ use Illuminate\Support\Str;
 
 /**
  * Persists a probe result exactly once per dispatch (replays are no-ops).
+ * Checks scheduled inside a maintenance window are flagged `in_maintenance`.
  */
 class RecordProbeResult
 {
+    public function __construct(private readonly MaintenanceSchedule $maintenanceSchedule) {}
+
     public function handle(MonitorDispatch $dispatch, ProbeResult $result, ?CarbonImmutable $checkedAt = null): bool
     {
         $checkedAt ??= CarbonImmutable::now();
@@ -37,6 +41,7 @@ class RecordProbeResult
                 'status_code' => $result->statusCode,
                 'error_code' => $result->errorCode?->value,
                 'metadata' => $result->metadata === [] ? null : json_encode($result->metadata),
+                'in_maintenance' => $this->maintenanceSchedule->covers($locked->monitor_id, $locked->scheduled_for),
                 'created_at' => $checkedAt->toDateTimeString(),
             ]);
 

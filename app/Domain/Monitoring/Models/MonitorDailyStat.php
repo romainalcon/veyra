@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $checks_count
  * @property int $success_count
  * @property int $failure_count
+ * @property int $maintenance_count
  * @property int|null $latency_avg_ms
  * @property int|null $latency_max_ms
  * @property int $expected_checks
@@ -35,6 +36,7 @@ class MonitorDailyStat extends Model
             'checks_count' => 'integer',
             'success_count' => 'integer',
             'failure_count' => 'integer',
+            'maintenance_count' => 'integer',
             'latency_avg_ms' => 'integer',
             'latency_max_ms' => 'integer',
             'expected_checks' => 'integer',

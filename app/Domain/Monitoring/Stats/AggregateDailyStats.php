@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\DB;
 /**
  * Recomputes the daily aggregates of one UTC day from raw checks. Idempotent:
  * rows are upserted (INSERT … SELECT … ON DUPLICATE KEY UPDATE), so it can run
- * repeatedly for "today" and "yesterday".
+ * repeatedly for "today" and "yesterday". Checks flagged `in_maintenance` are
+ * counted apart and removed from the expected checks: planned maintenance is
+ * neither uptime nor downtime.
  */
 class AggregateDailyStats
 {
@@ -28,16 +30,17 @@ class AggregateDailyStats
 
             $rows += DB::affectingStatement(<<<SQL
                 INSERT INTO monitor_daily_stats
-                    (monitor_id, day, checks_count, success_count, failure_count, latency_avg_ms, latency_max_ms, expected_checks, updated_at)
+                    (monitor_id, day, checks_count, success_count, failure_count, maintenance_count, latency_avg_ms, latency_max_ms, expected_checks, updated_at)
                 SELECT
                     c.monitor_id,
                     ?,
-                    COUNT(*),
-                    SUM(c.success = 1),
-                    SUM(c.success = 0),
-                    ROUND(AVG(CASE WHEN c.success = 1 THEN c.duration_ms END)),
-                    MAX(CASE WHEN c.success = 1 THEN c.duration_ms END),
-                    GREATEST(0, FLOOR(TIMESTAMPDIFF(SECOND, GREATEST(?, m.created_at), ?) / m.interval_seconds)),
+                    SUM(c.in_maintenance = 0),
+                    SUM(c.success = 1 AND c.in_maintenance = 0),
+                    SUM(c.success = 0 AND c.in_maintenance = 0),
+                    SUM(c.in_maintenance = 1),
+                    ROUND(AVG(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.duration_ms END)),
+                    MAX(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.duration_ms END),
+                    GREATEST(0, FLOOR(TIMESTAMPDIFF(SECOND, GREATEST(?, m.created_at), ?) / m.interval_seconds) - SUM(c.in_maintenance = 1)),
                     UTC_TIMESTAMP()
                 FROM monitor_checks c
                 JOIN monitors m ON m.id = c.monitor_id
@@ -49,6 +52,7 @@ class AggregateDailyStats
                     checks_count = VALUES(checks_count),
                     success_count = VALUES(success_count),
                     failure_count = VALUES(failure_count),
+                    maintenance_count = VALUES(maintenance_count),
                     latency_avg_ms = VALUES(latency_avg_ms),
                     latency_max_ms = VALUES(latency_max_ms),
                     expected_checks = VALUES(expected_checks),

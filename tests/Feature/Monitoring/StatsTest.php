@@ -130,3 +130,33 @@ test('the dashboard analytics only cover the current organization', function () 
                 ->where('analytics.uptime.24h.uptime', 100)
                 ->has('analytics.incidents.days', 30)));
 });
+
+test('planned maintenance is excluded from aggregates, uptime and expected checks', function () {
+    checksAt($this->monitor, '2026-11-21 08:00:00', 10, failures: 0);
+    checksAt($this->monitor, '2026-11-21 09:00:00', 5, failures: 5);
+    MonitorCheck::where('scheduled_for', '>=', '2026-11-21 09:00:00')->update(['in_maintenance' => true]);
+
+    app(AggregateDailyStats::class)->handle(CarbonImmutable::parse('2026-11-21'), $this->now);
+
+    expect(MonitorDailyStat::sole())
+        ->checks_count->toBe(10)
+        ->success_count->toBe(10)
+        ->failure_count->toBe(0)
+        ->maintenance_count->toBe(5)
+        ->expected_checks->toBe(1435);
+});
+
+test('24 h uptime ignores checks run during maintenance', function () {
+    checksAt($this->monitor, '2026-11-22 11:00:00', 10);
+    checksAt($this->monitor, '2026-11-22 11:30:00', 4, failures: 4);
+    MonitorCheck::where('scheduled_for', '>=', '2026-11-22 11:30:00')->update(['in_maintenance' => true]);
+
+    $summary = app(UptimeCalculator::class)->forMonitors(collect([$this->monitor]), StatsRange::Day)[$this->monitor->id];
+    $series = app(MonitorSeries::class)->latency($this->monitor, StatsRange::Day, $this->now);
+
+    expect($summary->uptime())->toBe(100.0)
+        ->and($summary->checks)->toBe(10)
+        ->and($summary->expected)->toBe(1436)
+        ->and(array_sum(array_column($series, 'maintenance')))->toBe(4)
+        ->and(array_sum(array_column($series, 'failures')))->toBe(0);
+});

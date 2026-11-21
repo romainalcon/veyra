@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Missing or stale data means UNKNOWN, never DOWN: a scheduler or worker
- * outage must not open (or resolve) incidents.
+ * outage must not open (or resolve) incidents. Monitors under planned
+ * maintenance are left alone: their state is restored when the window ends.
  */
 class DetectStaleMonitors
 {
@@ -29,7 +30,7 @@ class DetectStaleMonitors
             ->join('monitors', 'monitors.id', '=', 'monitor_states.monitor_id')
             ->where('monitors.enabled', true)
             ->whereNull('monitors.deleted_at')
-            ->where('monitor_states.status', '!=', MonitorStatus::Unknown->value)
+            ->whereNotIn('monitor_states.status', [MonitorStatus::Unknown->value, MonitorStatus::Maintenance->value])
             ->whereNotNull('monitor_states.last_checked_at')
             ->whereRaw('monitor_states.last_checked_at < DATE_SUB(?, INTERVAL (2 * monitors.interval_seconds + ?) SECOND)', [$now->toDateTimeString(), $grace])
             ->limit(500)
@@ -46,7 +47,7 @@ class DetectStaleMonitors
                 $state = MonitorState::query()->lockForUpdate()->find($monitorId);
 
                 if ($state === null
-                    || $state->status === MonitorStatus::Unknown
+                    || in_array($state->status, [MonitorStatus::Unknown, MonitorStatus::Maintenance], true)
                     || $state->last_checked_at === null
                     || $state->last_checked_at->greaterThanOrEqualTo($now->subSeconds(2 * $interval + $grace))) {
                     return 0;
