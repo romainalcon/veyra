@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Entitlements\LimitReached;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
@@ -10,6 +11,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -37,4 +39,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Organization limits (ADR-029): back to the form with a `limit` error and a toast.
+        $exceptions->render(function (LimitReached $exception, Request $request) {
+            $message = $exception->translatedMessage();
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message, 'errors' => ['limit' => [$message]]], 422);
+            }
+
+            Inertia::flash('toast', ['type' => 'error', 'message' => $message]);
+
+            return back()->withErrors(['limit' => $message]);
+        });
     })->create();

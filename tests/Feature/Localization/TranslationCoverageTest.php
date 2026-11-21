@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Incidents\Enums\IncidentEventType;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\MonitorInterval;
@@ -59,6 +60,7 @@ test('every enum label shown in the interface has a French translation', functio
         ...array_map(fn (IncidentEventType $case): string => $case->label(), IncidentEventType::cases()),
         ...array_map(fn (OrganizationRole $case): string => $case->label(), OrganizationRole::cases()),
         ...array_map(fn (NotificationEvent $case): string => $case->headline(), NotificationEvent::cases()),
+        ...array_map(fn (Feature $case): string => $case->limitMessage(), Feature::cases()),
         'Check failed',
     ];
 

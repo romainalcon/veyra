@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\System\CheckResult;
+use App\Domain\System\ConfigurationDoctor;
 use App\Domain\System\HealthCheck;
 use App\Domain\System\SchedulerHeartbeat;
 use App\Models\User;
@@ -67,4 +68,16 @@ test('the doctor reports blocking production issues with a failing exit code', f
     config(['app.debug' => false, 'mail.default' => 'smtp', 'session.secure' => true, 'app.url' => 'https://status.example.com', 'queue.default' => 'redis']);
 
     $this->artisan('veyra:doctor')->assertSuccessful();
+});
+
+test('the doctor fails a cloud edition running without cloud entitlements', function () {
+    config(['veyra.edition' => 'cloud']);
+
+    $result = collect(app(ConfigurationDoctor::class)->run())->firstWhere('name', 'entitlements');
+
+    expect($result->status)->toBe('fail');
+
+    config(['veyra.edition' => 'community']);
+
+    expect(collect(app(ConfigurationDoctor::class)->run())->firstWhere('name', 'entitlements')->status)->toBe('ok');
 });

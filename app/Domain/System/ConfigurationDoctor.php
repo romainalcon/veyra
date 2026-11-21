@@ -2,6 +2,8 @@
 
 namespace App\Domain\System;
 
+use App\Domain\Entitlements\CommunityEntitlements;
+use App\Domain\Entitlements\Contracts\Entitlements;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -10,7 +12,10 @@ use Throwable;
  */
 class ConfigurationDoctor
 {
-    public function __construct(private readonly HealthCheck $healthCheck) {}
+    public function __construct(
+        private readonly HealthCheck $healthCheck,
+        private readonly Entitlements $entitlements,
+    ) {}
 
     /**
      * @return list<CheckResult>
@@ -35,8 +40,21 @@ class ConfigurationDoctor
             in_array(config('mail.default'), ['log', 'array'], true) ? ($isProduction ? CheckResult::fail('mail', 'MAIL_MAILER is "'.config('mail.default').'": e-mail notifications are not delivered.') : CheckResult::warn('mail', 'Mail is only logged.')) : CheckResult::ok('mail', (string) config('mail.default')),
             config('veyra.source_url') ? CheckResult::ok('source_url', (string) config('veyra.source_url')) : CheckResult::warn('source_url', 'Set VEYRA_SOURCE_URL so users can obtain the source code (AGPL-3.0 §13).'),
             config('veyra.probes.allow_private_networks') ? CheckResult::warn('probes.private_networks', 'Private networks are reachable by probes: restrict who can create monitors.') : CheckResult::ok('probes.private_networks', 'Blocked'),
+            $this->entitlementsBinding(),
             CheckResult::warn('egress', 'Reminder: restrict outbound traffic of Horizon workers at network level (see docs/deployment).'),
         ];
+    }
+
+    /**
+     * A Cloud instance must bind its own entitlements; with the Community ones nothing is limited.
+     */
+    private function entitlementsBinding(): CheckResult
+    {
+        $isCommunityBinding = $this->entitlements instanceof CommunityEntitlements;
+
+        return config('veyra.edition') === 'cloud' && $isCommunityBinding
+            ? CheckResult::fail('entitlements', 'VEYRA_EDITION is "cloud" but no Cloud entitlements are installed: organizations are unlimited.')
+            : CheckResult::ok('entitlements', $isCommunityBinding ? 'Community (unlimited)' : class_basename($this->entitlements));
     }
 
     private function skipLocked(): CheckResult

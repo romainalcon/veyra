@@ -2,6 +2,8 @@
 
 namespace App\Domain\StatusPages\Actions;
 
+use App\Domain\Entitlements\Enums\Feature;
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\StatusPages\DTOs\StatusPageData;
 use App\Domain\StatusPages\Models\StatusPage;
@@ -10,7 +12,10 @@ use Illuminate\Support\Facades\DB;
 
 class SaveStatusPage
 {
-    public function __construct(private readonly SyncStatusPageComponents $syncStatusPageComponents) {}
+    public function __construct(
+        private readonly SyncStatusPageComponents $syncStatusPageComponents,
+        private readonly Quota $quota,
+    ) {}
 
     public function handle(Organization $organization, StatusPageData $data, ?StatusPage $statusPage = null): StatusPage
     {
@@ -24,6 +29,8 @@ class SaveStatusPage
             ];
 
             if ($statusPage === null) {
+                $this->quota->ensureCanAdd($organization, Feature::StatusPages);
+
                 $statusPage = $organization->statusPages()->create($attributes);
             } else {
                 $statusPage->update($attributes);

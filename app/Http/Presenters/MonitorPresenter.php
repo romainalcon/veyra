@@ -2,6 +2,7 @@
 
 namespace App\Http\Presenters;
 
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Certificates\CheckCertificateExpiry;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\HttpMethod;
@@ -124,10 +125,15 @@ final class MonitorPresenter
     }
 
     /**
+     * Intervals shorter than the organization minimum are left out, except
+     * the current interval of an edited monitor (limits apply to growth only).
+     *
      * @return array<string, mixed>
      */
-    public static function formOptions(Organization $organization): array
+    public static function formOptions(Organization $organization, ?int $currentInterval = null): array
     {
+        $minimumInterval = app(Quota::class)->minIntervalSeconds($organization);
+
         return [
             'channels' => $organization->notificationChannels()
                 ->orderBy('name')
@@ -140,7 +146,10 @@ final class MonitorPresenter
                     'enabled' => $channel->enabled,
                 ])
                 ->all(),
-            'intervals' => MonitorInterval::options(),
+            'intervals' => array_values(array_filter(
+                MonitorInterval::options(),
+                fn (array $option): bool => $minimumInterval === null || $option['value'] >= $minimumInterval || $option['value'] === $currentInterval,
+            )),
             'methods' => array_map(fn (HttpMethod $method): string => $method->value, HttpMethod::cases()),
             'types' => array_map(fn (MonitorType $type): array => [
                 'value' => $type->value,

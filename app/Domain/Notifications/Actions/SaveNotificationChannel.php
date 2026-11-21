@@ -2,24 +2,33 @@
 
 namespace App\Domain\Notifications\Actions;
 
+use App\Domain\Entitlements\Enums\Feature;
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Notifications\Enums\ChannelType;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
+use Illuminate\Support\Facades\DB;
 
 class SaveNotificationChannel
 {
+    public function __construct(private readonly Quota $quota) {}
+
     /**
      * @param  array{name: string, enabled: bool, is_default: bool, recipients?: list<string>, webhook_url?: string|null}  $data
      */
     public function create(Organization $organization, ChannelType $type, array $data): NotificationChannel
     {
-        return $organization->notificationChannels()->create([
-            'type' => $type,
-            'name' => $data['name'],
-            'enabled' => $data['enabled'],
-            'is_default' => $data['is_default'],
-            'config_encrypted' => $this->config($type, $data, []),
-        ]);
+        return DB::transaction(function () use ($organization, $type, $data): NotificationChannel {
+            $this->quota->ensureCanAdd($organization, Feature::NotificationChannels);
+
+            return $organization->notificationChannels()->create([
+                'type' => $type,
+                'name' => $data['name'],
+                'enabled' => $data['enabled'],
+                'is_default' => $data['is_default'],
+                'config_encrypted' => $this->config($type, $data, []),
+            ]);
+        });
     }
 
     /**

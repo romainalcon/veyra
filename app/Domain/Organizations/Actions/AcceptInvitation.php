@@ -2,6 +2,9 @@
 
 namespace App\Domain\Organizations\Actions;
 
+use App\Domain\Entitlements\Enums\Feature;
+use App\Domain\Entitlements\LimitReached;
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationInvitation;
 use App\Models\User;
@@ -11,9 +14,12 @@ use Illuminate\Validation\ValidationException;
 
 class AcceptInvitation
 {
+    public function __construct(private readonly Quota $quota) {}
+
     /**
      * Accept an invitation for the given user. The invitation row is locked and
      * deleted in the same transaction, so a token can be used only once.
+     * Joining is refused when the member limit was lowered since the invitation.
      *
      * @throws ValidationException
      */
@@ -38,6 +44,14 @@ class AcceptInvitation
             }
 
             $organization = $invitation->organization;
+
+            if (! $organization->members()->where('user_id', $user->id)->exists()) {
+                try {
+                    $this->quota->ensureCanAdd($organization, Feature::Members, fn (): int => $organization->members()->count());
+                } catch (LimitReached $exception) {
+                    throw ValidationException::withMessages(['invitation' => $exception->translatedMessage()]);
+                }
+            }
 
             $organization->members()->firstOrCreate(
                 ['user_id' => $user->id],

@@ -2,6 +2,8 @@
 
 namespace App\Domain\Monitoring\Actions;
 
+use App\Domain\Entitlements\Enums\Feature;
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\DTOs\MonitorData;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
@@ -14,17 +16,23 @@ use LogicException;
 
 class CreateMonitor
 {
-    public function __construct(private readonly SyncMonitorChannels $syncMonitorChannels) {}
+    public function __construct(
+        private readonly SyncMonitorChannels $syncMonitorChannels,
+        private readonly Quota $quota,
+    ) {}
 
     /**
      * Probed monitors are due immediately; a heartbeat is first evaluated
-     * after one period plus its grace.
+     * after one period plus its grace. A new monitor is active, so it counts
+     * against the active monitor limit.
      *
      * @param  string|null  $pingToken  plain ping token of a heartbeat (only its hash is stored)
      */
     public function handle(Organization $organization, MonitorData $data, ?string $pingToken = null): Monitor
     {
         return DB::transaction(function () use ($organization, $data, $pingToken): Monitor {
+            $this->quota->ensureCanAdd($organization, Feature::Monitors);
+
             $graceSeconds = $data->heartbeat->graceSeconds ?? 0;
 
             $monitor = $organization->monitors()->create([

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Monitors;
 
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\DTOs\ExpectedStatuses;
 use App\Domain\Monitoring\DTOs\HeartbeatTargetData;
 use App\Domain\Monitoring\DTOs\HttpTargetData;
@@ -141,6 +142,10 @@ class SaveMonitorRequest extends FormRequest
                     $validator->errors()->add('timeout', __('The timeout must be shorter than the interval.'));
                 }
 
+                if ($this->monitorType() !== MonitorType::Heartbeat && ! $validator->errors()->has('interval')) {
+                    $this->validateMinimumInterval($validator);
+                }
+
                 match ($this->monitorType()) {
                     MonitorType::Tcp => $this->validateTcpEndpoint($validator),
                     MonitorType::Http => $this->validateHttpTarget($validator),
@@ -148,6 +153,27 @@ class SaveMonitorRequest extends FormRequest
                 };
             },
         ];
+    }
+
+    /**
+     * Organization minimum for probed monitors (ADR-029). An edited monitor
+     * may keep an interval below a lowered minimum, but not move further below it.
+     */
+    private function validateMinimumInterval(Validator $validator): void
+    {
+        $minimum = app(Quota::class)->minIntervalSeconds($this->organization());
+        $interval = (int) $this->input('interval');
+        $monitor = $this->route('monitor');
+
+        if ($minimum === null || $interval >= $minimum) {
+            return;
+        }
+
+        if ($monitor instanceof Monitor && $interval >= $monitor->interval_seconds) {
+            return;
+        }
+
+        $validator->errors()->add('interval', __('The interval must be at least :seconds seconds for this organization.', ['seconds' => $minimum]));
     }
 
     /**

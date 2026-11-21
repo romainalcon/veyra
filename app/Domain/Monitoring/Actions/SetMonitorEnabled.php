@@ -2,6 +2,8 @@
 
 namespace App\Domain\Monitoring\Actions;
 
+use App\Domain\Entitlements\Enums\Feature;
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Events\MonitorStateChanged;
 use App\Domain\Monitoring\Models\Monitor;
@@ -12,12 +14,15 @@ use Illuminate\Support\Facades\DB;
 
 class SetMonitorEnabled
 {
+    public function __construct(private readonly Quota $quota) {}
+
     /**
      * Pausing stops scheduling (queued dispatches are skipped by the probe
      * job) and the state becomes UNKNOWN; an open incident stays open.
      * Resuming schedules a check right away (a heartbeat gets a full period
      * plus grace) and restarts the streaks, so results from before the pause
-     * never confirm a transition.
+     * never confirm a transition. Resuming counts against the active monitor
+     * limit; pausing is always allowed.
      */
     public function handle(Monitor $monitor, bool $enabled): Monitor
     {
@@ -26,6 +31,10 @@ class SetMonitorEnabled
         }
 
         DB::transaction(function () use ($monitor, $enabled): void {
+            if ($enabled) {
+                $this->quota->ensureCanAdd($monitor->organization, Feature::Monitors);
+            }
+
             MonitorState::ensureFor($monitor->id);
             $state = MonitorState::query()->lockForUpdate()->findOrFail($monitor->id);
             $previous = $state->status;

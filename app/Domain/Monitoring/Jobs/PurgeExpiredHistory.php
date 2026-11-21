@@ -2,7 +2,9 @@
 
 namespace App\Domain\Monitoring\Jobs;
 
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Enums\DispatchStatus;
+use App\Domain\Organizations\Models\Organization;
 use App\Domain\System\SchedulerBeatLog;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -12,8 +14,8 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Bounded retention cleanup. Raw checks older than the retention period are
- * deleted per monitor in batches (index (monitor_id, checked_at)); daily
+ * Bounded retention cleanup. Raw checks older than their organization's
+ * retention period (ADR-029, instance default otherwise) are deleted per monitor in batches (index (monitor_id, checked_at)); daily
  * aggregates are kept. The job re-dispatches itself when its time budget is
  * exhausted instead of running one unbounded DELETE.
  */
@@ -44,14 +46,21 @@ class PurgeExpiredHistory implements ShouldBeUnique, ShouldQueue
     {
         $startedAt = microtime(true);
         $now = CarbonImmutable::now();
-        $checksCutoff = $now->subDays((int) config('veyra.monitoring.check_retention_days', 30));
+        $quota = app(Quota::class);
 
-        $monitorIds = DB::table('monitors')
+        /** @var array<string, CarbonImmutable> $cutoffs */
+        $cutoffs = [];
+
+        $monitors = DB::table('monitors')
             ->when($this->afterMonitorId, fn ($query, $after) => $query->where('id', '>', $after))
             ->orderBy('id')
-            ->pluck('id');
+            ->get(['id', 'organization_id']);
 
-        foreach ($monitorIds as $monitorId) {
+        foreach ($monitors as $monitor) {
+            $monitorId = (string) $monitor->id;
+            $organizationId = (string) $monitor->organization_id;
+            $checksCutoff = $cutoffs[$organizationId] ??= $now->subDays($this->retentionDays($quota, $organizationId));
+
             do {
                 $deleted = DB::table('monitor_checks')
                     ->where('monitor_id', $monitorId)
@@ -81,6 +90,15 @@ class PurgeExpiredHistory implements ShouldBeUnique, ShouldQueue
         do {
             $deleted = SchedulerBeatLog::purge($now, self::BATCH_SIZE);
         } while ($deleted === self::BATCH_SIZE && ! $this->outOfTime($startedAt));
+    }
+
+    private function retentionDays(Quota $quota, string $organizationId): int
+    {
+        $organization = Organization::query()->find($organizationId);
+
+        return $organization === null
+            ? max(1, (int) config('veyra.monitoring.check_retention_days', 30))
+            : $quota->checkRetentionDays($organization);
     }
 
     /**

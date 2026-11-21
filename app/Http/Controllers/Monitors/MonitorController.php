@@ -128,7 +128,7 @@ class MonitorController extends Controller
         $monitor->load(['httpConfig', 'tcpConfig', 'heartbeatConfig', 'tlsCertificate']);
 
         return Inertia::render('monitors/Edit', [
-            ...MonitorPresenter::formOptions($organization),
+            ...MonitorPresenter::formOptions($organization, $monitor->interval_seconds),
             'monitor' => MonitorPresenter::detail($monitor),
         ]);
     }

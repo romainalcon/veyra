@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationMember;
@@ -62,7 +63,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{id: string, name: string, slug: string, role: string, openIncidents: int, can: array<string, bool>}|null
+     * @return array{id: string, name: string, slug: string, role: string, openIncidents: int, can: array<string, bool>, limits: array<string, array{used: int, limit: int}>}|null
      */
     private function currentOrganization(Request $request, ?User $user): ?array
     {
@@ -86,6 +87,8 @@ class HandleInertiaRequests extends Middleware
                 'delete' => $user->can('delete', $organization),
                 'manageMembers' => $user->can('manageMembers', $organization),
             ],
+            // Only limited features are listed: empty on the Community edition (ADR-029).
+            'limits' => app(Quota::class)->usage($organization),
         ];
     }
 }
