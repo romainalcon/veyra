@@ -4,6 +4,17 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-11-21
+
+### Added
+- **Planned maintenance** — one-off maintenance windows covering one or more monitors (UTC, up to `VEYRA_MAINTENANCE_MAX_HOURS`, 168 h by default). Checks keep running and are flagged; the new `MAINTENANCE` state opens no incident, sends no notification or reminder, and flagged checks are excluded from uptime, coverage and latency. Monitors return to `UNKNOWN` after a window and are confirmed again from fresh results. Management page, monitor banner and chart marker.
+- **Public status pages** — `/status/{slug}` pages showing selected monitors under public names and groups: overall status, 90-day uptime, ongoing and recent incidents, running and planned maintenance. Served without a session or cookies from a cached, whitelisted snapshot; missing data is shown as "No data", never as operational. Pages refresh automatically every minute.
+- **Public incident updates** — messages published on status pages, distinct from internal incident notes.
+- **Custom status page domains** — ownership proven with a `_veyra-challenge` TXT record, re-checked daily and revoked after three consecutive failures. A verified domain only serves its status page. `/status-domains/tls-check` lets a reverse proxy issue certificates on demand; Caddy example in `deploy/docker/Caddyfile.example`.
+
+### Security
+- Public pages never expose monitor identifiers, internal names, URLs, incident causes, internal notes or user data, and are rate limited per IP. Custom domains refuse IP literals, local suffixes and the instance's own host; the application (login, dashboards, session cookies) is never served on a custom domain. See `docs/SECURITY.md` and ADR-021 to ADR-023.
+
 ## [1.0.2] — 2026-11-21
 
 ### Fixed
@@ -31,7 +42,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/romainalcon/veyra/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/romainalcon/veyra/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/romainalcon/veyra/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/romainalcon/veyra/releases/tag/v1.0.0
