@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Monitors;
 
+use App\Domain\Incidents\Models\Incident;
 use App\Domain\Monitoring\Actions\CreateMonitor;
 use App\Domain\Monitoring\Actions\DeleteMonitor;
 use App\Domain\Monitoring\Actions\UpdateMonitor;
@@ -9,6 +10,7 @@ use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\IncidentPresenter;
 use App\Http\Presenters\MonitorPresenter;
 use App\Http\Requests\Monitors\SaveMonitorRequest;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +26,7 @@ class MonitorController extends Controller
         Gate::authorize('viewAny', [Monitor::class, $organization]);
 
         $monitors = $organization->monitors()
-            ->with(['httpConfig', 'latestCheck'])
+            ->with(['httpConfig', 'latestCheck', 'state'])
             ->orderBy('name')
             ->paginate(25)
             ->through(fn (Monitor $monitor): array => MonitorPresenter::summary($monitor));
@@ -57,7 +59,7 @@ class MonitorController extends Controller
     {
         Gate::authorize('view', [$monitor, $organization]);
 
-        $monitor->load(['httpConfig', 'latestCheck']);
+        $monitor->load(['httpConfig', 'latestCheck', 'state']);
 
         $checks = $monitor->checks()
             ->orderByDesc('checked_at')
@@ -67,8 +69,17 @@ class MonitorController extends Controller
 
         $canManage = $request->user()?->can('update', [$monitor, $organization]) ?? false;
 
+        $incidents = $monitor->incidents()
+            ->orderByDesc('started_at')
+            ->limit(10)
+            ->get()
+            ->each(fn (Incident $incident) => $incident->setRelation('monitor', $monitor))
+            ->map(fn (Incident $incident): array => IncidentPresenter::summary($incident))
+            ->all();
+
         return Inertia::render('monitors/Show', [
             'monitor' => MonitorPresenter::detail($monitor),
+            'incidents' => $incidents,
             'checks' => $checks,
             'can' => ['update' => $canManage, 'delete' => $canManage, 'checkNow' => $canManage],
         ]);

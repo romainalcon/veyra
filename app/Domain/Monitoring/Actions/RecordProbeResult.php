@@ -4,6 +4,7 @@ namespace App\Domain\Monitoring\Actions;
 
 use App\Domain\Monitoring\DTOs\ProbeResult;
 use App\Domain\Monitoring\Enums\DispatchStatus;
+use App\Domain\Monitoring\Jobs\ApplyMonitorStateJob;
 use App\Domain\Monitoring\Models\MonitorDispatch;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +41,10 @@ class RecordProbeResult
             ]);
 
             $locked->update(['status' => DispatchStatus::Completed, 'completed_at' => $checkedAt]);
+
+            if ($inserted === 1) {
+                ApplyMonitorStateJob::dispatch($locked->monitor_id)->afterCommit();
+            }
 
             return $inserted === 1;
         });

@@ -65,6 +65,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Confirmed State
+    |--------------------------------------------------------------------------
+    |
+    | Consecutive results required to confirm DOWN / UP, and how long a monitor
+    | may go without results before its state becomes UNKNOWN.
+    |
+    */
+
+    'monitoring' => [
+        'down_after_failures' => (int) env('VEYRA_DOWN_AFTER_FAILURES', 3),
+        'up_after_successes' => (int) env('VEYRA_UP_AFTER_SUCCESSES', 2),
+        'stale_grace_seconds' => 120,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Instance Administrators
     |--------------------------------------------------------------------------
     |

@@ -1,8 +1,14 @@
 <?php
 
+use App\Domain\Monitoring\Actions\ApplyMonitorState;
+use App\Domain\Monitoring\Enums\MonitorStatus;
+use App\Domain\Monitoring\Enums\ProbeErrorCode;
+use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Domain\Organizations\Models\Organization;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -43,4 +49,22 @@ function memberOf(Organization $organization, OrganizationRole $role): User
     ]);
 
     return $user;
+}
+
+/**
+ * Record a raw check for the monitor and apply it to the confirmed state,
+ * as ExecuteHttpProbe + ApplyMonitorStateJob would.
+ */
+function recordCheck(Monitor $monitor, bool $success, string $scheduledFor, ?int $statusCode = null): ?MonitorStatus
+{
+    MonitorCheck::factory()->create([
+        'monitor_id' => $monitor->id,
+        'scheduled_for' => $scheduledFor,
+        'checked_at' => CarbonImmutable::parse($scheduledFor)->addSeconds(1),
+        'success' => $success,
+        'status_code' => $statusCode ?? ($success ? 200 : 503),
+        'error_code' => $success ? null : ProbeErrorCode::UnexpectedStatus,
+    ]);
+
+    return app(ApplyMonitorState::class)->handle($monitor->id);
 }

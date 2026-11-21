@@ -1,5 +1,13 @@
 export type HttpMethod = 'GET' | 'HEAD';
 
+export type MonitorStatus = 'up' | 'degraded' | 'down' | 'unknown';
+
+export type MonitorState = {
+    status: MonitorStatus;
+    last_changed_at: string | null;
+    active_incident_id: string | null;
+};
+
 export type MonitorCheck = {
     id: string;
     checked_at: string;
@@ -19,6 +27,7 @@ export type MonitorSummary = {
     enabled: boolean;
     interval_seconds: number;
     latest_check: MonitorCheck | null;
+    state: MonitorState;
 };
 
 export type MonitorDetail = MonitorSummary & {

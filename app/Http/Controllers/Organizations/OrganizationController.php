@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Organizations;
 
+use App\Domain\Incidents\Enums\IncidentStatus;
+use App\Domain\Incidents\Models\Incident;
+use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Organizations\Actions\CreateOrganization;
 use App\Domain\Organizations\Actions\DeleteOrganization;
 use App\Domain\Organizations\Actions\UpdateOrganization;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\IncidentPresenter;
 use App\Http\Requests\Organizations\SaveOrganizationRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -36,11 +40,31 @@ class OrganizationController extends Controller
     {
         Gate::authorize('view', $organization);
 
+        $statusCounts = $organization->monitors()
+            ->where('monitors.enabled', true)
+            ->leftJoin('monitor_states', 'monitor_states.monitor_id', '=', 'monitors.id')
+            ->selectRaw("COALESCE(monitor_states.status, 'unknown') as status, COUNT(*) as aggregate")
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $openIncidents = $organization->incidents()
+            ->where('status', IncidentStatus::Open)
+            ->with('monitor:id,name,deleted_at')
+            ->orderByDesc('started_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (Incident $incident): array => IncidentPresenter::summary($incident))
+            ->all();
+
         return Inertia::render('organizations/Dashboard', [
             'monitorCounts' => [
                 'total' => $organization->monitors()->count(),
                 'paused' => $organization->monitors()->where('enabled', false)->count(),
+                'byStatus' => collect(MonitorStatus::cases())
+                    ->mapWithKeys(fn (MonitorStatus $status): array => [$status->value => (int) ($statusCounts[$status->value] ?? 0)])
+                    ->all(),
             ],
+            'openIncidents' => $openIncidents,
         ]);
     }
 

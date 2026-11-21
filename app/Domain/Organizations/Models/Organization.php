@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organizations\Models;
 
+use App\Domain\Incidents\Models\Incident;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Models\User;
 use App\Policies\OrganizationPolicy;
@@ -86,5 +87,13 @@ class Organization extends Model
     public function monitors(): HasMany
     {
         return $this->hasMany(Monitor::class);
+    }
+
+    /**
+     * @return HasMany<Incident, $this>
+     */
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(Incident::class);
     }
 }

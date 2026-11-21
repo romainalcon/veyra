@@ -5,6 +5,7 @@ namespace App\Domain\Monitoring\Actions;
 use App\Domain\Monitoring\DTOs\MonitorData;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Models\MonitorState;
 use App\Domain\Organizations\Models\Organization;
 use Illuminate\Support\Facades\DB;
 
@@ -24,6 +25,8 @@ class CreateMonitor
                 'timeout_seconds' => $data->timeoutSeconds,
                 'next_check_at' => now()->startOfSecond(),
             ]);
+
+            MonitorState::ensureFor($monitor->id);
 
             $monitor->httpConfig()->create([
                 'url' => $data->url,

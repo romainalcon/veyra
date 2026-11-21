@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\Incidents\IncidentController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\Monitors\MonitorCheckController;
 use App\Http\Controllers\Monitors\MonitorController;
@@ -67,6 +68,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('monitors/{monitor}/checks', [MonitorCheckController::class, 'store'])
                 ->middleware('throttle:manual-checks')
                 ->name('monitors.checks.store');
+
+            Route::get('incidents', [IncidentController::class, 'index'])->name('incidents.index');
+            Route::get('incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
+            Route::post('incidents/{incident}/acknowledgement', [IncidentController::class, 'acknowledge'])
+                ->middleware('throttle:30,1')
+                ->name('incidents.acknowledge');
+            Route::post('incidents/{incident}/notes', [IncidentController::class, 'addNote'])
+                ->middleware('throttle:30,1')
+                ->name('incidents.notes.store');
         });
 });
 

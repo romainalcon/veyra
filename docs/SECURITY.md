@@ -21,3 +21,6 @@ Use rate limits, idempotency keys, bounded queue retries, health checks, audited
 - Logs use `UrlRedactor` (no query string, no credentials) and never include exception messages from cURL.
 - Rate limits: monitor creation (`VEYRA_MONITORS_PER_HOUR`, default 30/user), manual checks (6/min per user, 1 per 30 s per monitor).
 - Application checks do not replace network egress filtering of the Horizon workers (see deployment guides).
+
+## Real-time payloads (Sprint 3)
+Broadcasts on `private-organizations.{id}` carry identifiers and enum values only (`monitor_id`, `incident_id`, `status`). Clients fetch data over HTTP, where policies apply again; the channel itself is authorized for members only.

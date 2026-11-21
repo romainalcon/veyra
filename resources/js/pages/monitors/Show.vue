@@ -1,23 +1,20 @@
 <script setup lang="ts">
-import {
-    Head,
-    Link,
-    router,
-    setLayoutProps,
-    usePage,
-    usePoll,
-} from '@inertiajs/vue3';
+import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Pause, Pencil, Play, RefreshCw, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
+import StatusBadge from '@/components/monitors/StatusBadge.vue';
+import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     formatDateTime,
     formatDuration,
+    formatElapsed,
     formatInterval,
 } from '@/lib/monitoring';
+import { show as showIncident } from '@/routes/organizations/incidents';
 import {
     destroy,
     edit,
@@ -29,6 +26,7 @@ import { store as checkNow } from '@/routes/organizations/monitors/checks';
 import type {
     CurrentOrganization,
     CursorPaginated,
+    IncidentSummary,
     MonitorCheck,
     MonitorDetail,
 } from '@/types';
@@ -36,6 +34,7 @@ import type {
 const props = defineProps<{
     monitor: MonitorDetail;
     checks: CursorPaginated<MonitorCheck>;
+    incidents: IncidentSummary[];
     can: { update: boolean; delete: boolean; checkNow: boolean };
 }>();
 
@@ -54,10 +53,16 @@ setLayoutProps({
     ],
 });
 
-// HTTP polling until real-time updates land (Sprint 3). Only the first page
-// of history is refreshed.
 const isFirstPage = computed(() => props.checks.prev_cursor === null);
-usePoll(15000, { only: ['monitor', 'checks'] }, { keepAlive: false });
+const activeIncident = computed(
+    () =>
+        props.incidents.find((incident) => incident.status === 'open') ?? null,
+);
+
+useOrganizationRealtime(organization.value.id, {
+    only: ['monitor', 'checks', 'incidents'],
+    filter: (payload) => payload.monitor_id === props.monitor.id,
+});
 
 const toggle = () =>
     router.visit(enabled(params.value), {
@@ -81,6 +86,7 @@ const remove = () => router.visit(destroy(params.value));
                     class="flex items-center gap-2 text-xl font-semibold tracking-tight"
                 >
                     {{ monitor.name }}
+                    <StatusBadge :status="monitor.state.status" />
                     <Badge v-if="!monitor.enabled" variant="secondary"
                         >Paused</Badge
                     >
@@ -134,9 +140,23 @@ const remove = () => router.visit(destroy(params.value));
 
         <InputError :message="page.props.errors?.monitor" />
 
+        <Link
+            v-if="activeIncident"
+            :href="showIncident([organization.slug, activeIncident.id])"
+            class="block rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+            data-test="active-incident-banner"
+        >
+            <span class="font-medium">Ongoing incident</span> since
+            {{ formatDateTime(activeIncident.started_at) }} ({{
+                formatElapsed(activeIncident.duration_seconds)
+            }})<template v-if="activeIncident.cause">
+                — {{ activeIncident.cause }}</template
+            >
+        </Link>
+
         <dl class="grid gap-4 rounded-lg border p-4 text-sm sm:grid-cols-4">
             <div>
-                <dt class="text-muted-foreground">Latest check</dt>
+                <dt class="text-muted-foreground">Latest raw check</dt>
                 <dd class="mt-1">
                     <CheckBadge :check="monitor.latest_check" />
                 </dd>
@@ -167,6 +187,37 @@ const remove = () => router.visit(destroy(params.value));
                 <dd class="mt-1">{{ monitor.header_names.join(', ') }}</dd>
             </div>
         </dl>
+
+        <section v-if="incidents.length" class="space-y-3">
+            <h2 class="text-base font-medium">Recent incidents</h2>
+            <ul class="divide-y rounded-lg border text-sm">
+                <li v-for="incident in incidents" :key="incident.id">
+                    <Link
+                        :href="showIncident([organization.slug, incident.id])"
+                        class="flex flex-wrap items-center gap-3 px-4 py-2 hover:bg-muted/50"
+                    >
+                        <Badge
+                            :variant="
+                                incident.status === 'open'
+                                    ? 'destructive'
+                                    : 'secondary'
+                            "
+                        >
+                            {{
+                                incident.status === 'open' ? 'Open' : 'Resolved'
+                            }}
+                        </Badge>
+                        <span>{{ formatDateTime(incident.started_at) }}</span>
+                        <span class="text-muted-foreground">
+                            {{ formatElapsed(incident.duration_seconds) }}
+                        </span>
+                        <span class="truncate text-muted-foreground">{{
+                            incident.cause
+                        }}</span>
+                    </Link>
+                </li>
+            </ul>
+        </section>
 
         <section class="space-y-3">
             <h2 class="text-base font-medium">Check history</h2>

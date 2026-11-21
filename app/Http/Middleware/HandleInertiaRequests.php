@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationMember;
 use App\Models\User;
@@ -54,7 +55,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{id: string, name: string, slug: string, role: string, can: array<string, bool>}|null
+     * @return array{id: string, name: string, slug: string, role: string, openIncidents: int, can: array<string, bool>}|null
      */
     private function currentOrganization(Request $request, ?User $user): ?array
     {
@@ -72,6 +73,7 @@ class HandleInertiaRequests extends Middleware
             'name' => $organization->name,
             'slug' => $organization->slug,
             'role' => $membership->role->value,
+            'openIncidents' => $organization->incidents()->where('status', IncidentStatus::Open)->count(),
             'can' => [
                 'update' => $user->can('update', $organization),
                 'delete' => $user->can('delete', $organization),

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Monitoring\Models;
 
+use App\Domain\Incidents\Models\Incident;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Organizations\Models\Organization;
 use App\Policies\MonitorPolicy;
@@ -33,6 +34,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read Organization $organization
  * @property-read MonitorHttpConfig|null $httpConfig
  * @property-read MonitorCheck|null $latestCheck
+ * @property-read MonitorState|null $state
  */
 #[Fillable(['organization_id', 'name', 'type', 'enabled', 'interval_seconds', 'timeout_seconds', 'next_check_at'])]
 #[UseFactory(MonitorFactory::class)]
@@ -86,6 +88,22 @@ class Monitor extends Model
     public function latestCheck(): HasOne
     {
         return $this->hasOne(MonitorCheck::class)->latestOfMany('checked_at');
+    }
+
+    /**
+     * @return HasOne<MonitorState, $this>
+     */
+    public function state(): HasOne
+    {
+        return $this->hasOne(MonitorState::class);
+    }
+
+    /**
+     * @return HasMany<Incident, $this>
+     */
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(Incident::class);
     }
 
     /**

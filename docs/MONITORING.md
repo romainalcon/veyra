@@ -42,3 +42,22 @@
 - **Probe**: see `app/Domain/Monitoring/Probes/HttpProbe.php`. Every hop is validated by `DestinationGuard`, the connection is pinned with `CURLOPT_RESOLVE`, redirects are followed manually (max 3), environment proxies are ignored, custom headers are dropped on cross-host redirects and responses are capped at 1 MiB.
 - **Error codes**: `invalid_url`, `forbidden_destination`, `dns_failure`, `connection_failed`, `timeout`, `tls_error`, `too_many_redirects`, `response_too_large`, `unexpected_status`, `unexpected_error`.
 - The UI shows the latest **raw** check; confirmed UP/DOWN states arrive in Sprint 3.
+
+## Confirmed state (Sprint 3)
+- `ApplyMonitorStateJob` (queue `incidents`, unique per monitor until processing) runs after each recorded check. Under the `monitor_states` row lock it reads the latest checks (ordered by `scheduled_for`) and recomputes the streaks, so lost, duplicated or late jobs cannot corrupt counters.
+- Ordering guard: if the newest check is not newer than `last_applied_scheduled_for`, nothing changes (late checks stay in history only).
+- Transitions (thresholds `VEYRA_DOWN_AFTER_FAILURES=3`, `VEYRA_UP_AFTER_SUCCESSES=2`):
+
+| From \ Leading streak | 1–2 failures | ≥ 3 failures | 1 success | ≥ 2 successes |
+|---|---|---|---|---|
+| UNKNOWN | UNKNOWN | DOWN | UNKNOWN | UP |
+| UP | DEGRADED | DOWN | UP | UP |
+| DEGRADED | DEGRADED | DOWN | UP | UP |
+| DOWN | DOWN | DOWN | DOWN | UP |
+
+- DEGRADED = failing but not confirmed; it never opens an incident.
+- Entering DOWN opens an incident (`started_at` = first failed check of the streak); leaving DOWN for UP resolves it (`resolved_at` = first successful check of the recovery streak). `monitor_states.active_incident_id` guarantees a single active incident.
+- Stale data: `veyra:monitors:detect-stale` (every minute) sets UNKNOWN when `last_checked_at` is older than `2 × interval + 120 s`. Incidents are neither opened nor resolved; an open incident gets `data_unavailable`, then `data_restored`. Streaks restart from the gap (`streak_since`), as they do on pause/resume.
+- Pausing → UNKNOWN (incident stays open). Deleting → open incident resolved with `monitor_deleted`.
+- Domain events for Sprint 4 notifications: `IncidentOpened`, `IncidentResolved`, `IncidentAcknowledged`, `MonitorStateChanged` (dispatched after commit).
+- Real time: `OrganizationUpdate` broadcasts `monitor.checked`, `monitor.state-changed` and `incident.updated` on `private-organizations.{id}` with identifiers only; the UI reloads props over HTTP (debounced), resyncs after reconnecting and polls every 30 s whenever the socket is unavailable.

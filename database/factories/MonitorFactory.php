@@ -6,6 +6,7 @@ use App\Domain\Monitoring\DTOs\ExpectedStatuses;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Models\MonitorState;
 use App\Domain\Organizations\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -35,6 +36,8 @@ class MonitorFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (Monitor $monitor): void {
+            MonitorState::ensureFor($monitor->id);
+
             $monitor->httpConfig()->create([
                 'url' => 'https://example.com/health',
                 'method' => HttpMethod::Get,

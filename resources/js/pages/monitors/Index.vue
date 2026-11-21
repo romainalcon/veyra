@@ -3,6 +3,8 @@ import { Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Activity, Plus } from '@lucide/vue';
 import { computed } from 'vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
+import StatusBadge from '@/components/monitors/StatusBadge.vue';
+import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +25,8 @@ const organization = computed(
     () => page.props.currentOrganization as CurrentOrganization,
 );
 
+useOrganizationRealtime(organization.value.id, { only: ['monitors'] });
+
 const paginationLabel = (label: string) =>
     label.replace('&laquo;', '«').replace('&raquo;', '»');
 
@@ -39,7 +43,7 @@ setLayoutProps({
             <div>
                 <h1 class="text-xl font-semibold tracking-tight">Monitors</h1>
                 <p class="text-sm text-muted-foreground">
-                    Results shown are the latest raw checks.
+                    Confirmed state, with the latest raw check alongside.
                 </p>
             </div>
             <Button v-if="canCreate" as-child>
@@ -78,6 +82,7 @@ setLayoutProps({
                 >
                     <div class="min-w-0 flex-1">
                         <p class="flex items-center gap-2 truncate font-medium">
+                            <StatusBadge :status="monitor.state.status" />
                             {{ monitor.name }}
                             <Badge v-if="!monitor.enabled" variant="secondary"
                                 >Paused</Badge

@@ -46,3 +46,8 @@
 - `monitor_checks` and `monitor_dispatches` have **no foreign key** to `monitors`: deleting an organization cascades to monitors and configs, then `PurgeMonitorHistory` (queue `maintenance`) deletes history in batches of 1000.
 - Monitors are soft deleted; their history is kept until retention (Sprint 4).
 - The scheduler relies on `FOR UPDATE SKIP LOCKED`, available since MariaDB 10.6; `tests/Integration/MonitorClaimingTest.php` verifies the server version and disjoint claiming.
+
+## State and incidents (Sprint 3)
+- `monitor_states` (one row per monitor) is only modified under `SELECT … FOR UPDATE`; `active_incident_id` replaces a partial unique index.
+- `incidents.organization_id` is denormalized for tenant-scoped listing (`(organization_id, status, started_at)`); `incident_events` is the append-only timeline.
+- Added index `monitor_checks (monitor_id, scheduled_for)` for streak evaluation.

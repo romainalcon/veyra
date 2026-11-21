@@ -13,9 +13,9 @@
 - [x] Idempotent check persistence and history list.
 
 ## Sprint 3 — Incidents and real time
-- [ ] UP/DOWN/DEGRADED/UNKNOWN state machine.
-- [ ] Confirmation thresholds, unique active incident, recovery and acknowledgement.
-- [ ] Reverb status events and UI resync fallback.
+- [x] UP/DOWN/DEGRADED/UNKNOWN state machine.
+- [x] Confirmation thresholds, unique active incident, recovery and acknowledgement.
+- [x] Reverb status events and UI resync fallback.
 
 ## Sprint 4 — Notifications and analytics
 - [ ] Email/Discord channels and retry-safe delivery.

@@ -31,6 +31,15 @@ export type ConnectionStatus =
     'connected' | 'disconnected' | 'connecting' | 'reconnecting' | 'failed';
 
 /**
+ * Events broadcast on `private-organizations.{id}` (identifiers only).
+ */
+export const REALTIME_EVENTS = [
+    '.monitor.checked',
+    '.monitor.state-changed',
+    '.incident.updated',
+] as const;
+
+/**
  * After a connection is re-established, events may have been missed: the
  * page must be refreshed from the HTTP source of truth.
  */
@@ -44,4 +53,41 @@ export function shouldResync(
             previous === 'disconnected' ||
             previous === 'failed')
     );
+}
+
+/**
+ * Polling is the fallback whenever real-time delivery is unavailable.
+ */
+export function shouldPoll(
+    configured: boolean,
+    status: ConnectionStatus | undefined,
+): boolean {
+    return !configured || status !== 'connected';
+}
+
+/**
+ * Coalesces bursts of events into a single reload.
+ */
+export function debounce(callback: () => void, waitMs: number) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const debounced = () => {
+        if (timer !== undefined) {
+            clearTimeout(timer);
+        }
+
+        timer = setTimeout(() => {
+            timer = undefined;
+            callback();
+        }, waitMs);
+    };
+
+    debounced.cancel = () => {
+        if (timer !== undefined) {
+            clearTimeout(timer);
+            timer = undefined;
+        }
+    };
+
+    return debounced;
 }

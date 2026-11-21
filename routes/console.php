@@ -13,6 +13,14 @@ Schedule::command('veyra:monitors:dispatch')
     ->onOneServer();
 
 /*
+ * Missing data turns confirmed states into UNKNOWN (never DOWN).
+ */
+Schedule::command('veyra:monitors:detect-stale')
+    ->everyMinute()
+    ->withoutOverlapping(expiresAt: 5)
+    ->onOneServer();
+
+/*
  * Horizon metrics for the dashboard graphs.
  */
 Schedule::command('horizon:snapshot')->everyFiveMinutes();

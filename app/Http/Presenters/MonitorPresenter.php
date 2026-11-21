@@ -4,6 +4,7 @@ namespace App\Http\Presenters;
 
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorInterval;
+use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 
@@ -28,6 +29,11 @@ final class MonitorPresenter
             'enabled' => $monitor->enabled,
             'interval_seconds' => $monitor->interval_seconds,
             'latest_check' => $monitor->latestCheck ? self::check($monitor->latestCheck) : null,
+            'state' => [
+                'status' => ($monitor->state->status ?? MonitorStatus::Unknown)->value,
+                'last_changed_at' => $monitor->state?->last_changed_at?->toIso8601String(),
+                'active_incident_id' => $monitor->state?->active_incident_id,
+            ],
         ];
     }
 

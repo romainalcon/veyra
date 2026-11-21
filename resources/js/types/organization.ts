@@ -8,6 +8,7 @@ export type OrganizationSummary = {
 
 export type CurrentOrganization = OrganizationSummary & {
     role: OrganizationRole;
+    openIncidents: number;
     can: {
         update: boolean;
         delete: boolean;

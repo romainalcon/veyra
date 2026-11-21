@@ -4,6 +4,7 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
+    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
@@ -32,6 +33,12 @@ const { isCurrentUrl } = useCurrentUrl();
                         <span>{{ item.title }}</span>
                     </Link>
                 </SidebarMenuButton>
+                <SidebarMenuBadge
+                    v-if="item.badge"
+                    class="bg-red-600 text-white"
+                    :data-test="`nav-badge-${item.title.toLowerCase()}`"
+                    >{{ item.badge }}</SidebarMenuBadge
+                >
             </SidebarMenuItem>
         </SidebarMenu>
     </SidebarGroup>

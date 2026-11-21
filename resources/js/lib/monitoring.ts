@@ -51,3 +51,21 @@ export function formatInterval(seconds: number): string {
 export function formatDateTime(iso: string | null): string {
     return iso ? new Date(iso).toLocaleString() : '—';
 }
+
+export function formatElapsed(seconds: number): string {
+    if (seconds < 60) {
+        return `${seconds}s`;
+    }
+
+    const minutes = Math.floor(seconds / 60);
+
+    if (minutes < 60) {
+        return `${minutes}m`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+
+    return hours < 24
+        ? `${hours}h ${minutes % 60}m`
+        : `${Math.floor(hours / 24)}d ${hours % 24}h`;
+}

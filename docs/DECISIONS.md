@@ -48,3 +48,11 @@
 ## ADR-014 — Scheduling outbox and catch-up rules
 **Decision:** Due monitors are claimed with `SKIP LOCKED` into `monitor_dispatches` in the same transaction that advances `next_check_at`; a relay publishes rows to Redis and redelivers stale ones (3 attempts max). Missed slots are skipped, stale dispatches are marked `skipped`, and no check is recorded in either case.
 **Why:** MariaDB stays the source of truth; Redis loss or worker outages cannot lose schedules or fabricate failures ("missing data is UNKNOWN, never DOWN").
+
+## ADR-015 — Confirmed state semantics
+**Decision:** States are recomputed from the latest checks under a row lock (no incremental counters). DEGRADED means 1–2 unconfirmed failures and never opens an incident; DOWN needs 3 consecutive failures, recovery 2 consecutive successes (configurable per instance). Missing data yields UNKNOWN and never opens or resolves an incident.
+**Why:** Idempotent, order-safe transitions, and a worker outage can never masquerade as service downtime.
+
+## ADR-016 — Real-time by identifiers
+**Decision:** Reverb events contain only identifiers; pages reload their props over HTTP (debounced), resync after reconnection and fall back to 30 s polling while disconnected.
+**Why:** Reverb stays a delivery mechanism; authorization and data shaping remain in HTTP controllers.
