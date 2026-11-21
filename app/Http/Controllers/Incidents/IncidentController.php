@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Incidents;
 
 use App\Domain\Incidents\Actions\AcknowledgeIncident;
 use App\Domain\Incidents\Actions\AddIncidentNote;
+use App\Domain\Incidents\Actions\PostPublicIncidentUpdate;
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Notifications\Models\NotificationDelivery;
 use App\Domain\Organizations\Models\Organization;
@@ -71,8 +72,9 @@ class IncidentController extends Controller
         return Inertia::render('incidents/Show', [
             'incident' => IncidentPresenter::detail($incident),
             'deliveries' => $deliveries,
-            'can' => ['acknowledge' => $canManage, 'addNote' => $canManage],
+            'can' => ['acknowledge' => $canManage, 'addNote' => $canManage, 'postPublicUpdate' => $canManage],
             'noteMaxLength' => AddIncidentNote::MAX_LENGTH,
+            'publicUpdateMaxLength' => PostPublicIncidentUpdate::MAX_LENGTH,
         ]);
     }
 
@@ -103,6 +105,23 @@ class IncidentController extends Controller
         /** @var User $user */
         $user = $request->user();
         $addIncidentNote->handle($incident, $user, (string) $validated['message']);
+
+        return back();
+    }
+
+    public function postPublicUpdate(Request $request, Organization $organization, Incident $incident, PostPublicIncidentUpdate $postPublicIncidentUpdate): RedirectResponse
+    {
+        Gate::authorize('postPublicUpdate', [$incident, $organization]);
+
+        $validated = $request->validate([
+            'public_message' => ['required', 'string', 'min:1', 'max:'.PostPublicIncidentUpdate::MAX_LENGTH],
+        ]);
+
+        /** @var User $user */
+        $user = $request->user();
+        $postPublicIncidentUpdate->handle($incident, $user, (string) $validated['public_message']);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Public update published.')]);
 
         return back();
     }

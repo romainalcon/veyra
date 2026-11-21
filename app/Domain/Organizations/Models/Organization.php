@@ -6,6 +6,7 @@ use App\Domain\Incidents\Models\Incident;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Notifications\Models\NotificationChannel;
+use App\Domain\StatusPages\Models\StatusPage;
 use App\Models\User;
 use App\Policies\OrganizationPolicy;
 use Database\Factories\OrganizationFactory;
@@ -32,6 +33,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, OrganizationInvitation> $invitations
  * @property-read Collection<int, Monitor> $monitors
  * @property-read Collection<int, MaintenanceWindow> $maintenanceWindows
+ * @property-read Collection<int, StatusPage> $statusPages
  */
 #[Fillable(['name', 'slug', 'settings'])]
 #[UseFactory(OrganizationFactory::class)]
@@ -98,6 +100,14 @@ class Organization extends Model
     public function maintenanceWindows(): HasMany
     {
         return $this->hasMany(MaintenanceWindow::class);
+    }
+
+    /**
+     * @return HasMany<StatusPage, $this>
+     */
+    public function statusPages(): HasMany
+    {
+        return $this->hasMany(StatusPage::class);
     }
 
     /**

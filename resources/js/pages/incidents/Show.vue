@@ -24,8 +24,9 @@ import type { CurrentOrganization, Delivery, IncidentDetail } from '@/types';
 const props = defineProps<{
     incident: IncidentDetail;
     deliveries: Delivery[];
-    can: { acknowledge: boolean; addNote: boolean };
+    can: { acknowledge: boolean; addNote: boolean; postPublicUpdate: boolean };
     noteMaxLength: number;
+    publicUpdateMaxLength: number;
 }>();
 
 const page = usePage();
@@ -208,6 +209,45 @@ const acknowledgeIncident = () =>
                 <InputError :message="errors.message" />
                 <Button :disabled="processing" data-test="add-note-button">
                     Add note
+                </Button>
+            </Form>
+        </section>
+
+        <section
+            v-if="can.postPublicUpdate"
+            class="space-y-3 rounded-lg border border-sky-200 p-4 dark:border-sky-900/50"
+            data-test="public-update-section"
+        >
+            <Form
+                v-bind="IncidentController.postPublicUpdate.form(params)"
+                :options="{ preserveScroll: true }"
+                reset-on-success
+                class="space-y-3"
+                v-slot="{ errors, processing }"
+            >
+                <div>
+                    <Label for="public_message">Post a public update</Label>
+                    <p class="text-xs text-muted-foreground">
+                        Shown on every published status page that includes this
+                        monitor. Internal notes above are never public.
+                    </p>
+                </div>
+                <textarea
+                    id="public_message"
+                    name="public_message"
+                    rows="3"
+                    required
+                    :maxlength="publicUpdateMaxLength"
+                    class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                    placeholder="We are investigating elevated error rates."
+                />
+                <InputError :message="errors.public_message" />
+                <Button
+                    variant="outline"
+                    :disabled="processing"
+                    data-test="post-public-update-button"
+                >
+                    Publish update
                 </Button>
             </Form>
         </section>

@@ -31,4 +31,9 @@ class IncidentPolicy
     {
         return $this->acknowledge($user, $incident, $organization);
     }
+
+    public function postPublicUpdate(User $user, Incident $incident, Organization $organization): bool
+    {
+        return $this->acknowledge($user, $incident, $organization);
+    }
 }

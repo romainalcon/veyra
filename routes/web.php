@@ -11,7 +11,10 @@ use App\Http\Controllers\Notifications\NotificationChannelController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
+use App\Http\Controllers\StatusPages\PublicStatusPageController;
 use App\Http\Controllers\System\HealthController;
+use App\Http\Middleware\HandleAppearance;
+use App\Http\Middleware\HandlePublicInertiaRequests;
 use App\Http\Middleware\ResolveOrganization;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +24,16 @@ Route::get('health', HealthController::class)
     ->middleware('throttle:60,1')
     ->withoutMiddleware(['web'])
     ->name('health');
+
+/*
+ * Public status pages: no session, no cookies, no CSRF, nothing user-related
+ * shared with the page (see HandlePublicInertiaRequests).
+ */
+Route::get('status/{slug}', PublicStatusPageController::class)
+    ->where('slug', '[a-z0-9-]{3,60}')
+    ->withoutMiddleware(['web'])
+    ->middleware(['throttle:status-pages', HandleAppearance::class, HandlePublicInertiaRequests::class])
+    ->name('status-pages.public');
 
 Route::get('invitations/{token}', [InvitationAcceptanceController::class, 'show'])
     ->middleware('throttle:30,1')
@@ -101,6 +114,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('incidents/{incident}/notes', [IncidentController::class, 'addNote'])
                 ->middleware('throttle:30,1')
                 ->name('incidents.notes.store');
+            Route::post('incidents/{incident}/public-updates', [IncidentController::class, 'postPublicUpdate'])
+                ->middleware('throttle:30,1')
+                ->name('incidents.public-updates.store');
 
             Route::get('notification-channels', [NotificationChannelController::class, 'index'])->name('notification-channels.index');
             Route::post('notification-channels', [NotificationChannelController::class, 'store'])
