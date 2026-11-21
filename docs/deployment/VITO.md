@@ -49,6 +49,9 @@ See `docs/operations/BACKUP.md`. Keep the site's `.env` (APP_KEY) in your secret
 ## Reverse proxy
 Vito's Nginx terminates TLS: set `TRUSTED_PROXIES=127.0.0.1` and `SESSION_SECURE_COOKIE=true`.
 
+### Custom status page domains (Sprint 6)
+Vito's Nginx does not issue certificates on demand. For each verified custom domain of a status page, add the domain as an alias of the Veyra site in Vito and re-issue the Let's Encrypt certificate including it (or create a separate site proxying to Veyra with its own certificate). Requests for that host are restricted by Veyra to the status page; the TXT ownership check (`veyra:status-domains:verify`, hourly through the scheduler) still applies. `GET /status-domains/tls-check?domain=<host>` tells you whether Veyra currently serves a domain.
+
 The paths in `deploy/vito/` (`/home/vito/veyra.example.com`, `php8.4`) are examples; adapt them to the site created in Vito.
 
 ## Notifications (Sprint 4)

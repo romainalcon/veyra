@@ -13,7 +13,8 @@ use Symfony\Component\HttpFoundation\Response;
  * Public, unauthenticated and sessionless. Unpublished pages are 404.
  *
  * The page is resolved explicitly: the route runs without the `web` group,
- * whose exclusion also removes SubstituteBindings.
+ * whose exclusion also removes SubstituteBindings. Verified custom domains
+ * are served by ServeStatusPageForCustomDomain through render().
  */
 class PublicStatusPageController extends Controller
 {

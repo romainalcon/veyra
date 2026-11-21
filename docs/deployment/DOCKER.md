@@ -43,5 +43,14 @@ See `docs/operations/BACKUP.md` (`deploy/docker/backup.sh` and `restore.sh`).
 - `VITE_REVERB_*` values are compiled into the JavaScript bundle at build time; rebuild the images after changing them.
 - The stack is built, started, smoke-tested and backed up/restored in CI (`.github/workflows/docker.yml`).
 
+## TLS and custom status page domains (Sprint 6)
+The stack serves plain HTTP on `VEYRA_HTTP_PORT`; terminate TLS in front of it. `deploy/docker/Caddyfile.example` shows a Caddy configuration that also issues certificates on demand for custom status page domains:
+- Caddy asks `GET /status-domains/tls-check?domain=<host>` before requesting a certificate; Veyra answers 200 only for verified domains of published status pages.
+- Requests whose `Host` is a verified custom domain only ever get the status page on `/` (everything else is 404); the instance host from `APP_URL` is never diverted.
+- Keep `TRUSTED_PROXIES` set so that the forwarded scheme and client IP (used for rate limiting) are honoured.
+- Users point their domain (CNAME or A/AAAA) at the server and prove ownership with the `_veyra-challenge.<domain>` TXT record shown in the UI; `veyra:status-domains:verify` (hourly) re-checks it daily and stops serving a domain after 3 consecutive failures.
+
+This configuration is an example and is not exercised in CI.
+
 ## Notifications (Sprint 4)
 The Horizon workers (queue `notifications`) need outbound access to your SMTP server (`MAIL_*`) and, if Discord channels are used, to `discord.com:443`. Keep these destinations in the egress allow-list of the probe/worker hosts.

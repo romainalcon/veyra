@@ -80,7 +80,11 @@ setLayoutProps({
                         >
                     </p>
                     <p class="truncate text-sm text-muted-foreground">
-                        /status/{{ statusPage.slug }} ·
+                        {{
+                            statusPage.custom_url ??
+                            `/status/${statusPage.slug}`
+                        }}
+                        ·
                         {{ statusPage.components_count }} component(s)
                     </p>
                 </div>
@@ -92,7 +96,9 @@ setLayoutProps({
                         as-child
                     >
                         <a
-                            :href="statusPage.public_url"
+                            :href="
+                                statusPage.custom_url ?? statusPage.public_url
+                            "
                             target="_blank"
                             rel="noopener noreferrer"
                         >

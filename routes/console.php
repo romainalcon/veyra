@@ -34,6 +34,11 @@ Schedule::command('veyra:maintenance:transition')
     ->onOneServer();
 
 /*
+ * Status pages: custom domain ownership (TXT) checks.
+ */
+Schedule::command('veyra:status-domains:verify')->hourly()->withoutOverlapping()->onOneServer();
+
+/*
  * Notifications: a single reminder for unacknowledged incidents.
  */
 Schedule::command('veyra:incidents:remind')->everyFiveMinutes()->withoutOverlapping()->onOneServer();

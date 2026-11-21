@@ -13,6 +13,8 @@ use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
 use App\Http\Controllers\StatusPages\PublicStatusPageController;
 use App\Http\Controllers\StatusPages\StatusPageController;
+use App\Http\Controllers\StatusPages\StatusPageDomainController;
+use App\Http\Controllers\StatusPages\TlsCheckController;
 use App\Http\Controllers\System\HealthController;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandlePublicInertiaRequests;
@@ -35,6 +37,14 @@ Route::get('status/{slug}', PublicStatusPageController::class)
     ->withoutMiddleware(['web'])
     ->middleware(['throttle:status-pages', HandleAppearance::class, HandlePublicInertiaRequests::class])
     ->name('status-pages.public');
+
+/*
+ * On-demand TLS "ask" endpoint for the reverse proxy (see docs/deployment).
+ */
+Route::get('status-domains/tls-check', TlsCheckController::class)
+    ->middleware('throttle:60,1')
+    ->withoutMiddleware(['web'])
+    ->name('status-domains.tls-check');
 
 Route::get('invitations/{token}', [InvitationAcceptanceController::class, 'show'])
     ->middleware('throttle:30,1')
@@ -129,6 +139,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('throttle:30,1')
                 ->name('status-pages.update');
             Route::delete('status-pages/{statusPage}', [StatusPageController::class, 'destroy'])->name('status-pages.destroy');
+            Route::put('status-pages/{statusPage}/domain', [StatusPageDomainController::class, 'update'])
+                ->middleware('throttle:10,1')
+                ->name('status-pages.domain.update');
+            Route::delete('status-pages/{statusPage}/domain', [StatusPageDomainController::class, 'destroy'])->name('status-pages.domain.destroy');
+            Route::post('status-pages/{statusPage}/domain/verify', [StatusPageDomainController::class, 'verify'])
+                ->middleware('throttle:10,1')
+                ->name('status-pages.domain.verify');
 
             Route::get('notification-channels', [NotificationChannelController::class, 'index'])->name('notification-channels.index');
             Route::post('notification-channels', [NotificationChannelController::class, 'store'])

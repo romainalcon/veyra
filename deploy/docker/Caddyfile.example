@@ -1,0 +1,27 @@
+# Veyra — example Caddy front for the Docker Compose stack, with on-demand TLS
+# for custom status page domains. Caddy runs on the host (ports 80/443) and
+# proxies to the `web` service published on VEYRA_HTTP_PORT (8000 by default).
+#
+# Certificates for custom domains are only requested when Veyra approves the
+# host name: /status-domains/tls-check answers 200 for verified domains of
+# published status pages and 404 otherwise, so pointing an arbitrary domain at
+# the server never triggers a certificate.
+
+{
+	on_demand_tls {
+		ask http://127.0.0.1:8000/status-domains/tls-check
+	}
+}
+
+# The instance itself (must match APP_URL).
+veyra.example.com {
+	reverse_proxy 127.0.0.1:8000
+}
+
+# Any other host name: custom status page domains.
+https:// {
+	tls {
+		on_demand
+	}
+	reverse_proxy 127.0.0.1:8000
+}

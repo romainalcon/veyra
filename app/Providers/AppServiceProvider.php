@@ -12,6 +12,8 @@ use App\Domain\Monitoring\Probes\ProbeSettings;
 use App\Domain\Monitoring\Probes\SystemDnsResolver;
 use App\Domain\Notifications\Listeners\QueueNotificationsOnIncidentEvent;
 use App\Domain\Notifications\Models\NotificationChannel;
+use App\Domain\StatusPages\Contracts\TxtResolver;
+use App\Domain\StatusPages\Support\SystemTxtResolver;
 use App\Domain\System\Benchmark\SimulatedProbe;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -33,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(DnsResolver::class, SystemDnsResolver::class);
+        $this->app->bind(TxtResolver::class, SystemTxtResolver::class);
         $this->app->bind(ProbeSettings::class, fn (): ProbeSettings => ProbeSettings::fromConfig());
 
         // Load benchmarks only (veyra:benchmark): never available in production.
