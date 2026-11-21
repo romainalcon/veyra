@@ -38,6 +38,10 @@ class MonitorFactory extends Factory
         return $this->afterCreating(function (Monitor $monitor): void {
             MonitorState::ensureFor($monitor->id);
 
+            if ($monitor->type !== MonitorType::Http) {
+                return;
+            }
+
             $monitor->httpConfig()->create([
                 'url' => 'https://example.com/health',
                 'method' => HttpMethod::Get,
@@ -56,6 +60,11 @@ class MonitorFactory extends Factory
         return $this->afterCreating(function (Monitor $monitor) use ($attributes): void {
             $monitor->httpConfig()->update($attributes);
         });
+    }
+
+    public function ofType(MonitorType $type): static
+    {
+        return $this->state(fn (): array => ['type' => $type]);
     }
 
     public function paused(): static

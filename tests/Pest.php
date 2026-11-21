@@ -54,7 +54,7 @@ function memberOf(Organization $organization, OrganizationRole $role): User
 
 /**
  * Record a raw check for the monitor and apply it to the confirmed state,
- * as ExecuteHttpProbe + ApplyMonitorStateJob would (including the
+ * as ExecuteProbe + ApplyMonitorStateJob would (including the
  * maintenance flag set by RecordProbeResult).
  */
 function recordCheck(Monitor $monitor, bool $success, string $scheduledFor, ?int $statusCode = null): ?MonitorStatus

@@ -4,7 +4,7 @@ namespace App\Domain\Monitoring\Actions;
 
 use App\Domain\Monitoring\Enums\DispatchStatus;
 use App\Domain\Monitoring\Enums\DispatchTrigger;
-use App\Domain\Monitoring\Jobs\ExecuteHttpProbe;
+use App\Domain\Monitoring\Jobs\ExecuteProbe;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorDispatch;
 use Illuminate\Support\Facades\DB;
@@ -48,7 +48,7 @@ class RequestManualCheck
         ]);
 
         try {
-            ExecuteHttpProbe::dispatch($id);
+            ExecuteProbe::dispatch($id);
         } catch (Throwable $exception) {
             // Back to pending: the scheduler's relay will publish it.
             MonitorDispatch::query()->whereKey($id)->where('status', DispatchStatus::Dispatched)->update([

@@ -3,7 +3,7 @@
 use App\Domain\Monitoring\Actions\PublishPendingDispatches;
 use App\Domain\Monitoring\Actions\ScheduleDueMonitors;
 use App\Domain\Monitoring\Enums\DispatchStatus;
-use App\Domain\Monitoring\Jobs\ExecuteHttpProbe;
+use App\Domain\Monitoring\Jobs\ExecuteProbe;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
@@ -64,7 +64,7 @@ test('pending dispatches are published to the probes queue', function () {
     $counts = app(PublishPendingDispatches::class)->handle($this->now);
 
     expect($counts['published'])->toBe(1);
-    Queue::assertPushedOn('probes', ExecuteHttpProbe::class, fn (ExecuteHttpProbe $job) => $job->dispatchId === $dispatch->id);
+    Queue::assertPushedOn('probes', ExecuteProbe::class, fn (ExecuteProbe $job) => $job->dispatchId === $dispatch->id);
 
     expect($dispatch->fresh())
         ->status->toBe(DispatchStatus::Dispatched)
@@ -98,7 +98,7 @@ test('lost jobs are redelivered, then given up after three attempts', function (
     expect($redeliver->fresh()->attempts)->toBe(2)
         ->and($exhausted->fresh()->status)->toBe(DispatchStatus::Failed)
         ->and($recent->fresh()->attempts)->toBe(1);
-    Queue::assertPushed(ExecuteHttpProbe::class, 1);
+    Queue::assertPushed(ExecuteProbe::class, 1);
 });
 
 test('stale dispatches are skipped instead of executed late', function () {
@@ -118,7 +118,7 @@ test('the scheduled command claims and publishes in one run', function () {
 
     $this->artisan('veyra:monitors:dispatch')->assertSuccessful();
 
-    Queue::assertPushedOn('probes', ExecuteHttpProbe::class);
+    Queue::assertPushedOn('probes', ExecuteProbe::class);
     expect(MonitorDispatch::sole()->status)->toBe(DispatchStatus::Dispatched);
 });
 
@@ -142,7 +142,7 @@ test('a redelivered job whose check already exists does not probe again', functi
     $dispatch = MonitorDispatch::factory()->status(DispatchStatus::Dispatched)->create();
     MonitorCheck::factory()->create(['monitor_id' => $dispatch->monitor_id, 'dispatch_id' => $dispatch->id]);
 
-    app()->call([new ExecuteHttpProbe($dispatch->id), 'handle']);
+    app()->call([new ExecuteProbe($dispatch->id), 'handle']);
 
     Http::assertNothingSent();
     expect($dispatch->fresh()->status)->toBe(DispatchStatus::Completed);

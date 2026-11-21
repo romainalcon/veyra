@@ -2,7 +2,7 @@
 
 use App\Domain\Monitoring\Enums\DispatchStatus;
 use App\Domain\Monitoring\Enums\DispatchTrigger;
-use App\Domain\Monitoring\Jobs\ExecuteHttpProbe;
+use App\Domain\Monitoring\Jobs\ExecuteProbe;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
@@ -223,7 +223,7 @@ test('check now queues a manual dispatch once per second', function () {
     $dispatch = MonitorDispatch::sole();
     expect($dispatch->trigger)->toBe(DispatchTrigger::Manual)
         ->and($dispatch->status)->toBe(DispatchStatus::Dispatched);
-    Queue::assertPushedOn('probes', ExecuteHttpProbe::class);
+    Queue::assertPushedOn('probes', ExecuteProbe::class);
 });
 
 test('check now is refused for paused monitors', function () {

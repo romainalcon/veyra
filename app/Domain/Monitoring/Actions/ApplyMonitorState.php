@@ -42,8 +42,6 @@ class ApplyMonitorState
 
     public function handle(string $monitorId, ?StateThresholds $thresholds = null): ?MonitorStatus
     {
-        $thresholds ??= StateThresholds::fromConfig();
-
         return DB::transaction(function () use ($monitorId, $thresholds): ?MonitorStatus {
             MonitorState::ensureFor($monitorId);
 
@@ -53,6 +51,8 @@ class ApplyMonitorState
             if ($state === null || $monitor === null || $monitor->trashed() || ! $monitor->enabled) {
                 return null;
             }
+
+            $thresholds ??= StateThresholds::forType($monitor->type);
 
             $checks = MonitorCheck::query()
                 ->where('monitor_id', $monitorId)

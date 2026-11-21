@@ -2,67 +2,10 @@
 
 namespace App\Domain\Monitoring\Jobs;
 
-use App\Domain\Monitoring\Actions\RecordProbeResult;
-use App\Domain\Monitoring\Enums\DispatchStatus;
-use App\Domain\Monitoring\Models\MonitorCheck;
-use App\Domain\Monitoring\Models\MonitorDispatch;
-use App\Domain\Monitoring\Probes\HttpProbe;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-
 /**
- * Executes one outbox dispatch. Bounded (single try, hard timeout) and
- * idempotent: a redelivered or duplicated job records nothing twice. A lost
- * job is redelivered by PublishPendingDispatches.
+ * Kept so that jobs queued by Veyra 1.1 (serialized with this class name)
+ * still run after an upgrade to 1.2. New dispatches use ExecuteProbe.
+ *
+ * @deprecated since 1.2, to be removed in 1.3.
  */
-class ExecuteHttpProbe implements ShouldQueue
-{
-    use Queueable;
-
-    public int $tries = 1;
-
-    public int $timeout = 45;
-
-    public bool $failOnTimeout = true;
-
-    public function __construct(public readonly string $dispatchId)
-    {
-        $this->onQueue('probes');
-    }
-
-    public function handle(HttpProbe $probe, RecordProbeResult $recordProbeResult): void
-    {
-        $dispatch = MonitorDispatch::query()->with('monitor.httpConfig')->find($this->dispatchId);
-
-        if ($dispatch === null || in_array($dispatch->status, [DispatchStatus::Completed, DispatchStatus::Skipped, DispatchStatus::Failed], true)) {
-            return;
-        }
-
-        // A redelivered job whose result is already stored must not probe again.
-        if (MonitorCheck::query()->where('dispatch_id', $dispatch->id)->exists()) {
-            $dispatch->update(['status' => DispatchStatus::Completed, 'completed_at' => $dispatch->completed_at ?? now()]);
-
-            return;
-        }
-
-        $monitor = $dispatch->monitor;
-
-        if ($monitor === null || $monitor->trashed() || ! $monitor->enabled || $monitor->httpConfig === null) {
-            $dispatch->update(['status' => DispatchStatus::Skipped, 'completed_at' => now()]);
-
-            return;
-        }
-
-        $result = $probe->run($monitor->httpConfig, $monitor->timeout_seconds);
-
-        $recordProbeResult->handle($dispatch, $result);
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function tags(): array
-    {
-        return ['dispatch:'.$this->dispatchId];
-    }
-}
+class ExecuteHttpProbe extends ExecuteProbe {}

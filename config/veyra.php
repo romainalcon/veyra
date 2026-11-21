@@ -92,6 +92,8 @@ return [
     'monitoring' => [
         'down_after_failures' => (int) env('VEYRA_DOWN_AFTER_FAILURES', 3),
         'up_after_successes' => (int) env('VEYRA_UP_AFTER_SUCCESSES', 2),
+        'heartbeat_down_after_misses' => (int) env('VEYRA_HEARTBEAT_DOWN_AFTER_MISSES', 1),
+        'heartbeat_up_after_pings' => (int) env('VEYRA_HEARTBEAT_UP_AFTER_PINGS', 1),
         'stale_grace_seconds' => 120,
         'check_retention_days' => max(1, (int) env('VEYRA_CHECK_RETENTION_DAYS', 30)),
     ],

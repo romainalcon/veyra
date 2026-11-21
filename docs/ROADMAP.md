@@ -39,8 +39,17 @@
 - [x] Custom domains: TXT verification, daily re-check and revocation, host-restricted routing, on-demand TLS ask endpoint (ADR-023).
 - [ ] Manual browser walkthrough and validation of the Caddy example on a real host.
 
+## Sprint 7 — More monitor types (1.2)
+- [x] Probe abstraction: `MonitorType` `http` / `tcp` / `heartbeat`, one config table per type (TCP and heartbeat tables arrive with their probes), probe job dispatched by type through the existing outbox (in-flight `ExecuteHttpProbe` jobs stay valid during upgrade), per-type confirmation thresholds (ADR-024).
+- [ ] TCP monitors: host + port connect check, every DNS answer validated by `AddressPolicy`, connection pinned to the validated IP, separate `VEYRA_TCP_ALLOWED_PORTS` allow-list, timeout ≤ 30 s, no payload sent or read.
+- [ ] Heartbeat monitors: secret per-monitor ping URL (`/ping/{token}`, GET/POST/HEAD, sessionless, rate-limited, token hashed at rest and regenerable), period + grace, optional `/fail` signal (ADR-025).
+- [ ] Heartbeat deadline evaluation through the outbox: a missed ping is recorded only when the evaluation runs on time and the scheduler was alive for the whole window; otherwise no check is written (UNKNOWN, never DOWN).
+- [ ] TLS certificate expiry for HTTPS monitors: certificate `notAfter`/issuer captured by the probe, warnings at 14/7/1 days and on expiry, sent to the monitor's channels once per certificate and threshold (deliveries no longer tied only to incidents) (ADR-026).
+- [ ] UI: type picker on creation, type-specific forms and detail pages (ping URL with copy/regenerate and curl/cron examples, last ping, certificate panel); status pages and analytics work unchanged for every type.
+- [ ] Docs: MONITORING, DATABASE, SECURITY, DECISIONS, CHANGELOG/UPGRADING for 1.2.
+
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
 
 ## Explicitly deferred
-Recurring maintenance windows, heartbeat/TCP/DNS probes, agents, multi-region checks, billing, public API and SSO.
+Recurring maintenance windows, DNS probes, agents, multi-region checks, billing, public API and SSO.

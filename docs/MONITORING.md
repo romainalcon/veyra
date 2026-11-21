@@ -83,3 +83,7 @@
 ## Status pages (Sprint 6)
 - Public status = confirmed state: `UP` → operational, `DEGRADED` → degraded, `DOWN` → outage, `MAINTENANCE` → maintenance, `UNKNOWN` or paused → no data. The overall status is the worst among components with data (no data only if none has any).
 - Incidents of listed monitors appear automatically (open, or resolved within 14 days) with a generic title; only `opened`, `public_update` and `resolved` events are published. Maintenance windows of listed monitors appear when running or starting within 7 days.
+
+## Monitor types (Sprint 7)
+- `http`, `tcp`, `heartbeat` share the outbox, check history, state machine and incidents (ADR-024). `ExecuteProbe` resolves the probe of the monitor's type through `ProbeRegistry`; a type without a probe or a monitor without its configuration is `skipped` (no check).
+- Thresholds per type: HTTP/TCP 3 failures → DOWN, 2 successes → UP; heartbeat 1 missed ping → DOWN, 1 ping → UP (`VEYRA_HEARTBEAT_DOWN_AFTER_MISSES`, `VEYRA_HEARTBEAT_UP_AFTER_PINGS`).

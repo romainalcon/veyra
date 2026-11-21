@@ -3,7 +3,7 @@
 namespace App\Domain\Monitoring\Actions;
 
 use App\Domain\Monitoring\Enums\DispatchStatus;
-use App\Domain\Monitoring\Jobs\ExecuteHttpProbe;
+use App\Domain\Monitoring\Jobs\ExecuteProbe;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorDispatch;
 use App\Domain\Monitoring\Support\CheckSchedule;
@@ -80,7 +80,7 @@ class PublishPendingDispatches
                     'dispatched_at' => $now,
                 ]);
 
-                ExecuteHttpProbe::dispatch($dispatch->id);
+                ExecuteProbe::dispatch($dispatch->id);
                 $counts['published']++;
             }
 

@@ -6,11 +6,13 @@ use App\Domain\Incidents\Models\Incident;
 use App\Domain\Monitoring\Actions\ApplyMonitorState;
 use App\Domain\Monitoring\Actions\DeleteMonitor;
 use App\Domain\Monitoring\Enums\MonitorStatus;
+use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Jobs\ApplyMonitorStateJob;
-use App\Domain\Monitoring\Jobs\ExecuteHttpProbe;
+use App\Domain\Monitoring\Jobs\ExecuteProbe;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorDispatch;
 use App\Domain\Monitoring\Models\MonitorState;
+use App\Domain\Monitoring\State\StateThresholds;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -124,7 +126,7 @@ test('the probe job triggers the state transition on the incidents queue', funct
     Http::fake(['*' => Http::response('', 200)]);
     $dispatch = MonitorDispatch::factory()->create(['monitor_id' => $this->monitor->id]);
 
-    app()->call([new ExecuteHttpProbe($dispatch->id), 'handle']);
+    app()->call([new ExecuteProbe($dispatch->id), 'handle']);
 
     Queue::assertPushedOn('incidents', ApplyMonitorStateJob::class, fn (ApplyMonitorStateJob $job) => $job->monitorId === $this->monitor->id);
 });
@@ -163,4 +165,31 @@ test('deleting a monitor closes its open incident', function () {
     expect($incident->status)->toBe(IncidentStatus::Resolved)
         ->and($incident->events()->latest('created_at')->latest('id')->first()->type)->toBe(IncidentEventType::MonitorDeleted)
         ->and(state($this->monitor)->active_incident_id)->toBeNull();
+});
+
+test('heartbeat monitors confirm down on one missed ping and up on one ping', function () {
+    $heartbeat = Monitor::factory()->ofType(MonitorType::Heartbeat)->create();
+
+    recordCheck($heartbeat, true, '2026-11-22 10:00:00');
+    expect(state($heartbeat)->status)->toBe(MonitorStatus::Up);
+
+    recordCheck($heartbeat, false, '2026-11-22 11:00:00');
+    expect(state($heartbeat)->status)->toBe(MonitorStatus::Down)
+        ->and(Incident::where('monitor_id', $heartbeat->id)->sole()->status)->toBe(IncidentStatus::Open);
+
+    recordCheck($heartbeat, true, '2026-11-22 12:00:00');
+    expect(state($heartbeat)->status)->toBe(MonitorStatus::Up)
+        ->and(Incident::where('monitor_id', $heartbeat->id)->sole()->status)->toBe(IncidentStatus::Resolved);
+});
+
+test('heartbeat thresholds are configured separately from probe thresholds', function () {
+    config([
+        'veyra.monitoring.heartbeat_down_after_misses' => 2,
+        'veyra.monitoring.down_after_failures' => 5,
+    ]);
+
+    expect(StateThresholds::forType(MonitorType::Heartbeat))
+        ->downAfter->toBe(2)->upAfter->toBe(1)
+        ->and(StateThresholds::forType(MonitorType::Http))->downAfter->toBe(5)->upAfter->toBe(2)
+        ->and(StateThresholds::forType(MonitorType::Tcp))->downAfter->toBe(5);
 });
