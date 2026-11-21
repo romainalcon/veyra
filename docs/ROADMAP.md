@@ -18,9 +18,9 @@
 - [x] Reverb status events and UI resync fallback.
 
 ## Sprint 4 — Notifications and analytics
-- [ ] Email/Discord channels and retry-safe delivery.
-- [ ] Dashboard, uptime, latency and incident charts.
-- [ ] Aggregation and batched retention.
+- [x] Email/Discord channels and retry-safe delivery.
+- [x] Dashboard, uptime, latency and incident charts.
+- [x] Aggregation and batched retention.
 
 ## Sprint 5 — Release
 - [ ] MariaDB integration tests, concurrency/SSRF tests, load test baseline.

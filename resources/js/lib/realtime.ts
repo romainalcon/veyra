@@ -37,6 +37,7 @@ export const REALTIME_EVENTS = [
     '.monitor.checked',
     '.monitor.state-changed',
     '.incident.updated',
+    '.notification.delivered',
 ] as const;
 
 /**

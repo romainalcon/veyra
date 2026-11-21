@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Incidents;
 use App\Domain\Incidents\Actions\AcknowledgeIncident;
 use App\Domain\Incidents\Actions\AddIncidentNote;
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Notifications\Models\NotificationDelivery;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\IncidentPresenter;
@@ -51,8 +52,25 @@ class IncidentController extends Controller
         $user = $request->user();
         $canManage = $user->can('acknowledge', [$incident, $organization]);
 
+        $deliveries = $incident->deliveries()
+            ->with('channel:id,name,type')
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn (NotificationDelivery $delivery): array => [
+                'id' => $delivery->id,
+                'channel' => $delivery->channel->name,
+                'channel_type' => $delivery->channel->type->value,
+                'event' => $delivery->event_type->value,
+                'status' => $delivery->status->value,
+                'attempts' => $delivery->attempts,
+                'last_error' => $delivery->last_error,
+                'sent_at' => $delivery->sent_at?->toIso8601String(),
+            ])
+            ->all();
+
         return Inertia::render('incidents/Show', [
             'incident' => IncidentPresenter::detail($incident),
+            'deliveries' => $deliveries,
             'can' => ['acknowledge' => $canManage, 'addNote' => $canManage],
             'noteMaxLength' => AddIncidentNote::MAX_LENGTH,
         ]);

@@ -21,6 +21,17 @@ Schedule::command('veyra:monitors:detect-stale')
     ->onOneServer();
 
 /*
+ * Notifications: a single reminder for unacknowledged incidents.
+ */
+Schedule::command('veyra:incidents:remind')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
+
+/*
+ * Analytics and retention (jobs run on the `maintenance` queue).
+ */
+Schedule::command('veyra:stats:aggregate')->everyTenMinutes()->onOneServer();
+Schedule::command('veyra:history:purge')->dailyAt('03:15')->timezone('UTC')->onOneServer();
+
+/*
  * Horizon metrics for the dashboard graphs.
  */
 Schedule::command('horizon:snapshot')->everyFiveMinutes();

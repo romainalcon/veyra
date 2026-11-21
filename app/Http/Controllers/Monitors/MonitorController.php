@@ -8,6 +8,9 @@ use App\Domain\Monitoring\Actions\DeleteMonitor;
 use App\Domain\Monitoring\Actions\UpdateMonitor;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
+use App\Domain\Monitoring\Stats\MonitorSeries;
+use App\Domain\Monitoring\Stats\StatsRange;
+use App\Domain\Monitoring\Stats\UptimeCalculator;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\IncidentPresenter;
@@ -41,7 +44,7 @@ class MonitorController extends Controller
     {
         Gate::authorize('create', [Monitor::class, $organization]);
 
-        return Inertia::render('monitors/Create', MonitorPresenter::formOptions());
+        return Inertia::render('monitors/Create', MonitorPresenter::formOptions($organization));
     }
 
     public function store(SaveMonitorRequest $request, Organization $organization, CreateMonitor $createMonitor): RedirectResponse
@@ -55,7 +58,7 @@ class MonitorController extends Controller
         return to_route('organizations.monitors.show', [$organization, $monitor]);
     }
 
-    public function show(Request $request, Organization $organization, Monitor $monitor): Response
+    public function show(Request $request, Organization $organization, Monitor $monitor, UptimeCalculator $uptimeCalculator, MonitorSeries $series): Response
     {
         Gate::authorize('view', [$monitor, $organization]);
 
@@ -77,9 +80,25 @@ class MonitorController extends Controller
             ->map(fn (Incident $incident): array => IncidentPresenter::summary($incident))
             ->all();
 
+        $range = StatsRange::tryFrom((string) $request->query('range')) ?? StatsRange::Day;
+
         return Inertia::render('monitors/Show', [
             'monitor' => MonitorPresenter::detail($monitor),
             'incidents' => $incidents,
+            'range' => $range->value,
+            'stats' => Inertia::defer(function () use ($monitor, $range, $uptimeCalculator, $series): array {
+                $monitors = collect([$monitor]);
+
+                return [
+                    'uptime' => collect([StatsRange::Day, StatsRange::Week, StatsRange::Month])
+                        ->mapWithKeys(fn (StatsRange $period): array => [
+                            $period->value => $uptimeCalculator->forMonitors($monitors, $period)[$monitor->id]->toArray(),
+                        ])
+                        ->all(),
+                    'days' => $series->uptimeDays($monitor, 90),
+                    'latency' => $series->latency($monitor, $range),
+                ];
+            }),
             'checks' => $checks,
             'can' => ['update' => $canManage, 'delete' => $canManage, 'checkNow' => $canManage],
         ]);
@@ -92,7 +111,7 @@ class MonitorController extends Controller
         $monitor->load('httpConfig');
 
         return Inertia::render('monitors/Edit', [
-            ...MonitorPresenter::formOptions(),
+            ...MonitorPresenter::formOptions($organization),
             'monitor' => MonitorPresenter::detail($monitor),
         ]);
     }

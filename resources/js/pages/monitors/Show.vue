@@ -4,10 +4,12 @@ import { Pause, Pencil, Play, RefreshCw, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
+import MonitorStatsPanel from '@/components/monitors/MonitorStatsPanel.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     formatDateTime,
     formatDuration,
@@ -29,12 +31,16 @@ import type {
     IncidentSummary,
     MonitorCheck,
     MonitorDetail,
+    MonitorStats,
+    StatsRange,
 } from '@/types';
 
 const props = defineProps<{
     monitor: MonitorDetail;
     checks: CursorPaginated<MonitorCheck>;
     incidents: IncidentSummary[];
+    stats?: MonitorStats;
+    range: StatsRange;
     can: { update: boolean; delete: boolean; checkNow: boolean };
 }>();
 
@@ -63,6 +69,9 @@ useOrganizationRealtime(organization.value.id, {
     only: ['monitor', 'checks', 'incidents'],
     filter: (payload) => payload.monitor_id === props.monitor.id,
 });
+
+const rangeHref = (range: StatsRange) =>
+    show.url(params.value, { query: { range } });
 
 const toggle = () =>
     router.visit(enabled(params.value), {
@@ -187,6 +196,21 @@ const remove = () => router.visit(destroy(params.value));
                 <dd class="mt-1">{{ monitor.header_names.join(', ') }}</dd>
             </div>
         </dl>
+
+        <Deferred data="stats">
+            <template #fallback>
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <Skeleton v-for="n in 3" :key="n" class="h-24 rounded-lg" />
+                </div>
+                <Skeleton class="h-64 rounded-lg" />
+            </template>
+            <MonitorStatsPanel
+                v-if="stats"
+                :stats="stats"
+                :range="range"
+                :range-href="rangeHref"
+            />
+        </Deferred>
 
         <section v-if="incidents.length" class="space-y-3">
             <h2 class="text-base font-medium">Recent incidents</h2>

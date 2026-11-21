@@ -30,6 +30,12 @@ const followRedirects = ref(props.monitor?.follow_redirects ?? true);
 const urlPlaceholder = 'https://example.com/health';
 const defaultUrl = props.monitor?.url ?? 'https://';
 const headers = ref<{ name: string; value: string }[]>([]);
+const selectedChannels = ref<string[]>(
+    props.monitor?.notification_channel_ids ??
+        props.channels
+            .filter((channel) => channel.is_default)
+            .map((channel) => channel.id),
+);
 
 const statusesValid = computed(
     () => parseExpectedStatuses(expectedStatuses.value) !== null,
@@ -191,6 +197,40 @@ const methodOptions = computed(() =>
             <HeadersEditor v-else v-model="headers" :errors="errors" />
             <InputError :message="errors.headers" />
         </div>
+
+        <fieldset class="space-y-3">
+            <legend class="text-sm font-medium">Notification channels</legend>
+            <input
+                type="hidden"
+                name="notification_channels_submitted"
+                value="1"
+            />
+            <p
+                v-if="channels.length === 0"
+                class="text-xs text-muted-foreground"
+            >
+                No channels configured for this organization yet.
+            </p>
+            <label
+                v-for="channel in channels"
+                :key="channel.id"
+                class="flex items-center gap-3 text-sm"
+            >
+                <input
+                    v-model="selectedChannels"
+                    type="checkbox"
+                    name="notification_channel_ids[]"
+                    :value="channel.id"
+                    class="size-4 accent-primary"
+                />
+                <span>{{ channel.name }}</span>
+                <span class="text-xs text-muted-foreground">
+                    {{ channel.type === 'email' ? 'E-mail' : 'Discord'
+                    }}{{ channel.enabled ? '' : ' · disabled' }}
+                </span>
+            </label>
+            <InputError :message="errors.notification_channel_ids" />
+        </fieldset>
 
         <Button
             type="submit"

@@ -6,6 +6,7 @@ use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\Monitors\MonitorCheckController;
 use App\Http\Controllers\Monitors\MonitorController;
 use App\Http\Controllers\Monitors\MonitorStatusController;
+use App\Http\Controllers\Notifications\NotificationChannelController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
@@ -77,6 +78,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('incidents/{incident}/notes', [IncidentController::class, 'addNote'])
                 ->middleware('throttle:30,1')
                 ->name('incidents.notes.store');
+
+            Route::get('notification-channels', [NotificationChannelController::class, 'index'])->name('notification-channels.index');
+            Route::post('notification-channels', [NotificationChannelController::class, 'store'])
+                ->middleware('throttle:30,1')
+                ->name('notification-channels.store');
+            Route::put('notification-channels/{notificationChannel}', [NotificationChannelController::class, 'update'])->name('notification-channels.update');
+            Route::delete('notification-channels/{notificationChannel}', [NotificationChannelController::class, 'destroy'])->name('notification-channels.destroy');
+            Route::post('notification-channels/{notificationChannel}/test', [NotificationChannelController::class, 'test'])
+                ->middleware('throttle:notification-tests')
+                ->name('notification-channels.test');
         });
 });
 

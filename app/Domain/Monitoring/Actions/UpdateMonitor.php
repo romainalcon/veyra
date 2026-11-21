@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class UpdateMonitor
 {
+    public function __construct(private readonly SyncMonitorChannels $syncMonitorChannels) {}
+
     public function handle(Monitor $monitor, MonitorData $data): Monitor
     {
         return DB::transaction(function () use ($monitor, $data): Monitor {
@@ -33,6 +35,10 @@ class UpdateMonitor
             }
 
             $monitor->httpConfig()->updateOrCreate(['monitor_id' => $monitor->id], $config);
+
+            if ($data->notificationChannelIds !== null) {
+                $this->syncMonitorChannels->handle($monitor, $data->notificationChannelIds);
+            }
 
             return $monitor;
         });

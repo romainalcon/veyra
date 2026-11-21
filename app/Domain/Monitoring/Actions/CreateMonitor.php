@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class CreateMonitor
 {
+    public function __construct(private readonly SyncMonitorChannels $syncMonitorChannels) {}
+
     /**
      * The first check is due immediately.
      */
@@ -35,6 +37,8 @@ class CreateMonitor
                 'follow_redirects' => $data->followRedirects,
                 'headers_encrypted' => $data->headers === [] ? null : $data->headers,
             ]);
+
+            $this->syncMonitorChannels->handle($monitor, $data->notificationChannelIds);
 
             return $monitor;
         });

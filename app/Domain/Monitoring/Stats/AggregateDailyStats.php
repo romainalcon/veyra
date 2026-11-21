@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Domain\Monitoring\Stats;
+
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Recomputes the daily aggregates of one UTC day from raw checks. Idempotent:
+ * rows are upserted (INSERT … SELECT … ON DUPLICATE KEY UPDATE), so it can run
+ * repeatedly for "today" and "yesterday".
+ */
+class AggregateDailyStats
+{
+    public const MONITOR_BATCH = 500;
+
+    public function handle(CarbonImmutable $day, ?CarbonImmutable $now = null): int
+    {
+        $now ??= CarbonImmutable::now();
+        $dayStart = $day->startOfDay();
+        $dayEnd = $dayStart->addDay();
+        $windowEnd = $now->lessThan($dayEnd) ? $now : $dayEnd;
+        $rows = 0;
+
+        DB::table('monitors')->orderBy('id')->select('id')->chunk(self::MONITOR_BATCH, function ($monitors) use ($dayStart, $dayEnd, $windowEnd, &$rows): void {
+            $ids = $monitors->pluck('id')->all();
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+            $rows += DB::affectingStatement(<<<SQL
+                INSERT INTO monitor_daily_stats
+                    (monitor_id, day, checks_count, success_count, failure_count, latency_avg_ms, latency_max_ms, expected_checks, updated_at)
+                SELECT
+                    c.monitor_id,
+                    ?,
+                    COUNT(*),
+                    SUM(c.success = 1),
+                    SUM(c.success = 0),
+                    ROUND(AVG(CASE WHEN c.success = 1 THEN c.duration_ms END)),
+                    MAX(CASE WHEN c.success = 1 THEN c.duration_ms END),
+                    GREATEST(0, FLOOR(TIMESTAMPDIFF(SECOND, GREATEST(?, m.created_at), ?) / m.interval_seconds)),
+                    UTC_TIMESTAMP()
+                FROM monitor_checks c
+                JOIN monitors m ON m.id = c.monitor_id
+                WHERE c.monitor_id IN ({$placeholders})
+                  AND c.checked_at >= ?
+                  AND c.checked_at < ?
+                GROUP BY c.monitor_id, m.created_at, m.interval_seconds
+                ON DUPLICATE KEY UPDATE
+                    checks_count = VALUES(checks_count),
+                    success_count = VALUES(success_count),
+                    failure_count = VALUES(failure_count),
+                    latency_avg_ms = VALUES(latency_avg_ms),
+                    latency_max_ms = VALUES(latency_max_ms),
+                    expected_checks = VALUES(expected_checks),
+                    updated_at = VALUES(updated_at)
+                SQL, [
+                $dayStart->toDateString(),
+                $dayStart->toDateTimeString(),
+                $windowEnd->toDateTimeString(),
+                ...$ids,
+                $dayStart->toDateTimeString(),
+                $dayEnd->toDateTimeString(),
+            ]);
+        });
+
+        return $rows;
+    }
+}

@@ -38,6 +38,7 @@ setLayoutProps({
     <div class="mx-auto w-full max-w-3xl px-4 py-6">
         <Heading title="Edit monitor" />
         <MonitorForm
+            :channels="channels"
             :intervals="intervals"
             :methods="methods"
             :monitor="monitor"

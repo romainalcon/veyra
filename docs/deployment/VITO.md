@@ -34,3 +34,6 @@ Then set `REVERB_HOST=127.0.0.1`, `REVERB_PORT=8080`, `REVERB_SCHEME=http` (serv
 - Set `VEYRA_ADMIN_EMAILS` to open `/horizon` to instance administrators only.
 
 The paths in `deploy/vito/` (`/home/vito/veyra.example.com`, `php8.4`) are examples; adapt them to the site created in Vito.
+
+## Notifications (Sprint 4)
+The Horizon workers (queue `notifications`) need outbound access to your SMTP server (`MAIL_*`) and, if Discord channels are used, to `discord.com:443`. Keep these destinations in the egress allow-list of the probe/worker hosts.

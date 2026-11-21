@@ -4,6 +4,7 @@ namespace App\Domain\Organizations\Models;
 
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Notifications\Models\NotificationChannel;
 use App\Models\User;
 use App\Policies\OrganizationPolicy;
 use Database\Factories\OrganizationFactory;
@@ -95,5 +96,13 @@ class Organization extends Model
     public function incidents(): HasMany
     {
         return $this->hasMany(Incident::class);
+    }
+
+    /**
+     * @return HasMany<NotificationChannel, $this>
+     */
+    public function notificationChannels(): HasMany
+    {
+        return $this->hasMany(NotificationChannel::class);
     }
 }

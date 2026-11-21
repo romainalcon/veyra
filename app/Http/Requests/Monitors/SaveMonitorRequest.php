@@ -8,6 +8,7 @@ use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Probes\UrlPolicy;
+use App\Domain\Organizations\Models\Organization;
 use App\Rules\AllowedMonitorDestination;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -62,6 +63,13 @@ class SaveMonitorRequest extends FormRequest
             'headers' => ['array', 'max:'.self::MAX_HEADERS],
             'headers.*.name' => ['required', 'string', 'max:100', 'regex:/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+$/'],
             'headers.*.value' => ['required', 'string', 'max:'.self::MAX_HEADER_VALUE_LENGTH, 'regex:/^[^\r\n\x00]*$/'],
+            'notification_channels_submitted' => ['nullable', 'boolean'],
+            'notification_channel_ids' => ['array', 'max:50'],
+            'notification_channel_ids.*' => [
+                'string',
+                'distinct',
+                Rule::exists('notification_channels', 'id')->where('organization_id', $this->organization()->id),
+            ],
         ];
     }
 
@@ -133,7 +141,18 @@ class SaveMonitorRequest extends FormRequest
             expectedStatuses: ExpectedStatuses::parse((string) $this->validated('expected_statuses')),
             followRedirects: (bool) $this->validated('follow_redirects'),
             headers: $headers,
+            notificationChannelIds: $this->boolean('notification_channels_submitted')
+                ? array_values(array_map('strval', (array) $this->validated('notification_channel_ids', [])))
+                : null,
         );
+    }
+
+    private function organization(): Organization
+    {
+        /** @var Organization $organization */
+        $organization = $this->route('organization');
+
+        return $organization;
     }
 
     private function isUpdate(): bool

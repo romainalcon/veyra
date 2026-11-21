@@ -39,3 +39,6 @@ Open `http://localhost:8000` (or `VEYRA_HTTP_PORT`). After creating the operator
 ## Notes
 - `VITE_REVERB_*` values are compiled into the JavaScript bundle at build time; rebuild the images after changing them.
 - Docker Compose validation (`docker compose config`) and a full `up` still need to be run on a host with Docker.
+
+## Notifications (Sprint 4)
+The Horizon workers (queue `notifications`) need outbound access to your SMTP server (`MAIL_*`) and, if Discord channels are used, to `discord.com:443`. Keep these destinations in the egress allow-list of the probe/worker hosts.

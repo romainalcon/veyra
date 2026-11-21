@@ -77,6 +77,12 @@ return [
         'down_after_failures' => (int) env('VEYRA_DOWN_AFTER_FAILURES', 3),
         'up_after_successes' => (int) env('VEYRA_UP_AFTER_SUCCESSES', 2),
         'stale_grace_seconds' => 120,
+        'check_retention_days' => max(1, (int) env('VEYRA_CHECK_RETENTION_DAYS', 30)),
+    ],
+
+    'notifications' => [
+        'reminder_after_minutes' => max(1, (int) env('VEYRA_REMINDER_AFTER_MINUTES', 30)),
+        'max_email_recipients' => 10,
     ],
 
     /*

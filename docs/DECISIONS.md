@@ -56,3 +56,15 @@
 ## ADR-016 — Real-time by identifiers
 **Decision:** Reverb events contain only identifiers; pages reload their props over HTTP (debounced), resync after reconnection and fall back to 30 s polling while disconnected.
 **Why:** Reverb stays a delivery mechanism; authorization and data shaping remain in HTTP controllers.
+
+## ADR-017 — Idempotent notification delivery
+**Decision:** Domain events create delivery rows keyed by (incident, channel, event); a unique queued job sends each row with bounded, exponential retries and distinguishes transient from permanent failures. Mail is sent synchronously inside that job (no second queue hop).
+**Why:** Replayed events, duplicate jobs and worker restarts must never spam, and every delivery outcome must be visible.
+
+## ADR-018 — Charts with shadcn-vue Charts (@unovis)
+**Decision:** Add `@unovis/vue` and `@unovis/ts` (pinned to 1.8.1) with the shadcn-vue `chart` components (copied from the official registry, adapted to direct `@unovis` subpath imports) for latency and incident charts; uptime bars are plain styled elements.
+**Why:** Consistent with the shadcn-vue UI and themes, without hand-writing axes, tooltips and crosshairs. The shadcn-vue CLI requires Node 22, so the registry files were reviewed and added manually.
+
+## ADR-019 — Uptime over observed checks with explicit coverage
+**Decision:** Uptime is computed only over observed checks; coverage (observed ÷ expected) is reported alongside, and periods without data are "No data".
+**Why:** A worker or scheduler outage must not masquerade as downtime nor inflate uptime to 100 %.

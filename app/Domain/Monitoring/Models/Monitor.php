@@ -4,6 +4,7 @@ namespace App\Domain\Monitoring\Models;
 
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Monitoring\Enums\MonitorType;
+use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
 use App\Policies\MonitorPolicy;
 use Carbon\CarbonImmutable;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -104,6 +106,22 @@ class Monitor extends Model
     public function incidents(): HasMany
     {
         return $this->hasMany(Incident::class);
+    }
+
+    /**
+     * @return BelongsToMany<NotificationChannel, $this>
+     */
+    public function notificationChannels(): BelongsToMany
+    {
+        return $this->belongsToMany(NotificationChannel::class, 'monitor_notification_channels');
+    }
+
+    /**
+     * @return HasMany<MonitorDailyStat, $this>
+     */
+    public function dailyStats(): HasMany
+    {
+        return $this->hasMany(MonitorDailyStat::class);
     }
 
     /**

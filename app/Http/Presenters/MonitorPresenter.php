@@ -7,6 +7,8 @@ use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
+use App\Domain\Notifications\Models\NotificationChannel;
+use App\Domain\Organizations\Models\Organization;
 
 /**
  * Explicit, whitelisted Inertia representations. Header values never leave
@@ -50,6 +52,7 @@ final class MonitorPresenter
             'expected_statuses' => $config?->expected_statuses->toExpression(),
             'follow_redirects' => $config->follow_redirects ?? true,
             'header_names' => $config?->headerNames() ?? [],
+            'notification_channel_ids' => $monitor->notificationChannels()->pluck('notification_channels.id')->all(),
             'next_check_at' => $monitor->next_check_at?->toIso8601String(),
             'created_at' => $monitor->created_at?->toIso8601String(),
         ];
@@ -75,9 +78,20 @@ final class MonitorPresenter
     /**
      * @return array<string, mixed>
      */
-    public static function formOptions(): array
+    public static function formOptions(Organization $organization): array
     {
         return [
+            'channels' => $organization->notificationChannels()
+                ->orderBy('name')
+                ->get(['id', 'name', 'type', 'is_default', 'enabled'])
+                ->map(fn (NotificationChannel $channel): array => [
+                    'id' => $channel->id,
+                    'name' => $channel->name,
+                    'type' => $channel->type->value,
+                    'is_default' => $channel->is_default,
+                    'enabled' => $channel->enabled,
+                ])
+                ->all(),
             'intervals' => MonitorInterval::options(),
             'methods' => array_map(fn (HttpMethod $method): string => $method->value, HttpMethod::cases()),
         ];

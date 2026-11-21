@@ -1,3 +1,5 @@
+import type { ChannelOption } from './notification';
+
 export type HttpMethod = 'GET' | 'HEAD';
 
 export type MonitorStatus = 'up' | 'degraded' | 'down' | 'unknown';
@@ -35,6 +37,7 @@ export type MonitorDetail = MonitorSummary & {
     expected_statuses: string | null;
     follow_redirects: boolean;
     header_names: string[];
+    notification_channel_ids: string[];
     next_check_at: string | null;
     created_at: string | null;
 };
@@ -42,6 +45,7 @@ export type MonitorDetail = MonitorSummary & {
 export type IntervalOption = { value: number; label: string };
 
 export type MonitorFormOptions = {
+    channels: ChannelOption[];
     intervals: IntervalOption[];
     methods: HttpMethod[];
 };

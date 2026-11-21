@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Organizations;
 use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Monitoring\Enums\MonitorStatus;
+use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Stats\IncidentSeries;
+use App\Domain\Monitoring\Stats\StatsRange;
+use App\Domain\Monitoring\Stats\UptimeCalculator;
 use App\Domain\Organizations\Actions\CreateOrganization;
 use App\Domain\Organizations\Actions\DeleteOrganization;
 use App\Domain\Organizations\Actions\UpdateOrganization;
@@ -15,6 +19,7 @@ use App\Http\Requests\Organizations\SaveOrganizationRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,7 +41,7 @@ class OrganizationController extends Controller
         return to_route('organizations.dashboard', $organization);
     }
 
-    public function dashboard(Organization $organization): Response
+    public function dashboard(Organization $organization, UptimeCalculator $uptimeCalculator, IncidentSeries $incidentSeries): Response
     {
         Gate::authorize('view', $organization);
 
@@ -65,6 +70,39 @@ class OrganizationController extends Controller
                     ->all(),
             ],
             'openIncidents' => $openIncidents,
+            'analytics' => Inertia::defer(function () use ($organization, $uptimeCalculator, $incidentSeries): array {
+                $monitors = $organization->monitors()->with('state')->orderBy('name')->get();
+                $weekly = $uptimeCalculator->forMonitors($monitors, StatsRange::Week);
+                $daily = $uptimeCalculator->forMonitors($monitors, StatsRange::Day);
+                $latency = DB::table('monitor_checks')
+                    ->whereIn('monitor_id', $monitors->pluck('id'))
+                    ->where('checked_at', '>=', now()->subDay())
+                    ->where('success', true)
+                    ->groupBy('monitor_id')
+                    ->selectRaw('monitor_id, ROUND(AVG(duration_ms)) as latency')
+                    ->pluck('latency', 'monitor_id');
+
+                return [
+                    'uptime' => [
+                        '24h' => UptimeCalculator::combine($daily)->toArray(),
+                        '7d' => UptimeCalculator::combine($weekly)->toArray(),
+                        '30d' => UptimeCalculator::combine($uptimeCalculator->forMonitors($monitors, StatsRange::Month))->toArray(),
+                    ],
+                    'monitors' => $monitors
+                        ->map(fn (Monitor $monitor): array => [
+                            'id' => $monitor->id,
+                            'name' => $monitor->name,
+                            'status' => ($monitor->state->status ?? MonitorStatus::Unknown)->value,
+                            'uptime_7d' => $weekly[$monitor->id]->uptime(),
+                            'partial' => $weekly[$monitor->id]->isPartial(),
+                            'latency_24h' => isset($latency[$monitor->id]) ? (int) $latency[$monitor->id] : null,
+                        ])
+                        ->sortBy(fn (array $row): float => $row['uptime_7d'] ?? 101.0)
+                        ->values()
+                        ->all(),
+                    'incidents' => $incidentSeries->forOrganization($organization, 30),
+                ];
+            }),
         ]);
     }
 

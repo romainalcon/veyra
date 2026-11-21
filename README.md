@@ -2,7 +2,7 @@
 
 Veyra is an open-core, self-hostable uptime monitoring platform for HTTP/HTTPS endpoints, with incidents, notifications, analytics and organizations.
 
-> Status: Sprint 3: confirmed UP/DEGRADED/DOWN/UNKNOWN states, incidents with acknowledgement and notes, and Reverb real-time updates, on top of SSRF-safe HTTP monitoring (Sprint 2). Notifications and analytics arrive in Sprint 4 (see `docs/ROADMAP.md`).
+> Status: Sprint 4: e-mail/Discord notifications with retries and reminders, uptime/latency/incident analytics and batched retention, on top of confirmed states, incidents and real-time updates. Sprint 5 prepares the release (see `docs/ROADMAP.md`).
 
 ## Stack
 Laravel 13 · PHP 8.4 · Vue 3 + TypeScript · Inertia 3 · Tailwind CSS 4 + shadcn-vue · MariaDB 11.4+ · Redis · Horizon · Reverb · Pest · Vitest.

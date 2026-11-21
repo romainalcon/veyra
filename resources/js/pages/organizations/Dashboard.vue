@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
+import { Deferred, Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Activity } from '@lucide/vue';
 import { computed } from 'vue';
+import IncidentsChart from '@/components/charts/IncidentsChart.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { coverageNote, formatUptime } from '@/lib/analytics';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { formatDateTime, formatElapsed } from '@/lib/monitoring';
 import { dashboard } from '@/routes/organizations';
@@ -11,11 +14,16 @@ import {
     index as incidentsIndex,
     show as showIncident,
 } from '@/routes/organizations/incidents';
-import { create, index } from '@/routes/organizations/monitors';
+import {
+    create,
+    index,
+    show as showMonitor,
+} from '@/routes/organizations/monitors';
 import type {
     CurrentOrganization,
     IncidentSummary,
     MonitorStatus,
+    OrganizationAnalytics,
 } from '@/types';
 
 defineProps<{
@@ -25,7 +33,10 @@ defineProps<{
         byStatus: Record<MonitorStatus, number>;
     };
     openIncidents: IncidentSummary[];
+    analytics?: OrganizationAnalytics;
 }>();
+
+const periods = ['24h', '7d', '30d'] as const;
 
 const page = usePage();
 const organization = computed(
@@ -115,6 +126,122 @@ setLayoutProps({
                     </li>
                 </ul>
             </section>
+
+            <Deferred data="analytics">
+                <template #fallback>
+                    <Skeleton class="h-64 rounded-xl" />
+                </template>
+                <template v-if="analytics">
+                    <section
+                        class="grid gap-4 sm:grid-cols-3"
+                        data-test="dashboard-uptime"
+                    >
+                        <div
+                            v-for="period in periods"
+                            :key="period"
+                            class="rounded-xl border p-4"
+                        >
+                            <p class="text-sm text-muted-foreground">
+                                Overall uptime {{ period }}
+                            </p>
+                            <p class="mt-1 text-2xl font-semibold">
+                                {{
+                                    formatUptime(
+                                        analytics.uptime[period].uptime,
+                                    )
+                                }}
+                            </p>
+                            <p
+                                v-if="coverageNote(analytics.uptime[period])"
+                                class="mt-1 text-xs text-muted-foreground"
+                            >
+                                {{ coverageNote(analytics.uptime[period]) }}
+                            </p>
+                        </div>
+                    </section>
+
+                    <section class="space-y-3 rounded-xl border p-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-sm font-medium">
+                                Incidents (30 days)
+                            </h2>
+                            <span
+                                v-if="analytics.incidents.mttr_minutes !== null"
+                                class="text-xs text-muted-foreground"
+                                >Mean time to recovery:
+                                {{ analytics.incidents.mttr_minutes }} min</span
+                            >
+                        </div>
+                        <IncidentsChart :days="analytics.incidents.days" />
+                    </section>
+
+                    <section class="space-y-3">
+                        <h2 class="text-base font-medium">Monitors</h2>
+                        <div class="overflow-x-auto rounded-lg border">
+                            <table
+                                class="w-full text-sm"
+                                data-test="dashboard-monitors"
+                            >
+                                <thead
+                                    class="bg-muted/50 text-left text-muted-foreground"
+                                >
+                                    <tr>
+                                        <th class="px-4 py-2 font-medium">
+                                            Monitor
+                                        </th>
+                                        <th class="px-4 py-2 font-medium">
+                                            State
+                                        </th>
+                                        <th class="px-4 py-2 font-medium">
+                                            Uptime 7d
+                                        </th>
+                                        <th class="px-4 py-2 font-medium">
+                                            Avg latency 24h
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr
+                                        v-for="row in analytics.monitors"
+                                        :key="row.id"
+                                    >
+                                        <td class="px-4 py-2">
+                                            <Link
+                                                :href="
+                                                    showMonitor([
+                                                        organization.slug,
+                                                        row.id,
+                                                    ])
+                                                "
+                                                class="hover:underline"
+                                                >{{ row.name }}</Link
+                                            >
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <StatusBadge :status="row.status" />
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            {{ formatUptime(row.uptime_7d) }}
+                                            <span
+                                                v-if="row.partial"
+                                                class="text-xs text-muted-foreground"
+                                                >(partial)</span
+                                            >
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            {{
+                                                row.latency_24h === null
+                                                    ? '—'
+                                                    : `${row.latency_24h} ms`
+                                            }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </template>
+            </Deferred>
         </template>
         <div
             v-else

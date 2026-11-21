@@ -51,3 +51,8 @@
 - `monitor_states` (one row per monitor) is only modified under `SELECT … FOR UPDATE`; `active_incident_id` replaces a partial unique index.
 - `incidents.organization_id` is denormalized for tenant-scoped listing (`(organization_id, status, started_at)`); `incident_events` is the append-only timeline.
 - Added index `monitor_checks (monitor_id, scheduled_for)` for streak evaluation.
+
+## Notifications and statistics (Sprint 4)
+- `notification_deliveries` is unique on `(incident_id, channel_id, event_type)` — the idempotency key of the delivery pipeline.
+- `monitor_daily_stats` (PK `(monitor_id, day)`, UTC days) is maintained with `INSERT … SELECT … ON DUPLICATE KEY UPDATE`; it survives raw-check retention.
+- Retention deletes use `DELETE … LIMIT 1000` loops on indexed columns (`monitor_checks (monitor_id, checked_at)`, `monitor_dispatches (status, completed_at)`, `notification_deliveries (created_at)`). `tests/Integration/AggregationTest.php` covers 10 000 checks.

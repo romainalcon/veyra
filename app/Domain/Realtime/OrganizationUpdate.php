@@ -24,6 +24,8 @@ class OrganizationUpdate implements ShouldBroadcast, ShouldDispatchAfterCommit
 
     public const INCIDENT_UPDATED = 'incident.updated';
 
+    public const NOTIFICATION_DELIVERED = 'notification.delivered';
+
     /**
      * @param  array<string, string>  $payload  identifiers and enum values only
      */

@@ -30,6 +30,7 @@ setLayoutProps({
             description="Veyra checks the endpoint from its own workers and records every result."
         />
         <MonitorForm
+            :channels="channels"
             :intervals="intervals"
             :methods="methods"
             :action="store.form(organization.slug)"

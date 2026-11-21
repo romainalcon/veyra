@@ -11,6 +11,7 @@ import { CheckCheck } from '@lucide/vue';
 import { computed } from 'vue';
 import IncidentController from '@/actions/App/Http/Controllers/Incidents/IncidentController';
 import InputError from '@/components/InputError.vue';
+import DeliveryStatus from '@/components/notifications/DeliveryStatus.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -18,10 +19,11 @@ import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { formatDateTime, formatElapsed } from '@/lib/monitoring';
 import { acknowledge, index, show } from '@/routes/organizations/incidents';
 import { show as showMonitor } from '@/routes/organizations/monitors';
-import type { CurrentOrganization, IncidentDetail } from '@/types';
+import type { CurrentOrganization, Delivery, IncidentDetail } from '@/types';
 
 const props = defineProps<{
     incident: IncidentDetail;
+    deliveries: Delivery[];
     can: { acknowledge: boolean; addNote: boolean };
     noteMaxLength: number;
 }>();
@@ -35,7 +37,7 @@ const params = computed(
 );
 
 useOrganizationRealtime(organization.value.id, {
-    only: ['incident'],
+    only: ['incident', 'deliveries'],
     filter: (payload) =>
         payload.incident_id === props.incident.id ||
         payload.monitor_id === props.incident.monitor?.id,
@@ -163,6 +165,26 @@ const acknowledgeIncident = () =>
                     </p>
                 </li>
             </ol>
+        </section>
+
+        <section v-if="deliveries.length" class="space-y-3">
+            <h2 class="text-base font-medium">Notifications</h2>
+            <ul
+                class="divide-y rounded-lg border text-sm"
+                data-test="incident-deliveries"
+            >
+                <li
+                    v-for="delivery in deliveries"
+                    :key="delivery.id"
+                    class="flex flex-wrap items-center gap-3 px-4 py-2"
+                >
+                    <span class="font-medium">{{ delivery.channel }}</span>
+                    <span class="text-muted-foreground">{{
+                        delivery.event
+                    }}</span>
+                    <DeliveryStatus :delivery="delivery" />
+                </li>
+            </ul>
         </section>
 
         <section v-if="can.addNote" class="space-y-3">
