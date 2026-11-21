@@ -65,8 +65,14 @@ jobs:
             $u = App\Models\User::forceCreate(["name" => "CI", "email" => "ci@example.com", "password" => bcrypt(Illuminate\Support\Str::random(32)), "email_verified_at" => now()]);
             $o = app(App\Domain\Organizations\Actions\CreateOrganization::class)->handle($u, new App\Domain\Organizations\DTOs\OrganizationData("CI"));
             app(App\Domain\Monitoring\Actions\CreateMonitor::class)->handle($o, new App\Domain\Monitoring\DTOs\MonitorData(
-              "httpbin", "http://httpbin:8080/status/200", App\Domain\Monitoring\Enums\HttpMethod::Get,
-              App\Domain\Monitoring\Enums\MonitorInterval::OneMinute, 5, App\Domain\Monitoring\DTOs\ExpectedStatuses::default(), true, [], null));'
+              type: App\Domain\Monitoring\Enums\MonitorType::Http,
+              name: "httpbin",
+              intervalSeconds: App\Domain\Monitoring\Enums\MonitorInterval::OneMinute->value,
+              timeoutSeconds: 5,
+              http: new App\Domain\Monitoring\DTOs\HttpTargetData(
+                "http://httpbin:8080/status/200", App\Domain\Monitoring\Enums\HttpMethod::Get,
+                App\Domain\Monitoring\DTOs\ExpectedStatuses::default(), true, []),
+            ));'
           for i in $(seq 1 30); do
             count=$($COMPOSE exec -T app php artisan tinker --execute 'echo App\Domain\Monitoring\Models\MonitorCheck::where("success", true)->count();' | tail -n 1)
             echo "successful checks: ${count}"
