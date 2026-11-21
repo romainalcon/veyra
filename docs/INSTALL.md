@@ -15,8 +15,9 @@ Open `APP_URL`, create the first account, then:
 1. `docker compose --env-file .env.docker exec app php artisan veyra:doctor` and fix every **FAIL**.
 2. Set `VEYRA_REGISTRATION_ENABLED=false` once your team is registered (invited people can still join), then `docker compose --env-file .env.docker up -d`.
 3. Set `VEYRA_ADMIN_EMAILS` to open `/horizon`, and `VEYRA_HEALTH_TOKEN` for detailed `/health`.
-4. If you run a modified version, set `VEYRA_SOURCE_URL` to your own repository (AGPL-3.0 §13); it defaults to the upstream repository.
-5. Schedule backups (`docs/operations/BACKUP.md`) and restrict outbound traffic of the `horizon` service (`docs/deployment/DOCKER.md`).
+4. Leave `VEYRA_LANDING_PAGE=false` (default) so visitors of `/` go straight to the login page; set it to `true` to show the public Veyra presentation page instead.
+5. If you run a modified version, set `VEYRA_SOURCE_URL` to your own repository (AGPL-3.0 §13); it defaults to the upstream repository.
+6. Schedule backups (`docs/operations/BACKUP.md`) and restrict outbound traffic of the `horizon` service (`docs/deployment/DOCKER.md`).
 
 Building images locally instead: keep `VEYRA_IMAGE_PREFIX=veyra` and run `docker compose --env-file .env.docker build` first.
 

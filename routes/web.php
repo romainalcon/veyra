@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Incidents\IncidentController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\Maintenance\MaintenanceWindowController;
@@ -23,7 +24,7 @@ use App\Http\Middleware\HandlePublicInertiaRequests;
 use App\Http\Middleware\ResolveOrganization;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard')->name('home');
+Route::get('/', HomeController::class)->name('home');
 
 Route::get('health', HealthController::class)
     ->middleware('throttle:60,1')
