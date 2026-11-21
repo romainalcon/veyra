@@ -4,6 +4,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-21
+
 ### Added
 - **Monitor types** — every monitor now has a type chosen on creation: HTTP(S) (unchanged), TCP or heartbeat. All types share the scheduler, check history, confirmed states, incidents, notifications, analytics and status pages (ADR-024).
 - **TCP monitors** — host + port connection checks: every DNS answer validated, connection pinned to the validated IP, nothing sent or read, timeout up to 30 s. Ports are limited to `VEYRA_PROBES_TCP_ALLOWED_PORTS` (default `22,25,80,443,465,587,993,995,3306,5432,6379`).
@@ -58,7 +60,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/romainalcon/veyra/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/romainalcon/veyra/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/romainalcon/veyra/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/romainalcon/veyra/compare/v1.0.0...v1.0.1
