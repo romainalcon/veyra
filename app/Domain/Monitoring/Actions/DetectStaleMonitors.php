@@ -26,30 +26,32 @@ class DetectStaleMonitors
         $now ??= CarbonImmutable::now();
         $grace = (int) config('veyra.monitoring.stale_grace_seconds', 120);
 
+        // Heartbeats may legitimately stay silent for their grace time on top of the period.
         $candidates = DB::table('monitor_states')
             ->join('monitors', 'monitors.id', '=', 'monitor_states.monitor_id')
+            ->leftJoin('monitor_heartbeat_configs', 'monitor_heartbeat_configs.monitor_id', '=', 'monitors.id')
             ->where('monitors.enabled', true)
             ->whereNull('monitors.deleted_at')
             ->whereNotIn('monitor_states.status', [MonitorStatus::Unknown->value, MonitorStatus::Maintenance->value])
             ->whereNotNull('monitor_states.last_checked_at')
-            ->whereRaw('monitor_states.last_checked_at < DATE_SUB(?, INTERVAL (2 * monitors.interval_seconds + ?) SECOND)', [$now->toDateTimeString(), $grace])
+            ->whereRaw('monitor_states.last_checked_at < DATE_SUB(?, INTERVAL (2 * monitors.interval_seconds + COALESCE(monitor_heartbeat_configs.grace_seconds, 0) + ?) SECOND)', [$now->toDateTimeString(), $grace])
             ->limit(500)
-            ->get(['monitor_states.monitor_id', 'monitors.organization_id', 'monitors.interval_seconds']);
+            ->get(['monitor_states.monitor_id', 'monitors.organization_id', 'monitors.interval_seconds', 'monitor_heartbeat_configs.grace_seconds as heartbeat_grace']);
 
         $marked = 0;
 
         foreach ($candidates as $candidate) {
             $monitorId = (string) $candidate->monitor_id;
             $organizationId = (string) $candidate->organization_id;
-            $interval = (int) $candidate->interval_seconds;
+            $staleAfter = 2 * (int) $candidate->interval_seconds + (int) ($candidate->heartbeat_grace ?? 0) + $grace;
 
-            $marked += DB::transaction(function () use ($monitorId, $organizationId, $interval, $now, $grace): int {
+            $marked += DB::transaction(function () use ($monitorId, $organizationId, $staleAfter, $now): int {
                 $state = MonitorState::query()->lockForUpdate()->find($monitorId);
 
                 if ($state === null
                     || in_array($state->status, [MonitorStatus::Unknown, MonitorStatus::Maintenance], true)
                     || $state->last_checked_at === null
-                    || $state->last_checked_at->greaterThanOrEqualTo($now->subSeconds(2 * $interval + $grace))) {
+                    || $state->last_checked_at->greaterThanOrEqualTo($now->subSeconds($staleAfter))) {
                     return 0;
                 }
 

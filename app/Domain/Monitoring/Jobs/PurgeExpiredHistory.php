@@ -3,6 +3,7 @@
 namespace App\Domain\Monitoring\Jobs;
 
 use App\Domain\Monitoring\Enums\DispatchStatus;
+use App\Domain\System\SchedulerBeatLog;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -72,6 +73,10 @@ class PurgeExpiredHistory implements ShouldBeUnique, ShouldQueue
 
         $this->purgeInBatches(fn () => DB::table('notification_deliveries')
             ->where('created_at', '<', $now->subDays(self::DELIVERY_RETENTION_DAYS)), $startedAt);
+
+        do {
+            $deleted = SchedulerBeatLog::purge($now, self::BATCH_SIZE);
+        } while ($deleted === self::BATCH_SIZE && ! $this->outOfTime($startedAt));
     }
 
     /**

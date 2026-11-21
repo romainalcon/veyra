@@ -6,6 +6,7 @@ use App\Domain\Monitoring\DTOs\ProbeResult;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Probes\Contracts\MonitorProbe;
 use App\Domain\Monitoring\Probes\Contracts\TcpConnector;
+use Carbon\CarbonImmutable;
 use LogicException;
 
 /**
@@ -26,7 +27,7 @@ final class TcpProbe implements MonitorProbe
         return $monitor->tcpConfig !== null;
     }
 
-    public function probe(Monitor $monitor): ProbeResult
+    public function probe(Monitor $monitor, CarbonImmutable $scheduledFor): ProbeResult
     {
         $config = $monitor->tcpConfig ?? throw new LogicException('TCP monitor without configuration.');
 

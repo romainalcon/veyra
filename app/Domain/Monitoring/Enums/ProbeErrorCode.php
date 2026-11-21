@@ -15,6 +15,7 @@ enum ProbeErrorCode: string
     case UnexpectedStatus = 'unexpected_status';
     case UnexpectedError = 'unexpected_error';
     case HeartbeatFailed = 'heartbeat_failed';
+    case HeartbeatMissed = 'heartbeat_missed';
 
     public function label(): string
     {
@@ -30,6 +31,7 @@ enum ProbeErrorCode: string
             self::UnexpectedStatus => 'Unexpected status code',
             self::UnexpectedError => 'Unexpected error',
             self::HeartbeatFailed => 'Failure reported by the job',
+            self::HeartbeatMissed => 'No ping received in time',
         };
     }
 }

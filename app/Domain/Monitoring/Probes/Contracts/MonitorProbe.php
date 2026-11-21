@@ -4,6 +4,7 @@ namespace App\Domain\Monitoring\Probes\Contracts;
 
 use App\Domain\Monitoring\DTOs\ProbeResult;
 use App\Domain\Monitoring\Models\Monitor;
+use Carbon\CarbonImmutable;
 
 /**
  * Executes one check of a monitor. Implementations must be bounded (timeouts,
@@ -18,5 +19,10 @@ interface MonitorProbe
      */
     public function canProbe(Monitor $monitor): bool;
 
-    public function probe(Monitor $monitor): ProbeResult;
+    /**
+     * @param  CarbonImmutable  $scheduledFor  the slot (or deadline) being checked
+     * @return ProbeResult|null null when no trustworthy observation can be made:
+     *                          the dispatch is skipped and nothing is recorded (UNKNOWN, never DOWN)
+     */
+    public function probe(Monitor $monitor, CarbonImmutable $scheduledFor): ?ProbeResult;
 }

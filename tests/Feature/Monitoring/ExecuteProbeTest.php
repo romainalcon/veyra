@@ -8,6 +8,7 @@ use App\Domain\Monitoring\Jobs\ExecuteProbe;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
+use App\Domain\Monitoring\Probes\HeartbeatProbe;
 use App\Domain\Monitoring\Probes\HttpMonitorProbe;
 use App\Domain\Monitoring\Probes\ProbeRegistry;
 use App\Domain\Monitoring\Probes\TcpProbe;
@@ -85,17 +86,16 @@ test('jobs queued before the upgrade under the legacy class name still run', fun
         ->and($dispatch->fresh()->status)->toBe(DispatchStatus::Completed);
 });
 
-test('dispatches of a type without a probe are skipped, never recorded as failures', function (MonitorType $type) {
-    Http::fake();
-    $monitor = Monitor::factory()->ofType($type)->create();
+test('a probe without a trustworthy observation skips the dispatch instead of recording a failure', function () {
+    $monitor = Monitor::factory()->heartbeat('Ab3dEf6hIj9lMn2pQr5tUv8xYz1bCd4fGh7jKl0n')->create();
     $dispatch = MonitorDispatch::factory()->create(['monitor_id' => $monitor->id]);
 
+    // No scheduler beats recorded: the window cannot be trusted.
     app()->call([new ExecuteProbe($dispatch->id), 'handle']);
 
     expect($dispatch->fresh()->status)->toBe(DispatchStatus::Skipped)
         ->and(MonitorCheck::count())->toBe(0);
-    Http::assertNothingSent();
-})->with([MonitorType::Heartbeat]);
+});
 
 test('a monitor without its configuration is skipped without probing', function (MonitorType $type) {
     Http::fake();
@@ -114,5 +114,5 @@ test('a monitor without its configuration is skipped without probing', function 
 test('the probe registry resolves the probe of each type', function () {
     expect(app(ProbeRegistry::class)->for(MonitorType::Http))->toBeInstanceOf(HttpMonitorProbe::class)
         ->and(app(ProbeRegistry::class)->for(MonitorType::Tcp))->toBeInstanceOf(TcpProbe::class)
-        ->and(app(ProbeRegistry::class)->for(MonitorType::Heartbeat))->toBeNull();
+        ->and(app(ProbeRegistry::class)->for(MonitorType::Heartbeat))->toBeInstanceOf(HeartbeatProbe::class);
 });

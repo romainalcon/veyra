@@ -48,13 +48,21 @@ class ExecuteProbe implements ShouldQueue
         $monitor = $dispatch->monitor;
         $probe = $monitor === null ? null : $probes->for($monitor->type);
 
-        if ($monitor === null || $monitor->trashed() || ! $monitor->enabled || $probe === null || ! $probe->canProbe($monitor)) {
+        if ($monitor === null || $probe === null || $monitor->trashed() || ! $monitor->enabled || ! $probe->canProbe($monitor)) {
             $dispatch->update(['status' => DispatchStatus::Skipped, 'completed_at' => now()]);
 
             return;
         }
 
-        $recordProbeResult->handle($dispatch, $probe->probe($monitor));
+        $result = $probe->probe($monitor, $dispatch->scheduled_for);
+
+        if ($result === null) {
+            $dispatch->update(['status' => DispatchStatus::Skipped, 'completed_at' => now()]);
+
+            return;
+        }
+
+        $recordProbeResult->handle($dispatch, $result);
     }
 
     /**

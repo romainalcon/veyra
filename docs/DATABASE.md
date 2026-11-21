@@ -72,4 +72,5 @@
 ## Monitor types (Sprint 7)
 - `monitor_tcp_configs` and `monitor_heartbeat_configs` mirror `monitor_http_configs` (PK = `monitor_id`, cascade on hard delete).
 - `monitors.interval_seconds` is widened from `SMALLINT UNSIGNED` to `INT UNSIGNED` for heartbeat periods up to one week (non-destructive `ALTER`).
+- `scheduler_beats` (PK `beat_at`, one row per minute) is written by `veyra:heartbeat` and purged by `veyra:history:purge` after 9 days; gap detection uses the `LAG()` window function (MariaDB 10.2+).
 - Heartbeat checks reference a `monitor_dispatches` row with `trigger = ping`; the unique `(monitor_id, scheduled_for)` key deduplicates pings within the same second.
