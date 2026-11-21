@@ -42,3 +42,32 @@ test('HSTS is only sent over HTTPS', function () {
     $this->get('http://localhost/login')->assertHeaderMissing('Strict-Transport-Security');
     $this->get('https://localhost/login')->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 });
+
+test('extensions may add script, frame and image origins to the policy', function () {
+    config([
+        'veyra.csp.script_src' => ['https://cdn.paddle.com'],
+        'veyra.csp.frame_src' => ['https://buy.paddle.com'],
+        'veyra.csp.img_src' => ['https://cdn.paddle.com'],
+    ]);
+
+    $policy = app(SecurityHeaders::class)->policy('abc');
+
+    expect($policy)
+        ->toContain("script-src 'self' 'nonce-abc' https://cdn.paddle.com")
+        ->toContain("frame-src 'self' https://buy.paddle.com")
+        ->toContain("img-src 'self' data: https://cdn.paddle.com");
+});
+
+test('the default policy only allows the instance itself', function () {
+    expect(app(SecurityHeaders::class)->policy('abc'))
+        ->toContain("script-src 'self' 'nonce-abc';")
+        ->toContain("frame-src 'self';");
+});
+
+test('configured origins can never inject another directive', function () {
+    config(['veyra.csp.script_src' => ["https://evil.test; script-src 'unsafe-eval'", "'unsafe-inline'", 'https://ok.test']]);
+
+    expect(app(SecurityHeaders::class)->policy('abc'))
+        ->toContain("script-src 'self' 'nonce-abc' https://ok.test;")
+        ->not->toContain('unsafe-eval');
+});

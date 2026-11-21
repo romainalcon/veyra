@@ -70,6 +70,7 @@
 - [x] `OrganizationNavigation` registry shared as `currentOrganization.navigation` and rendered in the sidebar.
 - [x] `OrganizationDeleting` event inside the deletion transaction; account deletion goes through `DeleteOrganization` (history purged, listeners run).
 - [x] `RaiseMonitorIntervals` action for plan downgrades.
+- [x] CSP extra origins for `script-src`, `frame-src` and `img-src` (empty by default).
 - [x] Tests: Community unchanged without extensions, navigation abilities and translation, deletion event and abort, account deletion purge, interval raising, page registry and dictionary merging.
 
 ## Done means

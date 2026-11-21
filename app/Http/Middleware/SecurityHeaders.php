@@ -48,19 +48,37 @@ class SecurityHeaders
 
     public function policy(string $nonce): string
     {
-        $connect = array_filter(["'self'", ...(array) config('veyra.csp.connect_src', [])]);
+        $connect = $this->sources(["'self'"], 'connect_src');
 
         return implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'nonce-{$nonce}'",
+            'script-src '.$this->sources(["'self'", "'nonce-{$nonce}'"], 'script_src'),
             "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data:",
+            'img-src '.$this->sources(["'self'", 'data:'], 'img_src'),
             "font-src 'self' data:",
-            'connect-src '.implode(' ', $connect),
+            'connect-src '.$connect,
+            'frame-src '.$this->sources(["'self'"], 'frame_src'),
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'none'",
         ]);
+    }
+
+    /**
+     * Base sources plus the configured extra origins of a directive. Values
+     * containing separators or quotes are ignored so that configuration can
+     * never inject another directive.
+     *
+     * @param  list<string>  $base
+     */
+    private function sources(array $base, string $key): string
+    {
+        $extra = array_filter(
+            array_map('strval', (array) config("veyra.csp.{$key}", [])),
+            fn (string $source): bool => $source !== '' && preg_match('/[;,\s\'"]/', $source) !== 1,
+        );
+
+        return implode(' ', array_values(array_unique([...$base, ...$extra])));
     }
 }

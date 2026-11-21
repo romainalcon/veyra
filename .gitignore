@@ -28,6 +28,8 @@ Thumbs.db
 /.claude/settings.local.json
 # Optional extensions (e.g. the commercial Cloud extension) live in their own repositories (ADR-030).
 /extensions/
+/composer.cloud.json
+/composer.cloud.lock
 /bootstrap/ssr
 /resources/js/actions
 /resources/js/routes

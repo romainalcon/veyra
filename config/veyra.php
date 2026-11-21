@@ -198,6 +198,9 @@ return [
     |
     | Extra `connect-src` origins: the browser-facing Reverb WebSocket endpoint
     | (derived from VITE_REVERB_*) unless VEYRA_CSP_CONNECT_SRC overrides it.
+    | Optional extensions may add the origins they need (for instance a
+    | payment provider's script and checkout frame) from their provider
+    | (ADR-030); without extensions these lists are empty.
     |
     */
 
@@ -207,6 +210,9 @@ return [
             : (env('VITE_REVERB_HOST')
                 ? [(env('VITE_REVERB_SCHEME', 'https') === 'https' ? 'wss://' : 'ws://').env('VITE_REVERB_HOST').':'.env('VITE_REVERB_PORT', 443)]
                 : []))),
+        'script_src' => [],
+        'frame_src' => [],
+        'img_src' => [],
     ],
 
     'admin_emails' => array_values(array_filter(array_map(
