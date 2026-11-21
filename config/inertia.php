@@ -36,8 +36,10 @@ return [
 
     'pages' => [
 
+        // Optional extensions cloned into extensions/<name>/ add their own pages (ADR-030).
         'paths' => [
             resource_path('js/pages'),
+            ...(glob(base_path('extensions/*/resources/js/pages'), GLOB_ONLYDIR) ?: []),
         ],
 
         'extensions' => [

@@ -36,6 +36,8 @@ export default defineConfig({
             ignored: [
                 '**/.claude/**',
                 '**/vendor/**',
+                '**/extensions/*/vendor/**',
+                '**/extensions/*/node_modules/**',
                 '**/storage/framework/views/**',
             ],
         },

@@ -11,7 +11,10 @@ export default defineConfig({
     },
     test: {
         environment: 'jsdom',
-        include: ['resources/js/**/*.test.ts'],
+        include: [
+            'resources/js/**/*.test.ts',
+            'extensions/*/resources/js/**/*.test.ts',
+        ],
         restoreMocks: true,
     },
 });

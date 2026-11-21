@@ -19,5 +19,7 @@ resources/js/actions
 resources/js/routes
 resources/js/wayfinder
 database/database.sqlite
+# Community images never contain optional extensions (ADR-030).
+extensions
 *.log
 .DS_Store

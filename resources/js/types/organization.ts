@@ -19,6 +19,14 @@ export type LimitUsage = {
     limit: number;
 };
 
+/** Navigation entry contributed by an optional extension (ADR-030). */
+export type ExtensionNavItem = {
+    id: string;
+    title: string;
+    href: string;
+    icon: 'credit-card' | 'receipt' | 'chart' | 'puzzle';
+};
+
 export type CurrentOrganization = OrganizationSummary & {
     role: OrganizationRole;
     openIncidents: number;
@@ -29,6 +37,8 @@ export type CurrentOrganization = OrganizationSummary & {
     };
     /** Only limited features are present; empty on the Community edition. */
     limits: Partial<Record<LimitFeature, LimitUsage>>;
+    /** Entries contributed by optional extensions; empty on the Community edition. */
+    navigation: ExtensionNavItem[];
 };
 
 export type Member = {

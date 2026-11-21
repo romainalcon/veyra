@@ -2,6 +2,7 @@
 
 namespace App\Domain\Identity\Actions;
 
+use App\Domain\Organizations\Actions\DeleteOrganization;
 use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationMember;
@@ -11,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class DeleteUser
 {
+    public function __construct(private readonly DeleteOrganization $deleteOrganization) {}
+
     /**
      * Fail early, without side effects, when the account cannot be deleted.
      *
@@ -31,7 +34,11 @@ class DeleteUser
     public function handle(User $user): void
     {
         DB::transaction(function () use ($user): void {
-            Organization::query()->whereKey($this->soleMemberOrganizationIds($user))->delete();
+            // Through DeleteOrganization, so that monitoring history is purged and listeners run.
+            Organization::query()
+                ->whereKey($this->soleMemberOrganizationIds($user))
+                ->get()
+                ->each(fn (Organization $organization) => $this->deleteOrganization->handle($organization));
 
             $user->delete();
         });

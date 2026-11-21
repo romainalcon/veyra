@@ -3,13 +3,18 @@ import { usePage } from '@inertiajs/vue3';
 import {
     Activity,
     Bell,
+    ChartColumn,
+    CreditCard,
     Globe,
     LayoutGrid,
+    Puzzle,
+    Receipt,
     Settings,
     Siren,
     Users,
     Wrench,
 } from '@lucide/vue';
+import type { LucideIcon } from '@lucide/vue';
 import { computed } from 'vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -28,10 +33,18 @@ import { index as members } from '@/routes/organizations/members';
 import { index as monitors } from '@/routes/organizations/monitors';
 import { index as notificationChannels } from '@/routes/organizations/notification-channels';
 import { index as statusPages } from '@/routes/organizations/status-pages';
-import type { NavItem } from '@/types';
+import type { ExtensionNavItem, NavItem } from '@/types';
 
 const page = usePage();
 const { t } = useTranslations();
+
+/** Icons extensions may use (OrganizationNavigation::ICONS). */
+const extensionIcons: Record<ExtensionNavItem['icon'], LucideIcon> = {
+    'credit-card': CreditCard,
+    receipt: Receipt,
+    chart: ChartColumn,
+    puzzle: Puzzle,
+};
 
 const mainNavItems = computed<NavItem[]>(() => {
     const organization = page.props.currentOrganization;
@@ -84,6 +97,13 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: members(organization.slug),
             icon: Users,
         },
+        // Already translated by the server; shown before the organization settings.
+        ...(organization.navigation ?? []).map((item): NavItem => ({
+            id: item.id,
+            title: item.title,
+            href: item.href,
+            icon: extensionIcons[item.icon] ?? Puzzle,
+        })),
         {
             id: 'settings',
             title: t('Settings'),

@@ -65,6 +65,13 @@
 - [x] UI: shared `currentOrganization.limits`, `LimitNotice` (usage, limit reached), disabled creation controls, intervals below the minimum hidden; French translations.
 - [x] Tests: every enforcement point, tenant isolation, translated messages, Community non-regression, retention per organization, MariaDB lock test.
 
+## Sprint 10a — Extension points (core)
+- [x] Extension pages, translations, styles and tooling from `extensions/*` (git- and Docker-ignored); core pages and translations always win (ADR-030).
+- [x] `OrganizationNavigation` registry shared as `currentOrganization.navigation` and rendered in the sidebar.
+- [x] `OrganizationDeleting` event inside the deletion transaction; account deletion goes through `DeleteOrganization` (history purged, listeners run).
+- [x] `RaiseMonitorIntervals` action for plan downgrades.
+- [x] Tests: Community unchanged without extensions, navigation abilities and translation, deletion event and abort, account deletion purge, interval raising, page registry and dictionary merging.
+
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
 

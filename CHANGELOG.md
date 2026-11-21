@@ -15,9 +15,14 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 - **Organization limits (groundwork for hosted plans)** — an `Entitlements` contract can limit active monitors, members (with pending invitations), status pages, custom domains, notification channels, the minimum check interval and raw-check retention per organization. The Community edition limits nothing and shows nothing new. Limits only stop growth: nothing is deleted or paused when a limit is lowered (ADR-029).
 - `veyra:doctor` reports which entitlements are installed and fails when `VEYRA_EDITION=cloud` runs without Cloud entitlements.
 
+- **Extension points** — optional extensions installed from their own repositories into `extensions/<name>/` can add pages, translations and organization navigation entries, react to organization deletion (`OrganizationDeleting`) and raise monitor intervals. Nothing changes without extensions; Community images never include them (ADR-030).
+
 ### Changed
 - Dates, percentages and numbers are formatted according to the active language.
 - Raw-check retention is resolved per organization (still `VEYRA_CHECK_RETENTION_DAYS` on the Community edition). No migration.
+
+### Fixed
+- Deleting an account now purges the monitoring history of the organizations deleted with it (raw checks were previously left behind).
 
 ## [1.2.0] — 2026-11-21
 

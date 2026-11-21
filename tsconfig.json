@@ -123,6 +123,8 @@
         "resources/js/**/*.d.ts",
         "resources/js/**/*.tsx",
         "resources/js/**/*.vue",
+        "extensions/*/resources/js/**/*.ts",
+        "extensions/*/resources/js/**/*.vue",
         "vite.config.ts",
         "vitest.config.ts"
     ]

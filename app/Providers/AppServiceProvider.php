@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Domain\Entitlements\CommunityEntitlements;
 use App\Domain\Entitlements\Contracts\Entitlements;
+use App\Domain\Extensions\OrganizationNavigation;
 use App\Domain\Incidents\Events\IncidentAcknowledged;
 use App\Domain\Incidents\Events\IncidentOpened;
 use App\Domain\Incidents\Events\IncidentResolved;
@@ -39,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(Entitlements::class, CommunityEntitlements::class);
+        $this->app->singleton(OrganizationNavigation::class);
         $this->app->bind(DnsResolver::class, SystemDnsResolver::class);
         $this->app->bind(TcpConnector::class, StreamTcpConnector::class);
         $this->app->bind(TxtResolver::class, SystemTxtResolver::class);

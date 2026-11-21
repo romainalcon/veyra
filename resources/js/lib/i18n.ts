@@ -13,20 +13,40 @@ type Dictionary = Record<string, string>;
 
 export const SOURCE_LOCALE = 'en';
 
-const bundled = import.meta.glob<Dictionary>('../../../lang/*.json', {
-    import: 'default',
-    eager: true,
-});
+/**
+ * Merges dictionaries by language code (`…/fr.json`). Core entries win over
+ * those of extensions (`extensions/<name>/lang/*.json`, ADR-030).
+ */
+export function mergeDictionaries(
+    core: Record<string, Dictionary>,
+    extensions: Record<string, Dictionary> = {},
+): Map<string, Dictionary> {
+    const merged = new Map<string, Dictionary>([[SOURCE_LOCALE, {}]]);
 
-const dictionaries = new Map<string, Dictionary>([[SOURCE_LOCALE, {}]]);
+    for (const [path, dictionary] of [
+        ...Object.entries(extensions),
+        ...Object.entries(core),
+    ]) {
+        const code = /([a-z]+)\.json$/.exec(path)?.[1];
 
-for (const [path, dictionary] of Object.entries(bundled)) {
-    const code = /([a-z]+)\.json$/.exec(path)?.[1];
-
-    if (code) {
-        dictionaries.set(code, dictionary);
+        if (code) {
+            merged.set(code, { ...(merged.get(code) ?? {}), ...dictionary });
+        }
     }
+
+    return merged;
 }
+
+const dictionaries = mergeDictionaries(
+    import.meta.glob<Dictionary>('../../../lang/*.json', {
+        import: 'default',
+        eager: true,
+    }),
+    import.meta.glob<Dictionary>('../../../extensions/*/lang/*.json', {
+        import: 'default',
+        eager: true,
+    }),
+);
 
 const activeLocale = ref(SOURCE_LOCALE);
 const activeDictionary = shallowRef<Dictionary>({});
