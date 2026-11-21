@@ -96,6 +96,14 @@ return [
         'check_retention_days' => max(1, (int) env('VEYRA_CHECK_RETENTION_DAYS', 30)),
     ],
 
+    /*
+    | Planned maintenance windows (one-off, UTC).
+    */
+
+    'maintenance' => [
+        'max_duration_hours' => max(1, (int) env('VEYRA_MAINTENANCE_MAX_HOURS', 168)),
+    ],
+
     'notifications' => [
         'reminder_after_minutes' => max(1, (int) env('VEYRA_REMINDER_AFTER_MINUTES', 30)),
         'max_email_recipients' => 10,

@@ -72,6 +72,7 @@ final class MonitorPresenter
             'error_code' => $check->error_code?->value,
             'error_label' => $check->error_code?->label(),
             'redirects' => (int) ($check->metadata['redirects'] ?? 0),
+            'in_maintenance' => $check->in_maintenance,
         ];
     }
 

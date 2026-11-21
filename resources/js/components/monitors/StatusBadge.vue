@@ -23,6 +23,10 @@ const styles: Record<MonitorStatus, { label: string; class: string }> = {
         label: 'Unknown',
         class: 'bg-muted text-muted-foreground hover:bg-muted',
     },
+    maintenance: {
+        label: 'Maintenance',
+        class: 'bg-sky-600 text-white hover:bg-sky-600 dark:bg-sky-500',
+    },
 };
 
 const style = computed(() => styles[props.status] ?? styles.unknown);

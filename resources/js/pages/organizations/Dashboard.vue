@@ -43,7 +43,13 @@ const organization = computed(
     () => page.props.currentOrganization as CurrentOrganization,
 );
 
-const statuses: MonitorStatus[] = ['up', 'degraded', 'down', 'unknown'];
+const statuses: MonitorStatus[] = [
+    'up',
+    'degraded',
+    'down',
+    'maintenance',
+    'unknown',
+];
 
 useOrganizationRealtime(organization.value.id, {
     only: ['monitorCounts', 'openIncidents', 'currentOrganization'],

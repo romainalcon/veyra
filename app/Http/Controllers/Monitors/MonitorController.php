@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Monitors;
 
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Actions\CreateMonitor;
 use App\Domain\Monitoring\Actions\DeleteMonitor;
 use App\Domain\Monitoring\Actions\UpdateMonitor;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Presenters\IncidentPresenter;
 use App\Http\Presenters\MonitorPresenter;
 use App\Http\Requests\Monitors\SaveMonitorRequest;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -85,6 +87,7 @@ class MonitorController extends Controller
         return Inertia::render('monitors/Show', [
             'monitor' => MonitorPresenter::detail($monitor),
             'incidents' => $incidents,
+            'maintenance' => $this->currentOrNextMaintenance($monitor),
             'range' => $range->value,
             'stats' => Inertia::defer(function () use ($monitor, $range, $uptimeCalculator, $series): array {
                 $monitors = collect([$monitor]);
@@ -136,5 +139,30 @@ class MonitorController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Monitor deleted.')]);
 
         return to_route('organizations.monitors.index', $organization);
+    }
+
+    /**
+     * The running window, or else the next scheduled one (within 7 days).
+     *
+     * @return array{title: string, starts_at: string, ends_at: string, active: bool}|null
+     */
+    private function currentOrNextMaintenance(Monitor $monitor): ?array
+    {
+        $now = CarbonImmutable::now();
+
+        $window = MaintenanceWindow::query()
+            ->whereHas('monitors', fn ($query) => $query->whereKey($monitor->id))
+            ->whereNull('cancelled_at')
+            ->where('ends_at', '>', $now)
+            ->where('starts_at', '<=', $now->addDays(7))
+            ->orderBy('starts_at')
+            ->first();
+
+        return $window === null ? null : [
+            'title' => $window->title,
+            'starts_at' => $window->starts_at->toIso8601String(),
+            'ends_at' => $window->ends_at->toIso8601String(),
+            'active' => $window->isActive($now),
+        ];
     }
 }

@@ -7,6 +7,7 @@ import {
     Settings,
     Siren,
     Users,
+    Wrench,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import NavMain from '@/components/NavMain.vue';
@@ -20,6 +21,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard, edit } from '@/routes/organizations';
 import { index as incidents } from '@/routes/organizations/incidents';
+import { index as maintenance } from '@/routes/organizations/maintenance';
 import { index as members } from '@/routes/organizations/members';
 import { index as monitors } from '@/routes/organizations/monitors';
 import { index as notificationChannels } from '@/routes/organizations/notification-channels';
@@ -50,6 +52,11 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: incidents(organization.slug),
             icon: Siren,
             badge: organization.openIncidents,
+        },
+        {
+            title: 'Maintenance',
+            href: maintenance(organization.slug),
+            icon: Wrench,
         },
         {
             title: 'Notifications',

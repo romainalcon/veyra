@@ -9,6 +9,7 @@ describe('StatusBadge', () => {
         ['degraded', 'Degraded'],
         ['down', 'Down'],
         ['unknown', 'Unknown'],
+        ['maintenance', 'Maintenance'],
     ])('renders the %s state', (status, label) => {
         const wrapper = mount(StatusBadge, { props: { status } });
 

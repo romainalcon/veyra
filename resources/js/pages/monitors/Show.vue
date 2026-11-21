@@ -31,6 +31,7 @@ import type {
     IncidentSummary,
     MonitorCheck,
     MonitorDetail,
+    MonitorMaintenance,
     MonitorStats,
     StatsRange,
 } from '@/types';
@@ -39,6 +40,7 @@ const props = defineProps<{
     monitor: MonitorDetail;
     checks: CursorPaginated<MonitorCheck>;
     incidents: IncidentSummary[];
+    maintenance: MonitorMaintenance | null;
     stats?: MonitorStats;
     range: StatsRange;
     can: { update: boolean; delete: boolean; checkNow: boolean };
@@ -163,6 +165,22 @@ const remove = () => router.visit(destroy(params.value));
             >
         </Link>
 
+        <div
+            v-if="maintenance"
+            class="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-300"
+            data-test="maintenance-banner"
+        >
+            <span class="font-medium">{{
+                maintenance.active ? 'Under maintenance' : 'Maintenance planned'
+            }}</span>
+            — {{ maintenance.title }}:
+            <template v-if="!maintenance.active"
+                >{{ formatDateTime(maintenance.starts_at) }} →
+            </template>
+            until {{ formatDateTime(maintenance.ends_at) }}. Checks keep running
+            but open no incident and do not count towards uptime.
+        </div>
+
         <dl class="grid gap-4 rounded-lg border p-4 text-sm sm:grid-cols-4">
             <div>
                 <dt class="text-muted-foreground">Latest raw check</dt>
@@ -269,7 +287,15 @@ const remove = () => router.visit(destroy(params.value));
                                 {{ formatDateTime(check.checked_at) }}
                             </td>
                             <td class="px-4 py-2">
-                                <CheckBadge :check="check" />
+                                <span class="flex items-center gap-2">
+                                    <CheckBadge :check="check" />
+                                    <Badge
+                                        v-if="check.in_maintenance"
+                                        variant="outline"
+                                        data-test="check-maintenance"
+                                        >Maintenance</Badge
+                                    >
+                                </span>
                             </td>
                             <td class="px-4 py-2">
                                 {{ formatDuration(check.duration_ms) }}

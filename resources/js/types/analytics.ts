@@ -1,3 +1,5 @@
+import type { MonitorStatus } from './monitor';
+
 export type UptimeFigure = {
     uptime: number | null;
     coverage: number | null;
@@ -17,6 +19,7 @@ export type LatencyPoint = {
     checks: number;
     successes: number;
     failures: number;
+    maintenance: number;
     latency_avg: number | null;
     latency_max: number | null;
 };
@@ -40,7 +43,7 @@ export type OrganizationAnalytics = {
     monitors: {
         id: string;
         name: string;
-        status: 'up' | 'degraded' | 'down' | 'unknown';
+        status: MonitorStatus;
         uptime_7d: number | null;
         partial: boolean;
         latency_24h: number | null;

@@ -35,6 +35,10 @@ const hasData = computed(() =>
     props.points.some((point) => point.latency_avg !== null),
 );
 
+const hasMaintenance = computed(() =>
+    props.points.some((point) => point.maintenance > 0),
+);
+
 const config = {
     avg: { label: 'Average (ms)', color: 'var(--chart-2)' },
     max: { label: 'Max (ms)', color: 'var(--chart-1)' },
@@ -101,4 +105,29 @@ const tooltip = componentToString(config, ChartTooltipContent, {
             />
         </VisXYContainer>
     </ChartContainer>
+    <div
+        v-if="hasMaintenance"
+        class="mt-2 space-y-1"
+        data-test="latency-maintenance"
+    >
+        <div class="flex h-1.5 gap-px overflow-hidden rounded-full">
+            <span
+                v-for="point in points"
+                :key="point.t"
+                class="flex-1"
+                :class="point.maintenance > 0 ? 'bg-sky-500' : 'bg-transparent'"
+                :title="
+                    point.maintenance > 0
+                        ? `${tickFormat(points.indexOf(point))}: maintenance`
+                        : undefined
+                "
+            />
+        </div>
+        <p class="text-xs text-muted-foreground">
+            <span
+                class="mr-1 inline-block size-2 rounded-full bg-sky-500"
+                aria-hidden="true"
+            />Planned maintenance (excluded from latency and uptime)
+        </p>
+    </div>
 </template>
