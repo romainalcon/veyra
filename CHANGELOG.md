@@ -4,6 +4,19 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+- **Monitor types** — every monitor now has a type chosen on creation: HTTP(S) (unchanged), TCP or heartbeat. All types share the scheduler, check history, confirmed states, incidents, notifications, analytics and status pages (ADR-024).
+- **TCP monitors** — host + port connection checks: every DNS answer validated, connection pinned to the validated IP, nothing sent or read, timeout up to 30 s. Ports are limited to `VEYRA_PROBES_TCP_ALLOWED_PORTS` (default `22,25,80,443,465,587,993,995,3306,5432,6379`).
+- **Heartbeat monitors** — jobs call a secret ping URL (`/ping/{token}`, GET/POST/HEAD) or `/ping/{token}/fail`. Period (1 min to 1 week) and grace (1 min to 24 h); one missed ping confirms DOWN, one ping confirms UP. The URL is shown once, can be regenerated, and comes with curl/cron examples. A deadline is reported as missed only when the scheduler was demonstrably alive for the whole window; otherwise the monitor goes UNKNOWN, never DOWN (ADR-025).
+- **TLS certificate expiry** — HTTPS monitors record the certificate of the monitored host (subject, issuer, validity), shown on the monitor page. The monitor's channels are warned at 14, 7 and 1 days before expiry and on expiry, once per certificate and threshold (`VEYRA_CERTIFICATE_WARNING_DAYS`). A renewed certificate starts over (ADR-026).
+
+### Changed
+- Notification deliveries can belong to a certificate alert instead of an incident; the delivery history shows both.
+- Probe jobs are dispatched as `ExecuteProbe`. `ExecuteHttpProbe` remains as a deprecated alias so jobs queued by 1.1 still run after the upgrade; it will be removed in 1.3.
+
+### Security
+- Ping tokens are 40 random characters stored as SHA-256 hashes only; the ping endpoint runs without session, cookies or CSRF, never reads the body and is rate limited per token and per IP. TCP monitors apply the same destination rules as HTTP probes with their own port allow-list. Certificate capture only reads the public chain presented by the monitored host. See `docs/SECURITY.md`.
+
 ## [1.1.0] — 2026-11-21
 
 ### Added

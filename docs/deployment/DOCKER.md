@@ -52,5 +52,9 @@ The stack serves plain HTTP on `VEYRA_HTTP_PORT`; terminate TLS in front of it. 
 
 This configuration is an example and is not exercised in CI.
 
+## Monitor types (Sprint 7)
+- TCP monitors connect to the ports of `VEYRA_PROBES_TCP_ALLOWED_PORTS`; allow them (to public destinations only) in the egress rules of the `horizon` service if you use TCP monitors.
+- Heartbeat monitors are pinged on `/ping/{token}` by your jobs: the path must be reachable through your reverse proxy, and `TRUSTED_PROXIES` must be set for per-IP rate limits. Keep the `scheduler` service running: without its minute beats, missed pings are reported as UNKNOWN, not DOWN.
+
 ## Notifications (Sprint 4)
 The Horizon workers (queue `notifications`) need outbound access to your SMTP server (`MAIL_*`) and, if Discord channels are used, to `discord.com:443`. Keep these destinations in the egress allow-list of the probe/worker hosts.

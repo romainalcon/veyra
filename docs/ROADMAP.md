@@ -46,7 +46,7 @@
 - [x] Heartbeat deadline evaluation through the outbox: a missed ping is recorded only when the evaluation runs on time and the scheduler was alive for the whole window; otherwise no check is written (UNKNOWN, never DOWN).
 - [x] TLS certificate expiry for HTTPS monitors: certificate `notAfter`/issuer captured by the probe, warnings at 14/7/1 days and on expiry, sent to the monitor's channels once per certificate and threshold (deliveries no longer tied only to incidents) (ADR-026).
 - [x] UI: type picker on creation, type-specific forms and detail pages (ping URL with copy/regenerate and curl/cron examples, last ping, certificate panel); status pages and analytics work unchanged for every type.
-- [ ] Docs: MONITORING, DATABASE, SECURITY, DECISIONS, CHANGELOG/UPGRADING for 1.2.
+- [x] Docs: MONITORING, DATABASE, SECURITY, DECISIONS, CHANGELOG/UPGRADING for 1.2.
 
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.

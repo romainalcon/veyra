@@ -15,6 +15,14 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.2.0
+Four migrations run automatically: `create_monitor_tcp_configs_table`, `create_monitor_heartbeat_configs_table` (also widens `monitors.interval_seconds` to `INT UNSIGNED`), `create_scheduler_beats_table` and `create_tls_certificate_tables` (new tables; `notification_deliveries.incident_id` becomes nullable and gains a `certificate_alert_id` column). The two altered tables are small (`monitors`, and deliveries kept 90 days), but MariaDB rebuilds them: take a backup first as usual.
+- Existing monitors become HTTP monitors; nothing changes for them. Probe jobs already queued by 1.1 keep running.
+- New scheduled command `veyra:certificates:check` (hourly) runs through the existing scheduler; `veyra:heartbeat` now also records a durable beat every minute, used to tell a missed ping from a stopped scheduler. Nothing to configure, but keep the scheduler running: while it is stopped, heartbeat deadlines are reported as UNKNOWN, not DOWN.
+- Heartbeat monitors need `/ping/*` reachable from the machines running your jobs through your reverse proxy, with `TRUSTED_PROXIES` set so that per-IP rate limits see the real client address.
+- TCP monitors connect to the ports in `VEYRA_PROBES_TCP_ALLOWED_PORTS`: open those ports (to public destinations only) in the egress rules of the Horizon workers if you use TCP monitors.
+- Optional: `VEYRA_PROBES_TCP_ALLOWED_PORTS`, `VEYRA_CERTIFICATE_WARNING_DAYS` (default `14,7,1`), `VEYRA_HEARTBEAT_DOWN_AFTER_MISSES` / `VEYRA_HEARTBEAT_UP_AFTER_PINGS` (default 1/1).
+
 ### 1.1.0
 Two migrations run automatically: `create_maintenance_tables` adds a `monitor_checks.in_maintenance` column (instant on MariaDB 11.4, no table rebuild) and maintenance tables; `create_status_page_tables` adds the status page tables. Take a backup first as usual.
 - New scheduled commands `veyra:maintenance:transition` (every minute) and `veyra:status-domains:verify` (hourly) run through the existing scheduler; nothing to configure.

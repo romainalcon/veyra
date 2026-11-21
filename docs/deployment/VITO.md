@@ -30,6 +30,8 @@ Then set `REVERB_HOST=127.0.0.1`, `REVERB_PORT=8080`, `REVERB_SCHEME=http` (serv
 
 ## Security
 - Restrict outbound traffic of the user running Horizon to public destinations (see Docker guide) before enabling HTTP probes.
+- If you use TCP monitors, allow the ports of `VEYRA_PROBES_TCP_ALLOWED_PORTS` (public destinations only) in that egress filter.
+- Heartbeat pings arrive on `/ping/{token}` through Nginx; keep `TRUSTED_PROXIES=127.0.0.1` so rate limits see the client IP, and keep the Laravel scheduler cron active (missed pings are only reported DOWN while it runs).
 - Keep MariaDB and Redis bound to localhost or a private network.
 - Set `VEYRA_ADMIN_EMAILS` to open `/horizon` to instance administrators only.
 
