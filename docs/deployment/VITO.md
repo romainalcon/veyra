@@ -1,0 +1,36 @@
+# Veyra — Private deployment with Vito Deploy
+
+Veyra runs the same code as the Docker distribution on a classic stack managed by Vito Deploy: Nginx + PHP-FPM 8.4, MariaDB 11.4, Redis, Supervisor and cron.
+
+## Server prerequisites
+- PHP 8.4 with `pdo_mysql`, `redis` (phpredis), `pcntl`, `posix`, `intl`, `zip`, `bcmath`, `opcache`.
+- MariaDB 11.4+ with `default-time-zone = '+00:00'` and an `utf8mb4` database for Veyra.
+- Redis 7+, Node.js 22 LTS and Composer 2 (for building assets on the server).
+
+## Site setup
+1. Create a Laravel/PHP site in Vito pointing to the repository, web root `public/`.
+2. Create the `.env` from `.env.example`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://…`, `SESSION_SECURE_COOKIE=true`, database, Redis, mail and Reverb values. Generate `APP_KEY` with `php artisan key:generate` and `REVERB_APP_KEY`/`REVERB_APP_SECRET` with `openssl rand -hex 16`.
+3. Use `deploy/vito/deploy.sh` as the deployment script (set `PHP_BIN` if needed).
+4. Create two Vito workers (Supervisor programs) equivalent to `deploy/vito/supervisor/veyra-horizon.conf` and `veyra-reverb.conf`.
+5. Add the scheduler cron from `deploy/vito/scheduler.cron` (Vito "Cron jobs").
+6. Expose Reverb through the site's Nginx configuration:
+
+```nginx
+location ~ ^/(app|apps)/ {
+    proxy_http_version 1.1;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_pass http://127.0.0.1:8080;
+}
+```
+
+Then set `REVERB_HOST=127.0.0.1`, `REVERB_PORT=8080`, `REVERB_SCHEME=http` (server side) and `VITE_REVERB_HOST=<public host>`, `VITE_REVERB_PORT=443`, `VITE_REVERB_SCHEME=https` (browser side), and redeploy.
+
+## Security
+- Restrict outbound traffic of the user running Horizon to public destinations (see Docker guide) before enabling HTTP probes.
+- Keep MariaDB and Redis bound to localhost or a private network.
+- Set `VEYRA_ADMIN_EMAILS` to open `/horizon` to instance administrators only.
+
+The paths in `deploy/vito/` (`/home/vito/veyra.example.com`, `php8.4`) are examples; adapt them to the site created in Vito.

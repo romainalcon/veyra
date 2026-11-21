@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Domain\Organizations\Actions;
+
+use App\Domain\Organizations\DTOs\InvitationData;
+use App\Domain\Organizations\Models\Organization;
+use App\Domain\Organizations\Models\OrganizationInvitation;
+use App\Domain\Organizations\Notifications\OrganizationInvitationNotification;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+
+class InviteMember
+{
+    /**
+     * Create or refresh the pending invitation for this e-mail and send it.
+     *
+     * Only a SHA-256 hash of the token is stored; the plain token exists solely
+     * in the e-mailed link.
+     */
+    public function handle(Organization $organization, User $inviter, InvitationData $data): OrganizationInvitation
+    {
+        $plainToken = Str::random(64);
+
+        $invitation = DB::transaction(fn (): OrganizationInvitation => OrganizationInvitation::updateOrCreate(
+            ['organization_id' => $organization->id, 'email' => $data->email],
+            [
+                'role' => $data->role,
+                'token_hash' => OrganizationInvitation::hashToken($plainToken),
+                'invited_by' => $inviter->id,
+                'expires_at' => now()->addHours((int) config('veyra.invitations.ttl_hours')),
+            ],
+        ));
+
+        Notification::route('mail', $data->email)
+            ->notify(new OrganizationInvitationNotification($organization->name, $inviter->name, $data->role, $plainToken));
+
+        return $invitation;
+    }
+}

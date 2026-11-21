@@ -1,0 +1,2 @@
+# Laravel scheduler (Horizon snapshots now; monitor scheduling from Sprint 2).
+* * * * * cd /home/vito/veyra.example.com && /usr/bin/php8.4 artisan schedule:run >> /dev/null 2>&1

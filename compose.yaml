@@ -1,0 +1,155 @@
+# Veyra Community Edition — Docker Compose stack.
+#
+#   cp deploy/docker/.env.docker.example .env.docker   # then fill in secrets
+#   docker compose --env-file .env.docker up -d --build
+#
+# See docs/deployment/DOCKER.md. All application roles use the same image.
+
+x-app: &app
+  image: ${VEYRA_IMAGE:-veyra/app:local}
+  build:
+    context: .
+    dockerfile: deploy/docker/Dockerfile
+    target: app
+    args: &vite-args
+      VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY:-}
+      VITE_REVERB_HOST: ${VITE_REVERB_HOST:-localhost}
+      VITE_REVERB_PORT: ${VITE_REVERB_PORT:-8000}
+      VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME:-http}
+  restart: unless-stopped
+  env_file: .env.docker
+  environment:
+    DB_CONNECTION: mysql
+    DB_HOST: mariadb
+    DB_PORT: 3306
+    REDIS_HOST: redis
+    QUEUE_CONNECTION: redis
+    CACHE_STORE: redis
+    SESSION_DRIVER: redis
+    BROADCAST_CONNECTION: reverb
+    REVERB_HOST: reverb
+    REVERB_PORT: 8080
+    REVERB_SCHEME: http
+  volumes:
+    - storage:/var/www/html/storage
+  depends_on:
+    mariadb:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
+  networks: [backend]
+
+services:
+  migrate:
+    <<: *app
+    restart: "no"
+    command: ["php", "artisan", "migrate", "--force"]
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  app:
+    <<: *app
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  web:
+    image: ${VEYRA_WEB_IMAGE:-veyra/web:local}
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      target: web
+      args: *vite-args
+    restart: unless-stopped
+    ports:
+      - "${VEYRA_HTTP_PORT:-8000}:80"
+    depends_on:
+      app:
+        condition: service_healthy
+      reverb:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [backend, public]
+
+  horizon:
+    <<: *app
+    command: ["php", "artisan", "horizon"]
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status | grep -q running"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    # Probe workers need outbound internet access. Network-level egress
+    # restrictions (no private ranges, metadata endpoints) are documented in
+    # docs/deployment/DOCKER.md and enforced before HTTP probes ship.
+    networks: [backend, egress]
+
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+
+  reverb:
+    <<: *app
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  mariadb:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-veyra}
+      MARIADB_USER: ${DB_USERNAME:-veyra}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.docker}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.docker}
+      MARIADB_AUTO_UPGRADE: "1"
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--default-time-zone=+00:00"]
+    volumes:
+      - mariadb:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [backend]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [backend]
+
+networks:
+  # Database, cache and internal services: no direct internet access.
+  backend:
+    internal: true
+  # Published HTTP entry point.
+  public: {}
+  # Outbound access for probe workers only.
+  egress: {}
+
+volumes:
+  storage:
+  mariadb:
+  redis:

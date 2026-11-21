@@ -1,0 +1,109 @@
+<script setup lang="ts">
+import { Link, usePage } from '@inertiajs/vue3';
+import { Building2, Check, ChevronsUpDown, Plus } from '@lucide/vue';
+import { computed } from 'vue';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    useSidebar,
+} from '@/components/ui/sidebar';
+import { create, dashboard } from '@/routes/organizations';
+
+const page = usePage();
+const { isMobile } = useSidebar();
+
+const currentOrganization = computed(() => page.props.currentOrganization);
+const organizations = computed(() => page.props.organizations ?? []);
+</script>
+
+<template>
+    <SidebarMenu>
+        <SidebarMenuItem>
+            <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                    <SidebarMenuButton
+                        size="lg"
+                        class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                        data-test="organization-switcher-trigger"
+                    >
+                        <div
+                            class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"
+                        >
+                            <Building2 class="size-4" />
+                        </div>
+                        <div
+                            class="grid flex-1 text-left text-sm leading-tight"
+                        >
+                            <span class="truncate font-semibold">
+                                {{
+                                    currentOrganization?.name ??
+                                    'Select organization'
+                                }}
+                            </span>
+                            <span
+                                v-if="currentOrganization"
+                                class="truncate text-xs text-muted-foreground capitalize"
+                            >
+                                {{ currentOrganization.role }}
+                            </span>
+                        </div>
+                        <ChevronsUpDown class="ml-auto size-4" />
+                    </SidebarMenuButton>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                    class="w-(--reka-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                    :side="isMobile ? 'bottom' : 'right'"
+                    align="start"
+                    :side-offset="4"
+                >
+                    <DropdownMenuLabel class="text-xs text-muted-foreground">
+                        Organizations
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                        v-for="organization in organizations"
+                        :key="organization.id"
+                        as-child
+                        data-test="organization-switcher-item"
+                    >
+                        <Link
+                            :href="dashboard(organization.slug)"
+                            class="flex w-full cursor-pointer items-center gap-2 p-2"
+                        >
+                            <span class="truncate">{{
+                                organization.name
+                            }}</span>
+                            <Check
+                                v-if="
+                                    currentOrganization?.id === organization.id
+                                "
+                                class="ml-auto size-4"
+                            />
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem as-child>
+                        <Link
+                            :href="create()"
+                            class="flex w-full cursor-pointer items-center gap-2 p-2"
+                        >
+                            <Plus class="size-4" />
+                            <span class="text-muted-foreground"
+                                >New organization</span
+                            >
+                        </Link>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </SidebarMenuItem>
+    </SidebarMenu>
+</template>
