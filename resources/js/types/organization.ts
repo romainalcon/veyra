@@ -6,6 +6,19 @@ export type OrganizationSummary = {
     slug: string;
 };
 
+/** Counted features an edition may limit (ADR-029). */
+export type LimitFeature =
+    | 'monitors'
+    | 'members'
+    | 'status_pages'
+    | 'custom_domains'
+    | 'notification_channels';
+
+export type LimitUsage = {
+    used: number;
+    limit: number;
+};
+
 export type CurrentOrganization = OrganizationSummary & {
     role: OrganizationRole;
     openIncidents: number;
@@ -14,6 +27,8 @@ export type CurrentOrganization = OrganizationSummary & {
         delete: boolean;
         manageMembers: boolean;
     };
+    /** Only limited features are present; empty on the Community edition. */
+    limits: Partial<Record<LimitFeature, LimitUsage>>;
 };
 
 export type Member = {

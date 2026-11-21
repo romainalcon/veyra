@@ -5,11 +5,13 @@ import InvitationController from '@/actions/App/Http/Controllers/Organizations/I
 import MemberController from '@/actions/App/Http/Controllers/Organizations/MemberController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import LimitNotice from '@/components/LimitNotice.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useOrganizationLimit } from '@/composables/useOrganizationLimit';
 import { index as membersIndex } from '@/routes/organizations/members';
 import type {
     CurrentOrganization,
@@ -37,6 +39,8 @@ setLayoutProps({
         { title: t('Members'), href: membersIndex(organization.value.slug) },
     ],
 });
+
+const { reached: limitReached } = useOrganizationLimit('members');
 
 const inviteRole = ref<string>(
     props.assignableRoles.find((role) => role.value === 'member')?.value ??
@@ -93,6 +97,15 @@ const formatDate = (iso: string) =>
                     )
                 "
             />
+            <LimitNotice
+                feature="members"
+                :resource="t('members and pending invitations')"
+                :hint="
+                    t(
+                        'Remove a member or revoke an invitation before inviting someone else.',
+                    )
+                "
+            />
             <Form
                 v-bind="InvitationController.store.form(organization.slug)"
                 :options="{ preserveScroll: true }"
@@ -123,7 +136,10 @@ const formatDate = (iso: string) =>
                     />
                     <InputError :message="errors.role" />
                 </div>
-                <Button :disabled="processing" data-test="invite-member-button">
+                <Button
+                    :disabled="processing || limitReached"
+                    data-test="invite-member-button"
+                >
                     {{ t('Send invitation') }}
                 </Button>
             </Form>

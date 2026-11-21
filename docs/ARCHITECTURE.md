@@ -13,6 +13,7 @@
 app/Domain/
   Identity/        Fortify actions, validation concerns, RegistrationGate, DeleteUser
   Organizations/   Actions, DTOs, Enums (OrganizationRole), Models, Notifications, Services
+  Entitlements/    Entitlements contract, Community implementation (no limits), Quota (ADR-029)
   Monitoring/      Probes, outbox, confirmed state, statistics
   Incidents/       Incidents, timeline events, public updates
   Notifications/   Channels, deliveries, reminders
@@ -49,5 +50,5 @@ extensions/cloud/    # optional, separate from Community core (not created yet)
 
 ## Architectural boundaries
 - Use domain services/actions; no business logic in controllers.
-- Cloud entitlements behind an interface, never a dependency from the Community core.
+- Cloud entitlements behind an interface, never a dependency from the Community core: the core binds `CommunityEntitlements`; an extension rebinds `Entitlements` (ADR-029).
 - Probe workers are Laravel jobs, but must have outbound network controls.

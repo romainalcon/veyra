@@ -2,10 +2,12 @@
 import { Form, router } from '@inertiajs/vue3';
 import { RefreshCw, Trash2 } from '@lucide/vue';
 import InputError from '@/components/InputError.vue';
+import LimitNotice from '@/components/LimitNotice.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useOrganizationLimit } from '@/composables/useOrganizationLimit';
 import { formatDateTime } from '@/lib/monitoring';
 import {
     destroy,
@@ -21,6 +23,9 @@ const props = defineProps<{
     params: [string, string];
     domain: StatusPageDomain | null;
 }>();
+
+// Replacing a domain never counts: only a page without one is blocked.
+const { reached: limitReached } = useOrganizationLimit('custom_domains');
 
 const verifyNow = () =>
     router.visit(verify(props.params), { preserveScroll: true });
@@ -45,7 +50,19 @@ const remove = () =>
             </p>
         </div>
 
+        <LimitNotice
+            v-if="!domain"
+            feature="custom_domains"
+            :resource="t('custom domains')"
+            :hint="
+                t(
+                    'Remove the domain of another status page before adding one here.',
+                )
+            "
+        />
+
         <Form
+            v-if="domain || !limitReached"
             v-bind="update.form(params)"
             :options="{ preserveScroll: true }"
             class="flex flex-col gap-2 sm:flex-row sm:items-start"

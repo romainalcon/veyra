@@ -2,8 +2,10 @@
 import { Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { ExternalLink, Globe, Plus } from '@lucide/vue';
 import { computed } from 'vue';
+import LimitNotice from '@/components/LimitNotice.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useOrganizationLimit } from '@/composables/useOrganizationLimit';
 import { create, edit, index } from '@/routes/organizations/status-pages';
 import type { CurrentOrganization, StatusPageSummary } from '@/types';
 import { useTranslations } from '@/lib/i18n';
@@ -16,6 +18,8 @@ const page = usePage();
 const organization = computed(
     () => page.props.currentOrganization as CurrentOrganization,
 );
+
+const { reached: limitReached } = useOrganizationLimit('status_pages');
 
 setLayoutProps({
     breadcrumbs: [
@@ -41,13 +45,23 @@ setLayoutProps({
                     }}
                 </p>
             </div>
-            <Button v-if="canManage" as-child>
+            <Button v-if="canManage && limitReached" disabled>
+                <Plus class="size-4" />
+                {{ t('New status page') }}
+            </Button>
+            <Button v-else-if="canManage" as-child>
                 <Link :href="create(organization.slug)">
                     <Plus class="size-4" />
                     {{ t('New status page') }}
                 </Link>
             </Button>
         </div>
+
+        <LimitNotice
+            feature="status_pages"
+            :resource="t('status pages')"
+            :hint="t('Delete a status page before creating another.')"
+        />
 
         <div
             v-if="statusPages.length === 0"

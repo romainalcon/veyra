@@ -2,8 +2,10 @@
 import { Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Activity, Plus } from '@lucide/vue';
 import { computed } from 'vue';
+import LimitNotice from '@/components/LimitNotice.vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
+import { useOrganizationLimit } from '@/composables/useOrganizationLimit';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +31,8 @@ const organization = computed(
 );
 
 useOrganizationRealtime(organization.value.id, { only: ['monitors'] });
+
+const { reached: limitReached } = useOrganizationLimit('monitors');
 
 const paginationLabel = (label: string) =>
     label.replace('&laquo;', '«').replace('&raquo;', '»');
@@ -57,13 +61,27 @@ setLayoutProps({
                     }}
                 </p>
             </div>
-            <Button v-if="canCreate" as-child>
+            <Button v-if="canCreate && limitReached" disabled>
+                <Plus class="size-4" />
+                {{ t('New monitor') }}
+            </Button>
+            <Button v-else-if="canCreate" as-child>
                 <Link :href="create(organization.slug)">
                     <Plus class="size-4" />
                     {{ t('New monitor') }}
                 </Link>
             </Button>
         </div>
+
+        <LimitNotice
+            feature="monitors"
+            :resource="t('active monitors')"
+            :hint="
+                t(
+                    'Pause or delete a monitor before adding or resuming another.',
+                )
+            "
+        />
 
         <div
             v-if="monitors.data.length === 0"
@@ -83,7 +101,7 @@ setLayoutProps({
                     )
                 }}
             </p>
-            <Button v-if="canCreate" class="mt-4" as-child>
+            <Button v-if="canCreate && !limitReached" class="mt-4" as-child>
                 <Link :href="create(organization.slug)">{{
                     t('Create a monitor')
                 }}</Link>

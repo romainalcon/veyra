@@ -62,6 +62,7 @@
 
 ## Notifications and statistics (Sprint 4)
 - `notification_deliveries` is unique on `(incident_id, channel_id, event_type)` — the idempotency key of the delivery pipeline. Certificate deliveries are unique on `(certificate_alert_id, channel_id)`; a CHECK constraint requires exactly one of `incident_id` and `certificate_alert_id` (ADR-026).
+- Raw-check retention is per organization (`Quota::checkRetentionDays()`, ADR-029): `VEYRA_CHECK_RETENTION_DAYS` on the Community edition, an entitlement otherwise.
 - `monitor_daily_stats` (PK `(monitor_id, day)`, UTC days) is maintained with `INSERT … SELECT … ON DUPLICATE KEY UPDATE`; it survives raw-check retention.
 - Retention deletes use `DELETE … LIMIT 1000` loops on indexed columns (`monitor_checks (monitor_id, checked_at)`, `monitor_dispatches (status, completed_at)`, `notification_deliveries (created_at)`). `tests/Integration/AggregationTest.php` covers 10 000 checks.
 

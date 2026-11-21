@@ -3,10 +3,12 @@ import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Mail, MessageSquare, Send, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
+import LimitNotice from '@/components/LimitNotice.vue';
 import ChannelForm from '@/components/notifications/ChannelForm.vue';
 import DeliveryStatus from '@/components/notifications/DeliveryStatus.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useOrganizationLimit } from '@/composables/useOrganizationLimit';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { formatDateTime, notificationEventLabel } from '@/lib/monitoring';
 import { show as showIncident } from '@/routes/organizations/incidents';
@@ -40,6 +42,8 @@ const organization = computed(
     () => page.props.currentOrganization as CurrentOrganization,
 );
 const editing = ref<string | null>(null);
+
+const { reached: limitReached } = useOrganizationLimit('notification_channels');
 
 useOrganizationRealtime(organization.value.id, { only: ['deliveries'] });
 
@@ -183,7 +187,13 @@ const remove = (channel: NotificationChannelSummary) =>
 
         <section v-if="canManage" class="space-y-4">
             <Heading variant="small" :title="t('Add a channel')" />
+            <LimitNotice
+                feature="notification_channels"
+                :resource="t('notification channels')"
+                :hint="t('Delete a channel before adding another.')"
+            />
             <ChannelForm
+                v-if="!limitReached"
                 :action="store.form(organization.slug)"
                 :types="types"
                 :max-recipients="maxRecipients"

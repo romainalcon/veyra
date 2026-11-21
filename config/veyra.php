@@ -8,8 +8,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | The running edition of Veyra. The Community core never depends on Cloud
-    | code; Cloud-only capabilities will be resolved through explicit
-    | contracts when they are introduced (see docs/DECISIONS.md, ADR-011).
+    | code; organization limits are resolved through the Entitlements
+    | contract, never from this value (see docs/DECISIONS.md, ADR-011/029).
     |
     */
 
