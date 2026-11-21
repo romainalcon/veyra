@@ -25,17 +25,17 @@ class SaveMaintenanceWindow
         $now = CarbonImmutable::now();
 
         if ($window !== null && ($window->isCancelled() || $window->hasEnded($now))) {
-            throw ValidationException::withMessages(['title' => 'This maintenance window is over and can no longer be changed.']);
+            throw ValidationException::withMessages(['title' => __('This maintenance window is over and can no longer be changed.')]);
         }
 
         $startsAt = $window !== null && $window->hasStarted($now) ? $window->starts_at : $data->startsAt;
 
         if ($data->endsAt->lessThanOrEqualTo($startsAt)) {
-            throw ValidationException::withMessages(['ends_at' => 'The end must be after the start.']);
+            throw ValidationException::withMessages(['ends_at' => __('The end must be after the start.')]);
         }
 
         if ($window !== null && $window->hasStarted($now) && $data->endsAt->lessThan($now)) {
-            throw ValidationException::withMessages(['ends_at' => 'A running window cannot end in the past; end it now instead.']);
+            throw ValidationException::withMessages(['ends_at' => __('A running window cannot end in the past; end it now instead.')]);
         }
 
         return DB::transaction(function () use ($organization, $data, $user, $window, $startsAt): MaintenanceWindow {

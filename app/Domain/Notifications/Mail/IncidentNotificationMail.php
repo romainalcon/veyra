@@ -8,11 +8,15 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
 /**
- * Sent synchronously from SendNotificationDelivery (already a queued job).
+ * Sent synchronously from SendNotificationDelivery (already a queued job),
+ * rendered in the language of the notification.
  */
 class IncidentNotificationMail extends Mailable
 {
-    public function __construct(public readonly NotificationMessage $notification) {}
+    public function __construct(public readonly NotificationMessage $notification)
+    {
+        $this->locale($notification->locale);
+    }
 
     public function envelope(): Envelope
     {

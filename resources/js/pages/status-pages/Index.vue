@@ -6,6 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { create, edit, index } from '@/routes/organizations/status-pages';
 import type { CurrentOrganization, StatusPageSummary } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t, tc } = useTranslations();
 
 defineProps<{ statusPages: StatusPageSummary[]; canManage: boolean }>();
 
@@ -16,28 +19,32 @@ const organization = computed(
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Status pages', href: index(organization.value.slug) },
+        { title: t('Status pages'), href: index(organization.value.slug) },
     ],
 });
 </script>
 
 <template>
-    <Head title="Status pages" />
+    <Head :title="t('Status pages')" />
 
     <div class="flex flex-1 flex-col gap-4 p-4">
         <div class="flex items-center justify-between gap-4">
             <div>
                 <h1 class="text-xl font-semibold tracking-tight">
-                    Status pages
+                    {{ t('Status pages') }}
                 </h1>
                 <p class="text-sm text-muted-foreground">
-                    Public pages for your users, refreshed every minute.
+                    {{
+                        t(
+                            'Public pages for your users, refreshed every minute.',
+                        )
+                    }}
                 </p>
             </div>
             <Button v-if="canManage" as-child>
                 <Link :href="create(organization.slug)">
                     <Plus class="size-4" />
-                    New status page
+                    {{ t('New status page') }}
                 </Link>
             </Button>
         </div>
@@ -52,10 +59,15 @@ setLayoutProps({
             >
                 <Globe class="size-6 text-muted-foreground" />
             </div>
-            <h2 class="text-lg font-semibold">No status pages yet</h2>
+            <h2 class="text-lg font-semibold">
+                {{ t('No status pages yet') }}
+            </h2>
             <p class="mt-1 max-w-sm text-sm text-muted-foreground">
-                Share the state of your services without exposing internal
-                details.
+                {{
+                    t(
+                        'Share the state of your services without exposing internal details.',
+                    )
+                }}
             </p>
         </div>
 
@@ -75,7 +87,9 @@ setLayoutProps({
                                     : 'secondary'
                             "
                             >{{
-                                statusPage.is_published ? 'Published' : 'Draft'
+                                statusPage.is_published
+                                    ? t('Published')
+                                    : t('Draft')
                             }}</Badge
                         >
                     </p>
@@ -85,7 +99,12 @@ setLayoutProps({
                             `/status/${statusPage.slug}`
                         }}
                         ·
-                        {{ statusPage.components_count }} component(s)
+                        {{
+                            tc(
+                                ':count component|:count components',
+                                statusPage.components_count,
+                            )
+                        }}
                     </p>
                 </div>
                 <div class="flex gap-2">
@@ -103,7 +122,7 @@ setLayoutProps({
                             rel="noopener noreferrer"
                         >
                             <ExternalLink class="size-4" />
-                            View
+                            {{ t('View') }}
                         </a>
                     </Button>
                     <Button
@@ -112,8 +131,9 @@ setLayoutProps({
                         size="sm"
                         as-child
                     >
-                        <Link :href="edit([organization.slug, statusPage.id])"
-                            >Edit</Link
+                        <Link
+                            :href="edit([organization.slug, statusPage.id])"
+                            >{{ t('Edit') }}</Link
                         >
                     </Button>
                 </div>

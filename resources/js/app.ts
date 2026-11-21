@@ -1,13 +1,25 @@
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { setLocale } from '@/lib/i18n';
 import { initializeRealtime } from '@/lib/realtime';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Veyra';
+
+/*
+ * The server renders `<html lang>` in the language of the request (the
+ * organization's, or the browser's outside one). Apply it before mounting,
+ * then follow every visit before the new page renders.
+ */
+setLocale(document.documentElement.lang);
+
+router.on('beforeUpdate', (event) => {
+    setLocale(event.detail.page.props.locale);
+});
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

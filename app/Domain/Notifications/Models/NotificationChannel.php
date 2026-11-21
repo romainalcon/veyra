@@ -72,8 +72,8 @@ class NotificationChannel extends Model
     public function summary(): string
     {
         return match ($this->type) {
-            ChannelType::Email => count($this->recipients()).' recipient(s): '.implode(', ', $this->recipients()),
-            ChannelType::Discord => 'Webhook …'.substr((string) $this->webhookUrl(), -4),
+            ChannelType::Email => trans_choice(':count recipient: :list|:count recipients: :list', count($this->recipients()), ['list' => implode(', ', $this->recipients())]),
+            ChannelType::Discord => (string) __('Webhook …:suffix', ['suffix' => substr((string) $this->webhookUrl(), -4)]),
         };
     }
 

@@ -4,6 +4,15 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+- **Organization language** — Owners and Admins choose the language of an organization (English or French) in its settings. Members see the organization in that language; pages outside an organization (sign-in, profile) follow the browser language. New organizations start in the language of their creator's browser (ADR-027).
+- Public status pages, including custom domains, are shown in the organization language, whatever the visitor's browser.
+- E-mail and Discord notifications and member invitations are written in the organization language.
+- Complete French translation of the interface: every page, status and type label, incident cause, validation error, e-mail and notification.
+
+### Changed
+- Dates, percentages and numbers are formatted according to the active language.
+
 ## [1.2.0] — 2026-11-21
 
 ### Added

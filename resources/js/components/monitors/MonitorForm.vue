@@ -11,6 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { parseExpectedStatuses } from '@/lib/monitoring';
 import type { MonitorDetail, MonitorFormOptions, MonitorType } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<
     MonitorFormOptions & {
@@ -86,7 +89,7 @@ const methodOptions = computed(() =>
         v-slot="{ errors, processing }"
     >
         <fieldset v-if="!isEdit" class="grid gap-2">
-            <legend class="text-sm font-medium">Type</legend>
+            <legend class="text-sm font-medium">{{ t('Type') }}</legend>
             <div class="flex flex-wrap gap-2" role="radiogroup">
                 <label
                     v-for="option in types"
@@ -107,21 +110,21 @@ const methodOptions = computed(() =>
             <InputError :message="errors.type" />
         </fieldset>
         <p v-else class="text-sm text-muted-foreground">
-            Type:
+            {{ t('Type:') }}
             <span class="font-medium text-foreground">{{
                 currentTypeLabel
             }}</span>
-            (cannot be changed)
+            {{ t('(cannot be changed)') }}
         </p>
 
         <div class="grid gap-2">
-            <Label for="name">Name</Label>
+            <Label for="name">{{ t('Name') }}</Label>
             <Input
                 id="name"
                 name="name"
                 required
                 maxlength="100"
-                placeholder="Marketing website"
+                :placeholder="t('Marketing website')"
                 :default-value="monitor?.name"
             />
             <InputError :message="errors.name" />
@@ -131,14 +134,16 @@ const methodOptions = computed(() =>
             v-if="isHeartbeat"
             class="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground"
         >
-            Your job calls a secret ping URL when it runs. If no ping arrives
-            within the period plus the grace time, the heartbeat is reported
-            down. The URL is shown once after saving.
+            {{
+                t(
+                    'Your job calls a secret ping URL when it runs. If no ping arrives within the period plus the grace time, the heartbeat is reported down. The URL is shown once after saving.',
+                )
+            }}
         </p>
 
         <div v-if="isTcp" class="grid gap-2 sm:grid-cols-[1fr_8rem]">
             <div class="grid gap-2">
-                <Label for="host">Host</Label>
+                <Label for="host">{{ t('Host') }}</Label>
                 <Input
                     id="host"
                     name="host"
@@ -151,7 +156,7 @@ const methodOptions = computed(() =>
                 <InputError :message="errors.host" />
             </div>
             <div class="grid gap-2">
-                <Label for="port">Port</Label>
+                <Label for="port">{{ t('Port') }}</Label>
                 <Input
                     id="port"
                     name="port"
@@ -172,15 +177,18 @@ const methodOptions = computed(() =>
                 <InputError :message="errors.port" />
             </div>
             <p class="text-xs text-muted-foreground sm:col-span-2">
-                Veyra opens a TCP connection and closes it immediately; nothing
-                is sent. Allowed ports on this instance:
-                {{ tcpPorts.join(', ') }}.
+                {{
+                    t(
+                        'Veyra opens a TCP connection and closes it immediately; nothing is sent. Allowed ports on this instance: :ports.',
+                        { ports: tcpPorts.join(', ') },
+                    )
+                }}
             </p>
         </div>
 
         <div v-if="isHttp" class="grid gap-2 sm:grid-cols-[8rem_1fr]">
             <div class="grid gap-2">
-                <Label for="method">Method</Label>
+                <Label for="method">{{ t('Method') }}</Label>
                 <NativeSelect
                     id="method"
                     name="method"
@@ -207,7 +215,7 @@ const methodOptions = computed(() =>
         <div class="grid gap-4 sm:grid-cols-3">
             <div class="grid gap-2">
                 <Label for="interval">{{
-                    isHeartbeat ? 'Expected every' : 'Check every'
+                    isHeartbeat ? t('Expected every') : t('Check every')
                 }}</Label>
                 <NativeSelect
                     id="interval"
@@ -218,7 +226,9 @@ const methodOptions = computed(() =>
                 <InputError :message="errors.interval" />
             </div>
             <div v-if="isHeartbeat" class="grid gap-2">
-                <Label for="grace_minutes">Grace time (minutes)</Label>
+                <Label for="grace_minutes">{{
+                    t('Grace time (minutes)')
+                }}</Label>
                 <Input
                     id="grace_minutes"
                     name="grace_minutes"
@@ -231,7 +241,7 @@ const methodOptions = computed(() =>
                 <InputError :message="errors.grace_minutes" />
             </div>
             <div v-else class="grid gap-2">
-                <Label for="timeout">Timeout (seconds)</Label>
+                <Label for="timeout">{{ t('Timeout (seconds)') }}</Label>
                 <Input
                     id="timeout"
                     name="timeout"
@@ -244,7 +254,9 @@ const methodOptions = computed(() =>
                 <InputError :message="errors.timeout" />
             </div>
             <div v-if="isHttp" class="grid gap-2">
-                <Label for="expected_statuses">Expected status codes</Label>
+                <Label for="expected_statuses">{{
+                    t('Expected status codes')
+                }}</Label>
                 <Input
                     id="expected_statuses"
                     name="expected_statuses"
@@ -256,7 +268,11 @@ const methodOptions = computed(() =>
                     v-if="!statusesValid && !errors.expected_statuses"
                     class="text-xs text-muted-foreground"
                 >
-                    Use codes or ranges between 100 and 599, e.g. 200-299, 301.
+                    {{
+                        t(
+                            'Use codes or ranges between 100 and 599, e.g. 200-299, 301.',
+                        )
+                    }}
                 </p>
                 <InputError :message="errors.expected_statuses" />
             </div>
@@ -276,15 +292,20 @@ const methodOptions = computed(() =>
                 value="1"
                 class="size-4 rounded border-input accent-primary"
             />
-            <span>Follow redirects (up to 3, each one re-validated)</span>
+            <span>{{
+                t('Follow redirects (up to 3, each one re-validated)')
+            }}</span>
         </label>
 
         <div v-if="isHttp" class="space-y-3">
             <div>
-                <Label>Custom headers</Label>
+                <Label>{{ t('Custom headers') }}</Label>
                 <p class="text-xs text-muted-foreground">
-                    Stored encrypted. Values are never displayed again after
-                    saving.
+                    {{
+                        t(
+                            'Stored encrypted. Values are never displayed again after saving.',
+                        )
+                    }}
                 </p>
             </div>
 
@@ -301,12 +322,12 @@ const methodOptions = computed(() =>
             >
                 <p class="flex-1 text-sm text-muted-foreground">
                     <template v-if="monitor?.header_names.length">
-                        Configured:
+                        {{ t('Configured:') }}
                         <span class="font-medium text-foreground">{{
                             monitor.header_names.join(', ')
                         }}</span>
                     </template>
-                    <template v-else>No custom headers.</template>
+                    <template v-else>{{ t('No custom headers.') }}</template>
                 </p>
                 <Button
                     type="button"
@@ -315,7 +336,7 @@ const methodOptions = computed(() =>
                     data-test="replace-headers"
                     @click="replaceHeaders = true"
                 >
-                    Replace headers
+                    {{ t('Replace headers') }}
                 </Button>
             </div>
             <HeadersEditor v-else v-model="headers" :errors="errors" />
@@ -323,7 +344,9 @@ const methodOptions = computed(() =>
         </div>
 
         <fieldset class="space-y-3">
-            <legend class="text-sm font-medium">Notification channels</legend>
+            <legend class="text-sm font-medium">
+                {{ t('Notification channels') }}
+            </legend>
             <input
                 type="hidden"
                 name="notification_channels_submitted"
@@ -333,7 +356,7 @@ const methodOptions = computed(() =>
                 v-if="channels.length === 0"
                 class="text-xs text-muted-foreground"
             >
-                No channels configured for this organization yet.
+                {{ t('No channels configured for this organization yet.') }}
             </p>
             <label
                 v-for="channel in channels"
@@ -349,8 +372,8 @@ const methodOptions = computed(() =>
                 />
                 <span>{{ channel.name }}</span>
                 <span class="text-xs text-muted-foreground">
-                    {{ channel.type === 'email' ? 'E-mail' : 'Discord'
-                    }}{{ channel.enabled ? '' : ' · disabled' }}
+                    {{ channel.type === 'email' ? t('E-mail') : 'Discord'
+                    }}{{ channel.enabled ? '' : ` · ${t('disabled')}` }}
                 </span>
             </label>
             <InputError :message="errors.notification_channel_ids" />

@@ -9,9 +9,9 @@ enum ChannelType: string
 
     public function label(): string
     {
-        return match ($this) {
+        return (string) __(match ($this) {
             self::Email => 'E-mail',
             self::Discord => 'Discord',
-        };
+        });
     }
 }

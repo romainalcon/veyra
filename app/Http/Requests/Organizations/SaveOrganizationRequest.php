@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Organizations;
 
+use App\Domain\Localization\SupportedLocales;
 use App\Domain\Organizations\DTOs\OrganizationData;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Validates organization creation and updates. Authorization for updates is
@@ -19,12 +21,13 @@ class SaveOrganizationRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'min:2', 'max:100'],
+            'locale' => ['nullable', 'string', Rule::in(SupportedLocales::codes())],
         ];
     }
 
     public function toData(): OrganizationData
     {
-        /** @var array{name: string} $validated */
+        /** @var array{name: string, locale?: string|null} $validated */
         $validated = $this->validated();
 
         return OrganizationData::fromArray($validated);

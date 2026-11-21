@@ -8,7 +8,7 @@ import DeliveryStatus from '@/components/notifications/DeliveryStatus.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
-import { formatDateTime } from '@/lib/monitoring';
+import { formatDateTime, notificationEventLabel } from '@/lib/monitoring';
 import { show as showIncident } from '@/routes/organizations/incidents';
 import {
     destroy,
@@ -23,6 +23,9 @@ import type {
     Delivery,
     NotificationChannelSummary,
 } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t, tc } = useTranslations();
 
 defineProps<{
     channels: NotificationChannelSummary[];
@@ -42,7 +45,7 @@ useOrganizationRealtime(organization.value.id, { only: ['deliveries'] });
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Notifications', href: index(organization.value.slug) },
+        { title: t('Notifications'), href: index(organization.value.slug) },
     ],
 });
 
@@ -58,13 +61,17 @@ const remove = (channel: NotificationChannelSummary) =>
 </script>
 
 <template>
-    <Head title="Notifications" />
+    <Head :title="t('Notifications')" />
 
     <div class="mx-auto w-full max-w-4xl space-y-10 px-4 py-6">
         <section class="space-y-4">
             <Heading
-                title="Notification channels"
-                description="Alerts for incident opened, resolved, acknowledged, plus one reminder when nobody acknowledges within 30 minutes."
+                :title="t('Notification channels')"
+                :description="
+                    t(
+                        'Alerts for incident opened, resolved, acknowledged, plus one reminder when nobody acknowledges within 30 minutes.',
+                    )
+                "
             />
 
             <p
@@ -72,9 +79,11 @@ const remove = (channel: NotificationChannelSummary) =>
                 class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
                 data-test="channels-empty-state"
             >
-                No channels yet.
-                <template v-if="canManage">Add one below.</template>
-                <template v-else>Ask an admin to configure one.</template>
+                {{ t('No channels yet.') }}
+                <template v-if="canManage">{{ t('Add one below.') }}</template>
+                <template v-else>{{
+                    t('Ask an admin to configure one.')
+                }}</template>
             </p>
 
             <ul
@@ -106,17 +115,22 @@ const remove = (channel: NotificationChannelSummary) =>
                                 <Badge
                                     v-if="!channel.enabled"
                                     variant="secondary"
-                                    >Disabled</Badge
+                                    >{{ t('Disabled') }}</Badge
                                 >
                                 <Badge
                                     v-if="channel.is_default"
                                     variant="outline"
-                                    >Default</Badge
+                                    >{{ t('Default') }}</Badge
                                 >
                             </p>
                             <p class="truncate text-sm text-muted-foreground">
                                 {{ channel.summary }} ·
-                                {{ channel.monitors_count }} monitor(s)
+                                {{
+                                    tc(
+                                        ':count monitor|:count monitors',
+                                        channel.monitors_count,
+                                    )
+                                }}
                             </p>
                         </div>
                         <div v-if="canManage" class="flex flex-wrap gap-2">
@@ -127,7 +141,7 @@ const remove = (channel: NotificationChannelSummary) =>
                                 @click="sendTest(channel)"
                             >
                                 <Send class="size-4" />
-                                Send test
+                                {{ t('Send test') }}
                             </Button>
                             <Button
                                 variant="outline"
@@ -139,7 +153,11 @@ const remove = (channel: NotificationChannelSummary) =>
                                             : channel.id
                                 "
                             >
-                                {{ editing === channel.id ? 'Close' : 'Edit' }}
+                                {{
+                                    editing === channel.id
+                                        ? t('Close')
+                                        : t('Edit')
+                                }}
                             </Button>
                             <Button
                                 variant="ghost"
@@ -164,7 +182,7 @@ const remove = (channel: NotificationChannelSummary) =>
         </section>
 
         <section v-if="canManage" class="space-y-4">
-            <Heading variant="small" title="Add a channel" />
+            <Heading variant="small" :title="t('Add a channel')" />
             <ChannelForm
                 :action="store.form(organization.slug)"
                 :types="types"
@@ -173,21 +191,29 @@ const remove = (channel: NotificationChannelSummary) =>
         </section>
 
         <section class="space-y-3">
-            <Heading variant="small" title="Recent deliveries" />
+            <Heading variant="small" :title="t('Recent deliveries')" />
             <p
                 v-if="deliveries.length === 0"
                 class="text-sm text-muted-foreground"
             >
-                No notifications sent yet.
+                {{ t('No notifications sent yet.') }}
             </p>
             <div v-else class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm" data-test="deliveries-table">
                     <thead class="bg-muted/50 text-left text-muted-foreground">
                         <tr>
-                            <th class="px-4 py-2 font-medium">When</th>
-                            <th class="px-4 py-2 font-medium">Channel</th>
-                            <th class="px-4 py-2 font-medium">Event</th>
-                            <th class="px-4 py-2 font-medium">Status</th>
+                            <th class="px-4 py-2 font-medium">
+                                {{ t('When') }}
+                            </th>
+                            <th class="px-4 py-2 font-medium">
+                                {{ t('Channel') }}
+                            </th>
+                            <th class="px-4 py-2 font-medium">
+                                {{ t('Event') }}
+                            </th>
+                            <th class="px-4 py-2 font-medium">
+                                {{ t('Status') }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
@@ -208,12 +234,16 @@ const remove = (channel: NotificationChannelSummary) =>
                                         ])
                                     "
                                     class="hover:underline"
-                                    >{{ delivery.event }} ·
-                                    {{ delivery.monitor }}</Link
+                                    >{{
+                                        notificationEventLabel(delivery.event)
+                                    }}
+                                    · {{ delivery.monitor }}</Link
                                 >
                                 <span v-else
-                                    >{{ delivery.event }} ·
-                                    {{ delivery.monitor }}</span
+                                    >{{
+                                        notificationEventLabel(delivery.event)
+                                    }}
+                                    · {{ delivery.monitor }}</span
                                 >
                             </td>
                             <td class="px-4 py-2">

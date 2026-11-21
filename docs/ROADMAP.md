@@ -48,6 +48,15 @@
 - [x] UI: type picker on creation, type-specific forms and detail pages (ping URL with copy/regenerate and curl/cron examples, last ping, certificate panel); status pages and analytics work unchanged for every type.
 - [x] Docs: MONITORING, DATABASE, SECURITY, DECISIONS, CHANGELOG/UPGRADING for 1.2.
 
+## Sprint 8 — Languages (1.3)
+- [x] Organization language (`en`/`fr`) set by Owners/Admins; tenant pages, validation messages and flashes in that language; browser language outside an organization (ADR-027).
+- [x] Public status pages (path and custom domain) in the organization language, snapshot cached per language.
+- [x] E-mail and Discord notifications and invitations in the organization language.
+- [x] Shared translation files (`lang/fr.json`, `lang/fr/*.php`) and a dependency-free `t()` helper for Vue; locale-aware dates and numbers.
+- [x] App shell (navigation, menus, banners, footer) and organization settings translated.
+- [x] Every application page translated (monitors, incidents, maintenance, status page management, notifications, members, authentication, profile), including enum labels, stored incident causes (translated on display) and domain validation errors.
+- [x] Coverage tests: every `t()`/`__()` literal and enum label must exist in `lang/fr.json`, with the same placeholders.
+
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
 

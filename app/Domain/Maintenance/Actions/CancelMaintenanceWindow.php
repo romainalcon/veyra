@@ -24,7 +24,7 @@ class CancelMaintenanceWindow
         }
 
         if ($window->hasStarted($now)) {
-            throw ValidationException::withMessages(['window' => 'This maintenance window has already started.']);
+            throw ValidationException::withMessages(['window' => __('This maintenance window has already started.')]);
         }
 
         $window->update(['cancelled_at' => $now]);

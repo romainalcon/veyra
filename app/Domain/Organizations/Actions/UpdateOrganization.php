@@ -12,7 +12,10 @@ class UpdateOrganization
      */
     public function handle(Organization $organization, OrganizationData $data): Organization
     {
-        $organization->update(['name' => $data->name]);
+        $organization->update(array_filter([
+            'name' => $data->name,
+            'locale' => $data->locale,
+        ], fn (?string $value): bool => $value !== null));
 
         return $organization;
     }

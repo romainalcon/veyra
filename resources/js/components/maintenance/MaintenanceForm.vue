@@ -9,6 +9,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { isoToLocalInput, localInputToIso } from '@/lib/datetime';
 import type { MaintenanceMonitorOption, MaintenanceWindow } from '@/types';
 import type { RouteFormDefinition } from '@/wayfinder';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<{
     action: RouteFormDefinition<'post'>;
@@ -55,38 +58,40 @@ const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         v-slot="{ errors, processing }"
     >
         <div class="grid gap-2">
-            <Label for="title">Title</Label>
+            <Label for="title">{{ t('Title') }}</Label>
             <Input
                 id="title"
                 name="title"
                 required
                 maxlength="120"
-                placeholder="Database upgrade"
+                :placeholder="t('Database upgrade')"
                 :default-value="window?.title"
             />
             <InputError :message="errors.title" />
         </div>
 
         <div class="grid gap-2">
-            <Label for="description">Description (optional)</Label>
+            <Label for="description">{{ t('Description (optional)') }}</Label>
             <textarea
                 id="description"
                 name="description"
                 rows="3"
                 maxlength="2000"
                 class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-                placeholder="What is being done and what users may notice."
+                :placeholder="
+                    t('What is being done and what users may notice.')
+                "
                 :value="window?.description ?? ''"
             />
             <p class="text-xs text-muted-foreground">
-                May be shown publicly on status pages.
+                {{ t('May be shown publicly on status pages.') }}
             </p>
             <InputError :message="errors.description" />
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div class="grid gap-2">
-                <Label for="starts_at_local">Starts</Label>
+                <Label for="starts_at_local">{{ t('Starts') }}</Label>
                 <Input
                     id="starts_at_local"
                     v-model="startsLocal"
@@ -102,7 +107,7 @@ const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 <InputError :message="errors.starts_at" />
             </div>
             <div class="grid gap-2">
-                <Label for="ends_at_local">Ends</Label>
+                <Label for="ends_at_local">{{ t('Ends') }}</Label>
                 <Input
                     id="ends_at_local"
                     v-model="endsLocal"
@@ -118,19 +123,24 @@ const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             </div>
         </div>
         <p class="-mt-3 text-xs text-muted-foreground">
-            Times in {{ timeZone }}; at most {{ maxDurationHours }} hours.
+            {{
+                t('Times in :zone; at most :hours hours.', {
+                    zone: timeZone,
+                    hours: maxDurationHours,
+                })
+            }}
             <template v-if="started">
-                A running window keeps its start.</template
+                {{ t('A running window keeps its start.') }}</template
             >
         </p>
 
         <fieldset class="space-y-3">
-            <legend class="text-sm font-medium">Monitors</legend>
+            <legend class="text-sm font-medium">{{ t('Monitors') }}</legend>
             <p
                 v-if="monitors.length === 0"
                 class="text-xs text-muted-foreground"
             >
-                No monitors in this organization yet.
+                {{ t('No monitors in this organization yet.') }}
             </p>
             <div class="grid gap-2 sm:grid-cols-2">
                 <label

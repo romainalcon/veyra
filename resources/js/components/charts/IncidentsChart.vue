@@ -13,6 +13,9 @@ import {
 } from '@/components/ui/chart';
 import { formatBucketLabel } from '@/lib/analytics';
 import type { IncidentDay } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<{ days: IncidentDay[] }>();
 
@@ -27,8 +30,8 @@ const data = computed<Datum[]>(() =>
 );
 
 const config = {
-    incidents: { label: 'Incidents', color: 'var(--chart-1)' },
-    downtime: { label: 'Downtime (min)', color: 'var(--chart-3)' },
+    incidents: { label: t('Incidents'), color: 'var(--chart-1)' },
+    downtime: { label: t('Downtime (min)'), color: 'var(--chart-3)' },
 } satisfies ChartConfig;
 
 const tickFormat = (index: number) => {

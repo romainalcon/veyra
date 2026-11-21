@@ -15,6 +15,9 @@ import {
 } from '@/components/ui/chart';
 import { formatBucketLabel } from '@/lib/analytics';
 import type { LatencyPoint } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<{
     points: LatencyPoint[];
@@ -40,8 +43,8 @@ const hasMaintenance = computed(() =>
 );
 
 const config = {
-    avg: { label: 'Average (ms)', color: 'var(--chart-2)' },
-    max: { label: 'Max (ms)', color: 'var(--chart-1)' },
+    avg: { label: t('Average (ms)'), color: 'var(--chart-2)' },
+    max: { label: t('Max (ms)'), color: 'var(--chart-1)' },
 } satisfies ChartConfig;
 
 const tickFormat = (index: number) => {
@@ -61,7 +64,7 @@ const tooltip = componentToString(config, ChartTooltipContent, {
         class="flex h-56 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground"
         data-test="latency-empty"
     >
-        No successful checks in this period.
+        {{ t('No successful checks in this period.') }}
     </div>
     <ChartContainer v-else :config="config" class="aspect-auto h-56" cursor>
         <VisXYContainer
@@ -118,7 +121,9 @@ const tooltip = componentToString(config, ChartTooltipContent, {
                 :class="point.maintenance > 0 ? 'bg-sky-500' : 'bg-transparent'"
                 :title="
                     point.maintenance > 0
-                        ? `${tickFormat(points.indexOf(point))}: maintenance`
+                        ? t(':date: maintenance', {
+                              date: tickFormat(points.indexOf(point)),
+                          })
                         : undefined
                 "
             />
@@ -127,7 +132,7 @@ const tooltip = componentToString(config, ChartTooltipContent, {
             <span
                 class="mr-1 inline-block size-2 rounded-full bg-sky-500"
                 aria-hidden="true"
-            />Planned maintenance (excluded from latency and uptime)
+            />{{ t('Planned maintenance (excluded from latency and uptime)') }}
         </p>
     </div>
 </template>

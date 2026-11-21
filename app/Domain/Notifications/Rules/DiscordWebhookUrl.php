@@ -35,7 +35,7 @@ class DiscordWebhookUrl implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! self::isValid($value)) {
-            $fail('Provide a Discord webhook URL (https://discord.com/api/webhooks/…).');
+            $fail(__('Provide a Discord webhook URL (https://discord.com/api/webhooks/…).'));
         }
     }
 }

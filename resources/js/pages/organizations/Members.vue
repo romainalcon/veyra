@@ -17,6 +17,9 @@ import type {
     PendingInvitation,
     RoleOption,
 } from '@/types';
+import { currentLocale, useTranslations } from '@/lib/i18n';
+
+const { t, tc } = useTranslations();
 
 const props = defineProps<{
     members: Member[];
@@ -31,7 +34,7 @@ const organization = computed(
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Members', href: membersIndex(organization.value.slug) },
+        { title: t('Members'), href: membersIndex(organization.value.slug) },
     ],
 });
 
@@ -41,8 +44,15 @@ const inviteRole = ref<string>(
         'viewer',
 );
 
+const roleLabels: Record<string, string> = {
+    owner: 'Owner',
+    admin: 'Admin',
+    member: 'Member',
+    viewer: 'Viewer',
+};
+
 const roleLabel = (value: string) =>
-    value.charAt(0).toUpperCase() + value.slice(1);
+    roleLabels[value] ? t(roleLabels[value]) : value;
 
 const changeRole = (member: Member, role: string) => {
     router.visit(
@@ -65,18 +75,23 @@ const revokeInvitation = (invitation: PendingInvitation) => {
     );
 };
 
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
+const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(currentLocale());
 </script>
 
 <template>
-    <Head title="Members" />
+    <Head :title="t('Members')" />
 
     <div class="mx-auto w-full max-w-4xl space-y-10 px-4 py-6">
         <section v-if="organization.can.manageMembers" class="space-y-6">
             <Heading
                 variant="small"
-                title="Invite a member"
-                description="Invitations are sent by e-mail and expire automatically."
+                :title="t('Invite a member')"
+                :description="
+                    t(
+                        'Invitations are sent by e-mail and expire automatically.',
+                    )
+                "
             />
             <Form
                 v-bind="InvitationController.store.form(organization.slug)"
@@ -86,7 +101,9 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
                 v-slot="{ errors, processing }"
             >
                 <div class="grid flex-1 gap-2">
-                    <Label for="email" class="sr-only">E-mail address</Label>
+                    <Label for="email" class="sr-only">{{
+                        t('E-mail address')
+                    }}</Label>
                     <Input
                         id="email"
                         name="email"
@@ -97,7 +114,7 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
                     <InputError :message="errors.email" />
                 </div>
                 <div class="grid gap-2">
-                    <Label for="role" class="sr-only">Role</Label>
+                    <Label for="role" class="sr-only">{{ t('Role') }}</Label>
                     <NativeSelect
                         id="role"
                         name="role"
@@ -107,7 +124,7 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
                     <InputError :message="errors.role" />
                 </div>
                 <Button :disabled="processing" data-test="invite-member-button">
-                    Send invitation
+                    {{ t('Send invitation') }}
                 </Button>
             </Form>
         </section>
@@ -115,8 +132,10 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
         <section class="space-y-4">
             <Heading
                 variant="small"
-                title="Members"
-                :description="`${members.length} member${members.length === 1 ? '' : 's'}`"
+                :title="t('Members')"
+                :description="
+                    tc(':count member|:count members', members.length)
+                "
             />
             <InputError :message="page.props.errors?.member" />
             <ul class="divide-y rounded-lg border" data-test="members-list">
@@ -131,7 +150,7 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
                             <span
                                 v-if="member.is_current_user"
                                 class="text-muted-foreground"
-                                >(you)</span
+                                >{{ t('(you)') }}</span
                             >
                         </p>
                         <p class="truncate text-sm text-muted-foreground">
@@ -143,7 +162,9 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
                             v-if="member.can_update"
                             :model-value="member.role"
                             :options="assignableRoles"
-                            :aria-label="`Role of ${member.name}`"
+                            :aria-label="
+                                t('Role of :name', { name: member.name })
+                            "
                             @update:model-value="
                                 (role) => role && changeRole(member, role)
                             "
@@ -157,7 +178,11 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
                             size="sm"
                             @click="removeMember(member)"
                         >
-                            {{ member.is_current_user ? 'Leave' : 'Remove' }}
+                            {{
+                                member.is_current_user
+                                    ? t('Leave')
+                                    : t('Remove')
+                            }}
                         </Button>
                     </div>
                 </li>
@@ -165,12 +190,12 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
         </section>
 
         <section v-if="organization.can.manageMembers" class="space-y-4">
-            <Heading variant="small" title="Pending invitations" />
+            <Heading variant="small" :title="t('Pending invitations')" />
             <p
                 v-if="invitations.length === 0"
                 class="text-sm text-muted-foreground"
             >
-                No pending invitations.
+                {{ t('No pending invitations.') }}
             </p>
             <ul v-else class="divide-y rounded-lg border">
                 <li
@@ -183,8 +208,12 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
                             {{ invitation.email }}
                         </p>
                         <p class="text-sm text-muted-foreground">
-                            {{ roleLabel(invitation.role) }} · expires
-                            {{ formatDate(invitation.expires_at) }}
+                            {{ roleLabel(invitation.role) }} ·
+                            {{
+                                t('expires :date', {
+                                    date: formatDate(invitation.expires_at),
+                                })
+                            }}
                         </p>
                     </div>
                     <Button
@@ -193,7 +222,7 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
                         size="sm"
                         @click="revokeInvitation(invitation)"
                     >
-                        Revoke
+                        {{ t('Revoke') }}
                     </Button>
                 </li>
             </ul>

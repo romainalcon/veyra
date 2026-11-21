@@ -16,10 +16,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
-import { formatDateTime, formatElapsed } from '@/lib/monitoring';
+import {
+    formatDateTime,
+    formatElapsed,
+    notificationEventLabel,
+} from '@/lib/monitoring';
 import { acknowledge, index, show } from '@/routes/organizations/incidents';
 import { show as showMonitor } from '@/routes/organizations/monitors';
 import type { CurrentOrganization, Delivery, IncidentDetail } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<{
     incident: IncidentDetail;
@@ -46,8 +53,8 @@ useOrganizationRealtime(organization.value.id, {
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Incidents', href: index(organization.value.slug) },
-        { title: 'Incident', href: show(params.value) },
+        { title: t('Incidents'), href: index(organization.value.slug) },
+        { title: t('Incident'), href: show(params.value) },
     ],
 });
 
@@ -56,7 +63,7 @@ const acknowledgeIncident = () =>
 </script>
 
 <template>
-    <Head title="Incident" />
+    <Head :title="t('Incident')" />
 
     <div class="mx-auto w-full max-w-4xl space-y-6 px-4 py-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -71,7 +78,11 @@ const acknowledgeIncident = () =>
                                 : 'secondary'
                         "
                     >
-                        {{ incident.status === 'open' ? 'Open' : 'Resolved' }}
+                        {{
+                            incident.status === 'open'
+                                ? t('Open')
+                                : t('Resolved')
+                        }}
                     </Badge>
                     <Link
                         v-if="incident.monitor && !incident.monitor.deleted"
@@ -85,7 +96,7 @@ const acknowledgeIncident = () =>
                         >{{ incident.monitor.name }}</Link
                     >
                     <span v-else>{{
-                        incident.monitor?.name ?? 'Deleted monitor'
+                        incident.monitor?.name ?? t('Deleted monitor')
                     }}</span>
                 </h1>
                 <p class="text-sm text-muted-foreground">
@@ -100,45 +111,47 @@ const acknowledgeIncident = () =>
                 @click="acknowledgeIncident"
             >
                 <CheckCheck class="size-4" />
-                Acknowledge
+                {{ t('Acknowledge') }}
             </Button>
         </div>
 
         <dl class="grid gap-4 rounded-lg border p-4 text-sm sm:grid-cols-4">
             <div>
-                <dt class="text-muted-foreground">Started</dt>
+                <dt class="text-muted-foreground">{{ t('Started') }}</dt>
                 <dd class="mt-1">{{ formatDateTime(incident.started_at) }}</dd>
             </div>
             <div>
-                <dt class="text-muted-foreground">Resolved</dt>
+                <dt class="text-muted-foreground">{{ t('Resolved') }}</dt>
                 <dd class="mt-1">
                     {{
                         incident.resolved_at
                             ? formatDateTime(incident.resolved_at)
-                            : 'Ongoing'
+                            : t('Ongoing')
                     }}
                 </dd>
             </div>
             <div>
-                <dt class="text-muted-foreground">Duration</dt>
+                <dt class="text-muted-foreground">{{ t('Duration') }}</dt>
                 <dd class="mt-1">
                     {{ formatElapsed(incident.duration_seconds) }}
                 </dd>
             </div>
             <div>
-                <dt class="text-muted-foreground">Acknowledged</dt>
+                <dt class="text-muted-foreground">
+                    {{ t('Acknowledged') }}
+                </dt>
                 <dd class="mt-1">
                     <template v-if="incident.acknowledged_at">
-                        {{ incident.acknowledged_by ?? 'Someone' }},
+                        {{ incident.acknowledged_by ?? t('Someone') }},
                         {{ formatDateTime(incident.acknowledged_at) }}
                     </template>
-                    <template v-else>Not yet</template>
+                    <template v-else>{{ t('Not yet') }}</template>
                 </dd>
             </div>
         </dl>
 
         <section class="space-y-3">
-            <h2 class="text-base font-medium">Timeline</h2>
+            <h2 class="text-base font-medium">{{ t('Timeline') }}</h2>
             <ol class="space-y-3 border-l pl-4" data-test="incident-timeline">
                 <li
                     v-for="event in incident.events"
@@ -169,7 +182,7 @@ const acknowledgeIncident = () =>
         </section>
 
         <section v-if="deliveries.length" class="space-y-3">
-            <h2 class="text-base font-medium">Notifications</h2>
+            <h2 class="text-base font-medium">{{ t('Notifications') }}</h2>
             <ul
                 class="divide-y rounded-lg border text-sm"
                 data-test="incident-deliveries"
@@ -181,7 +194,7 @@ const acknowledgeIncident = () =>
                 >
                     <span class="font-medium">{{ delivery.channel }}</span>
                     <span class="text-muted-foreground">{{
-                        delivery.event
+                        notificationEventLabel(delivery.event)
                     }}</span>
                     <DeliveryStatus :delivery="delivery" />
                 </li>
@@ -196,7 +209,7 @@ const acknowledgeIncident = () =>
                 class="space-y-3"
                 v-slot="{ errors, processing }"
             >
-                <Label for="message">Add a note</Label>
+                <Label for="message">{{ t('Add a note') }}</Label>
                 <textarea
                     id="message"
                     name="message"
@@ -204,11 +217,11 @@ const acknowledgeIncident = () =>
                     required
                     :maxlength="noteMaxLength"
                     class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-                    placeholder="What did you find? What is being done?"
+                    :placeholder="t('What did you find? What is being done?')"
                 />
                 <InputError :message="errors.message" />
                 <Button :disabled="processing" data-test="add-note-button">
-                    Add note
+                    {{ t('Add note') }}
                 </Button>
             </Form>
         </section>
@@ -226,10 +239,15 @@ const acknowledgeIncident = () =>
                 v-slot="{ errors, processing }"
             >
                 <div>
-                    <Label for="public_message">Post a public update</Label>
+                    <Label for="public_message">{{
+                        t('Post a public update')
+                    }}</Label>
                     <p class="text-xs text-muted-foreground">
-                        Shown on every published status page that includes this
-                        monitor. Internal notes above are never public.
+                        {{
+                            t(
+                                'Shown on every published status page that includes this monitor. Internal notes above are never public.',
+                            )
+                        }}
                     </p>
                 </div>
                 <textarea
@@ -239,7 +257,9 @@ const acknowledgeIncident = () =>
                     required
                     :maxlength="publicUpdateMaxLength"
                     class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-                    placeholder="We are investigating elevated error rates."
+                    :placeholder="
+                        t('We are investigating elevated error rates.')
+                    "
                 />
                 <InputError :message="errors.public_message" />
                 <Button
@@ -247,7 +267,7 @@ const acknowledgeIncident = () =>
                     :disabled="processing"
                     data-test="post-public-update-button"
                 >
-                    Publish update
+                    {{ t('Publish update') }}
                 </Button>
             </Form>
         </section>

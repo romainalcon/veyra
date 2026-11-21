@@ -17,6 +17,9 @@ import type {
     StatusPageDetail,
     StatusPageFormOptions,
 } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<
     StatusPageFormOptions & { statusPage: StatusPageDetail }
@@ -32,7 +35,7 @@ const params = computed(
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Status pages', href: index(organization.value.slug) },
+        { title: t('Status pages'), href: index(organization.value.slug) },
         { title: props.statusPage.title, href: edit(params.value) },
     ],
 });
@@ -41,11 +44,11 @@ const remove = () => router.visit(destroy(params.value));
 </script>
 
 <template>
-    <Head :title="`Edit ${statusPage.title}`" />
+    <Head :title="t('Edit :name', { name: statusPage.title })" />
 
     <div class="mx-auto w-full max-w-3xl space-y-6 px-4 py-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
-            <Heading class="flex-1" title="Edit status page" />
+            <Heading class="flex-1" :title="t('Edit status page')" />
             <div class="flex gap-2">
                 <Button
                     v-if="statusPage.is_published"
@@ -60,7 +63,7 @@ const remove = () => router.visit(destroy(params.value));
                         data-test="public-link"
                     >
                         <ExternalLink class="size-4" />
-                        View public page
+                        {{ t('View public page') }}
                     </a>
                 </Button>
                 <Button
@@ -70,7 +73,7 @@ const remove = () => router.visit(destroy(params.value));
                     @click="remove"
                 >
                     <Trash2 class="size-4" />
-                    Delete
+                    {{ t('Delete') }}
                 </Button>
             </div>
         </div>
@@ -79,7 +82,7 @@ const remove = () => router.visit(destroy(params.value));
             :monitors="monitors"
             :max-components="maxComponents"
             :action="update.form(params)"
-            submit-label="Save changes"
+            :submit-label="t('Save changes')"
         />
         <StatusPageDomainSettings
             :params="params"

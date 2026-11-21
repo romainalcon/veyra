@@ -21,7 +21,7 @@ class EndMaintenanceWindowNow
         $now = CarbonImmutable::now()->startOfSecond();
 
         if (! $window->isActive($now)) {
-            throw ValidationException::withMessages(['window' => 'This maintenance window is not running.']);
+            throw ValidationException::withMessages(['window' => __('This maintenance window is not running.')]);
         }
 
         $window->update(['ends_at' => $now]);

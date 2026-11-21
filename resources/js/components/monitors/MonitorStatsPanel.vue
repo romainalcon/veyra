@@ -5,6 +5,9 @@ import UptimeBars from '@/components/charts/UptimeBars.vue';
 import { Button } from '@/components/ui/button';
 import { coverageNote, formatUptime } from '@/lib/analytics';
 import type { MonitorStats, StatsRange } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 defineProps<{
     stats: MonitorStats;
@@ -24,7 +27,9 @@ const ranges: StatsRange[] = ['24h', '7d', '30d', '90d'];
                 :key="period"
                 class="rounded-lg border p-4"
             >
-                <p class="text-sm text-muted-foreground">Uptime {{ period }}</p>
+                <p class="text-sm text-muted-foreground">
+                    {{ t('Uptime :period', { period }) }}
+                </p>
                 <p class="mt-1 text-2xl font-semibold">
                     {{ formatUptime(stats.uptime[period].uptime) }}
                 </p>
@@ -38,14 +43,14 @@ const ranges: StatsRange[] = ['24h', '7d', '30d', '90d'];
         </div>
 
         <div class="space-y-2 rounded-lg border p-4">
-            <h2 class="text-sm font-medium">Daily uptime</h2>
+            <h2 class="text-sm font-medium">{{ t('Daily uptime') }}</h2>
             <UptimeBars :days="stats.days" />
         </div>
 
         <div class="space-y-3 rounded-lg border p-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <h2 class="text-sm font-medium">Response time</h2>
-                <nav class="flex gap-1" aria-label="Chart range">
+                <h2 class="text-sm font-medium">{{ t('Response time') }}</h2>
+                <nav class="flex gap-1" :aria-label="t('Chart range')">
                     <Button
                         v-for="option in ranges"
                         :key="option"

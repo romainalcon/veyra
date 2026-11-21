@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Badge } from '@/components/ui/badge';
 import type { Delivery } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 defineProps<{
     delivery: Pick<Delivery, 'status' | 'attempts' | 'last_error'>;
@@ -12,14 +15,18 @@ defineProps<{
         <Badge
             v-if="delivery.status === 'sent'"
             class="bg-emerald-600 text-white hover:bg-emerald-600"
-            >Sent</Badge
+            >{{ t('Sent') }}</Badge
         >
-        <Badge v-else-if="delivery.status === 'failed'" variant="destructive"
-            >Failed</Badge
-        >
+        <Badge v-else-if="delivery.status === 'failed'" variant="destructive">{{
+            t('Failed')
+        }}</Badge>
         <Badge v-else variant="secondary">
-            Pending{{
-                delivery.attempts ? ` (retry ${delivery.attempts})` : ''
+            {{
+                delivery.attempts
+                    ? t('Pending (retry :attempt)', {
+                          attempt: delivery.attempts,
+                      })
+                    : t('Pending')
             }}
         </Badge>
         <span

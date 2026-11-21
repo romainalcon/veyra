@@ -13,6 +13,9 @@ import {
     verify,
 } from '@/routes/organizations/status-pages/domain';
 import type { StatusPageDomain } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t, tc } = useTranslations();
 
 const props = defineProps<{
     params: [string, string];
@@ -32,11 +35,13 @@ const remove = () =>
         data-test="domain-settings"
     >
         <div>
-            <h2 class="text-base font-medium">Custom domain</h2>
+            <h2 class="text-base font-medium">{{ t('Custom domain') }}</h2>
             <p class="text-sm text-muted-foreground">
-                Serve this page on your own host name, e.g.
-                <code>status.example.com</code>. Only the status page is ever
-                served on that domain.
+                {{
+                    t(
+                        'Serve this page on your own host name, e.g. status.example.com. Only the status page is ever served on that domain.',
+                    )
+                }}
             </p>
         </div>
 
@@ -47,7 +52,9 @@ const remove = () =>
             v-slot="{ errors, processing }"
         >
             <div class="grid flex-1 gap-1">
-                <Label for="custom_domain" class="sr-only">Domain</Label>
+                <Label for="custom_domain" class="sr-only">{{
+                    t('Domain')
+                }}</Label>
                 <Input
                     id="custom_domain"
                     name="custom_domain"
@@ -62,7 +69,7 @@ const remove = () =>
                 variant="outline"
                 :disabled="processing"
                 data-test="save-domain-button"
-                >Save domain</Button
+                >{{ t('Save domain') }}</Button
             >
         </Form>
 
@@ -71,29 +78,38 @@ const remove = () =>
                 <Badge
                     :variant="domain.verified ? 'default' : 'secondary'"
                     data-test="domain-status"
-                    >{{ domain.verified ? 'Verified' : 'Pending' }}</Badge
+                    >{{ domain.verified ? t('Verified') : t('Pending') }}</Badge
                 >
                 <span class="text-muted-foreground">
                     <template v-if="domain.checked_at">
-                        Last checked {{ formatDateTime(domain.checked_at) }}
+                        {{
+                            t('Last checked :date', {
+                                date: formatDateTime(domain.checked_at),
+                            })
+                        }}
                     </template>
-                    <template v-else>Not checked yet</template>
+                    <template v-else>{{ t('Not checked yet') }}</template>
                     <template v-if="domain.verified && domain.failures > 0">
-                        · record missing on the last
-                        {{ domain.failures }} check(s)</template
+                        ·
+                        {{
+                            tc(
+                                'record missing on the last check|record missing on the last :count checks',
+                                domain.failures,
+                            )
+                        }}</template
                     >
                 </span>
             </p>
 
             <ol class="list-decimal space-y-2 pl-5 text-muted-foreground">
                 <li>
-                    Add this TXT record at your DNS provider:
+                    {{ t('Add this TXT record at your DNS provider:') }}
                     <div class="mt-1 grid gap-1 sm:grid-cols-[6rem_1fr]">
-                        <span>Name</span>
+                        <span>{{ t('Name') }}</span>
                         <code class="break-all text-foreground">{{
                             domain.txt_name
                         }}</code>
-                        <span>Value</span>
+                        <span>{{ t('Value') }}</span>
                         <code
                             class="break-all text-foreground"
                             data-test="txt-value"
@@ -102,13 +118,19 @@ const remove = () =>
                     </div>
                 </li>
                 <li>
-                    Point <code>{{ domain.name }}</code> (CNAME or A/AAAA) to
-                    this Veyra instance. Your administrator must enable TLS for
-                    custom domains on the reverse proxy.
+                    {{
+                        t(
+                            'Point :domain (CNAME or A/AAAA) to this Veyra instance. Your administrator must enable TLS for custom domains on the reverse proxy.',
+                            { domain: domain.name },
+                        )
+                    }}
                 </li>
                 <li>
-                    Verify. Veyra re-checks the record every day and stops
-                    serving the domain if it disappears.
+                    {{
+                        t(
+                            'Verify. Veyra re-checks the record every day and stops serving the domain if it disappears.',
+                        )
+                    }}
                 </li>
             </ol>
 
@@ -120,7 +142,7 @@ const remove = () =>
                     @click="verifyNow"
                 >
                     <RefreshCw class="size-4" />
-                    Verify now
+                    {{ t('Verify now') }}
                 </Button>
                 <Button
                     variant="ghost"
@@ -129,7 +151,7 @@ const remove = () =>
                     @click="remove"
                 >
                     <Trash2 class="size-4" />
-                    Remove domain
+                    {{ t('Remove domain') }}
                 </Button>
             </div>
         </div>

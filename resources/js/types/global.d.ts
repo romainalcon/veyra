@@ -26,6 +26,8 @@ declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
+            /** Interface language of the request (ADR-027). */
+            locale: string;
             auth: Auth;
             organizations: OrganizationSummary[];
             currentOrganization: CurrentOrganization | null;

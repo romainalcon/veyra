@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property string $name
  * @property string $slug
+ * @property string $locale
  * @property array<string, mixed>|null $settings
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -35,13 +36,20 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, MaintenanceWindow> $maintenanceWindows
  * @property-read Collection<int, StatusPage> $statusPages
  */
-#[Fillable(['name', 'slug', 'settings'])]
+#[Fillable(['name', 'slug', 'locale', 'settings'])]
 #[UseFactory(OrganizationFactory::class)]
 #[UsePolicy(OrganizationPolicy::class)]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
     use HasFactory, HasUuids;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'locale' => 'en',
+    ];
 
     /**
      * @return array<string, string>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\StatusPages;
 
+use App\Domain\Localization\SupportedLocales;
 use App\Domain\StatusPages\Models\StatusPage;
 use App\Domain\StatusPages\Services\StatusPageSnapshot;
 use App\Http\Controllers\Controller;
@@ -14,7 +15,9 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * The page is resolved explicitly: the route runs without the `web` group,
  * whose exclusion also removes SubstituteBindings. Verified custom domains
- * are served by ServeStatusPageForCustomDomain through render().
+ * are served by ServeStatusPageForCustomDomain through render(). The page is
+ * shown in the language of its organization, never the visitor's, so that
+ * the shared HTTP cache stays correct (ADR-027).
  */
 class PublicStatusPageController extends Controller
 {
@@ -35,6 +38,9 @@ class PublicStatusPageController extends Controller
     public function render(Request $request, StatusPage $statusPage): Response
     {
         abort_unless($statusPage->is_published, 404);
+
+        $statusPage->loadMissing('organization:id,locale');
+        app()->setLocale(SupportedLocales::resolve($statusPage->organization->locale));
 
         $response = Inertia::render('status/Show', ['snapshot' => $this->snapshot->for($statusPage)])
             ->toResponse($request);

@@ -2,6 +2,9 @@
 import { Plus, Trash2 } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 /**
  * Edits custom request headers. Values of stored headers are never sent to
@@ -38,7 +41,9 @@ const remove = (index: number) => {
                     :name="`headers[${index}][name]`"
                     placeholder="Authorization"
                     autocomplete="off"
-                    :aria-label="`Header ${index + 1} name`"
+                    :aria-label="
+                        t('Header :number name', { number: index + 1 })
+                    "
                 />
                 <p
                     v-if="errors?.[`headers.${index}.name`]"
@@ -52,9 +57,11 @@ const remove = (index: number) => {
                     v-model="header.value"
                     :name="`headers[${index}][value]`"
                     type="password"
-                    placeholder="Value"
+                    :placeholder="t('Value')"
                     autocomplete="off"
-                    :aria-label="`Header ${index + 1} value`"
+                    :aria-label="
+                        t('Header :number value', { number: index + 1 })
+                    "
                 />
                 <p
                     v-if="errors?.[`headers.${index}.value`]"
@@ -67,7 +74,7 @@ const remove = (index: number) => {
                 type="button"
                 variant="ghost"
                 size="icon"
-                :aria-label="`Remove header ${index + 1}`"
+                :aria-label="t('Remove header :number', { number: index + 1 })"
                 @click="remove(index)"
             >
                 <Trash2 class="size-4" />
@@ -81,7 +88,7 @@ const remove = (index: number) => {
             @click="add"
         >
             <Plus class="size-4" />
-            Add header
+            {{ t('Add header') }}
         </Button>
     </div>
 </template>

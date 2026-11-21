@@ -4,6 +4,9 @@ import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/monitoring';
 import type { MonitorCertificate } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t, tc } = useTranslations();
 
 const props = defineProps<{
     certificate: MonitorCertificate | null;
@@ -17,16 +20,17 @@ const label = computed(() => {
     }
 
     if (certificate.status === 'expired') {
-        return 'Expired';
+        return t('Expired');
     }
 
     if (certificate.days_left < 1) {
-        return 'Expires today';
+        return t('Expires today');
     }
 
-    return certificate.days_left === 1
-        ? 'Expires in 1 day'
-        : `Expires in ${certificate.days_left} days`;
+    return tc(
+        'Expires in :count day|Expires in :count days',
+        certificate.days_left,
+    );
 });
 </script>
 
@@ -46,7 +50,7 @@ const label = computed(() => {
                     class="size-4 text-amber-600 dark:text-amber-400"
                 />
                 <ShieldCheck v-else class="size-4 text-muted-foreground" />
-                TLS certificate
+                {{ t('TLS certificate') }}
             </h2>
             <template v-if="certificate">
                 <Badge
@@ -76,22 +80,22 @@ const label = computed(() => {
             data-test="certificate-details"
         >
             <div class="min-w-0">
-                <dt class="text-muted-foreground">Issued to</dt>
+                <dt class="text-muted-foreground">{{ t('Issued to') }}</dt>
                 <dd class="mt-1 truncate">{{ certificate.subject ?? '—' }}</dd>
             </div>
             <div class="min-w-0">
-                <dt class="text-muted-foreground">Issuer</dt>
+                <dt class="text-muted-foreground">{{ t('Issuer') }}</dt>
                 <dd class="mt-1 truncate">{{ certificate.issuer ?? '—' }}</dd>
             </div>
             <div>
-                <dt class="text-muted-foreground">Valid</dt>
+                <dt class="text-muted-foreground">{{ t('Valid') }}</dt>
                 <dd class="mt-1">
                     {{ formatDateTime(certificate.not_before) }} →
                     {{ formatDateTime(certificate.not_after) }}
                 </dd>
             </div>
             <div>
-                <dt class="text-muted-foreground">Last seen</dt>
+                <dt class="text-muted-foreground">{{ t('Last seen') }}</dt>
                 <dd class="mt-1">
                     {{ formatDateTime(certificate.checked_at) }}
                 </dd>
@@ -102,12 +106,18 @@ const label = computed(() => {
             class="text-sm text-muted-foreground"
             data-test="certificate-empty"
         >
-            No certificate seen yet. It is read on the next successful HTTPS
-            connection to this host.
+            {{
+                t(
+                    'No certificate seen yet. It is read on the next successful HTTPS connection to this host.',
+                )
+            }}
         </p>
         <p class="text-xs text-muted-foreground">
-            The monitor's notification channels are warned before expiry and
-            when the certificate has expired, once per certificate.
+            {{
+                t(
+                    "The monitor's notification channels are warned before expiry and when the certificate has expired, once per certificate.",
+                )
+            }}
         </p>
     </section>
 </template>

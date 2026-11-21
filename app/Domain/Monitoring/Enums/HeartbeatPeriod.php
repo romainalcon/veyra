@@ -21,12 +21,12 @@ enum HeartbeatPeriod: int
 
     public function label(): string
     {
-        return match (true) {
-            $this->value < 3600 => ($this->value / 60).' min',
-            $this->value === 3600 => '1 hour',
-            $this->value < 86400 => ($this->value / 3600).' hours',
-            $this->value === 86400 => '1 day',
-            default => '1 week',
+        return (string) match (true) {
+            $this->value < 3600 => __(':count min', ['count' => $this->value / 60]),
+            $this->value === 3600 => __('1 hour'),
+            $this->value < 86400 => __(':count hours', ['count' => $this->value / 3600]),
+            $this->value === 86400 => __('1 day'),
+            default => __('1 week'),
         };
     }
 

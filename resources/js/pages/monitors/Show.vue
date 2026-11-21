@@ -37,6 +37,9 @@ import type {
     MonitorStats,
     StatsRange,
 } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 const props = defineProps<{
     monitor: MonitorDetail;
@@ -58,7 +61,7 @@ const params = computed(
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Monitors', href: index(organization.value.slug) },
+        { title: t('Monitors'), href: index(organization.value.slug) },
         { title: props.monitor.name, href: show(params.value) },
     ],
 });
@@ -108,9 +111,9 @@ const remove = () => router.visit(destroy(params.value));
                 >
                     {{ monitor.name }}
                     <StatusBadge :status="monitor.state.status" />
-                    <Badge v-if="!monitor.enabled" variant="secondary"
-                        >Paused</Badge
-                    >
+                    <Badge v-if="!monitor.enabled" variant="secondary">{{
+                        t('Paused')
+                    }}</Badge>
                 </h1>
                 <p class="truncate text-sm text-muted-foreground">
                     {{ monitor.target }}
@@ -125,7 +128,7 @@ const remove = () => router.visit(destroy(params.value));
                     @click="runCheck"
                 >
                     <RefreshCw class="size-4" />
-                    Check now
+                    {{ t('Check now') }}
                 </Button>
                 <Button
                     v-if="can.update"
@@ -138,12 +141,12 @@ const remove = () => router.visit(destroy(params.value));
                         :is="monitor.enabled ? Pause : Play"
                         class="size-4"
                     />
-                    {{ monitor.enabled ? 'Pause' : 'Resume' }}
+                    {{ monitor.enabled ? t('Pause') : t('Resume') }}
                 </Button>
                 <Button v-if="can.update" variant="outline" size="sm" as-child>
                     <Link :href="edit(params)">
                         <Pencil class="size-4" />
-                        Edit
+                        {{ t('Edit') }}
                     </Link>
                 </Button>
                 <Button
@@ -154,7 +157,7 @@ const remove = () => router.visit(destroy(params.value));
                     @click="remove"
                 >
                     <Trash2 class="size-4" />
-                    Delete
+                    {{ t('Delete') }}
                 </Button>
             </div>
         </div>
@@ -167,10 +170,13 @@ const remove = () => router.visit(destroy(params.value));
             class="block rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
             data-test="active-incident-banner"
         >
-            <span class="font-medium">Ongoing incident</span> since
-            {{ formatDateTime(activeIncident.started_at) }} ({{
-                formatElapsed(activeIncident.duration_seconds)
-            }})<template v-if="activeIncident.cause">
+            <span class="font-medium">{{ t('Ongoing incident') }}</span>
+            {{
+                t('since :date (:elapsed)', {
+                    date: formatDateTime(activeIncident.started_at),
+                    elapsed: formatElapsed(activeIncident.duration_seconds),
+                })
+            }}<template v-if="activeIncident.cause">
                 — {{ activeIncident.cause }}</template
             >
         </Link>
@@ -181,33 +187,45 @@ const remove = () => router.visit(destroy(params.value));
             data-test="maintenance-banner"
         >
             <span class="font-medium">{{
-                maintenance.active ? 'Under maintenance' : 'Maintenance planned'
+                maintenance.active
+                    ? t('Under maintenance')
+                    : t('Maintenance planned')
             }}</span>
             — {{ maintenance.title }}:
             <template v-if="!maintenance.active"
                 >{{ formatDateTime(maintenance.starts_at) }} →
             </template>
-            until {{ formatDateTime(maintenance.ends_at) }}. Checks keep running
-            but open no incident and do not count towards uptime.
+            {{
+                t(
+                    'until :date. Checks keep running but open no incident and do not count towards uptime.',
+                    { date: formatDateTime(maintenance.ends_at) },
+                )
+            }}
         </div>
 
         <dl class="grid gap-4 rounded-lg border p-4 text-sm sm:grid-cols-4">
             <div>
-                <dt class="text-muted-foreground">Latest raw check</dt>
+                <dt class="text-muted-foreground">
+                    {{ t('Latest raw check') }}
+                </dt>
                 <dd class="mt-1">
                     <CheckBadge :check="monitor.latest_check" />
                 </dd>
             </div>
             <div>
                 <template v-if="monitor.heartbeat">
-                    <dt class="text-muted-foreground">Period / grace</dt>
+                    <dt class="text-muted-foreground">
+                        {{ t('Period / grace') }}
+                    </dt>
                     <dd class="mt-1">
                         {{ formatInterval(monitor.interval_seconds) }} /
                         {{ formatInterval(monitor.heartbeat.grace_seconds) }}
                     </dd>
                 </template>
                 <template v-else>
-                    <dt class="text-muted-foreground">Interval / timeout</dt>
+                    <dt class="text-muted-foreground">
+                        {{ t('Interval / timeout') }}
+                    </dt>
                     <dd class="mt-1">
                         {{ formatInterval(monitor.interval_seconds) }} /
                         {{ monitor.timeout_seconds }} s
@@ -215,27 +233,35 @@ const remove = () => router.visit(destroy(params.value));
                 </template>
             </div>
             <div v-if="monitor.type === 'http'">
-                <dt class="text-muted-foreground">Expected statuses</dt>
+                <dt class="text-muted-foreground">
+                    {{ t('Expected statuses') }}
+                </dt>
                 <dd class="mt-1">{{ monitor.expected_statuses }}</dd>
             </div>
             <div>
                 <dt class="text-muted-foreground">
-                    {{ monitor.heartbeat ? 'Ping expected by' : 'Next check' }}
+                    {{
+                        monitor.heartbeat
+                            ? t('Ping expected by')
+                            : t('Next check')
+                    }}
                 </dt>
                 <dd class="mt-1">
                     {{
                         monitor.enabled
                             ? formatDateTime(monitor.next_check_at)
-                            : 'Paused'
+                            : t('Paused')
                     }}
                 </dd>
             </div>
             <div v-if="monitor.type === 'tcp'">
-                <dt class="text-muted-foreground">Check</dt>
-                <dd class="mt-1">TCP connection</dd>
+                <dt class="text-muted-foreground">{{ t('Check') }}</dt>
+                <dd class="mt-1">{{ t('TCP connection') }}</dd>
             </div>
             <div v-if="monitor.header_names.length" class="sm:col-span-4">
-                <dt class="text-muted-foreground">Custom headers</dt>
+                <dt class="text-muted-foreground">
+                    {{ t('Custom headers') }}
+                </dt>
                 <dd class="mt-1">{{ monitor.header_names.join(', ') }}</dd>
             </div>
         </dl>
@@ -267,7 +293,9 @@ const remove = () => router.visit(destroy(params.value));
         </Deferred>
 
         <section v-if="incidents.length" class="space-y-3">
-            <h2 class="text-base font-medium">Recent incidents</h2>
+            <h2 class="text-base font-medium">
+                {{ t('Recent incidents') }}
+            </h2>
             <ul class="divide-y rounded-lg border text-sm">
                 <li v-for="incident in incidents" :key="incident.id">
                     <Link
@@ -282,7 +310,9 @@ const remove = () => router.visit(destroy(params.value));
                             "
                         >
                             {{
-                                incident.status === 'open' ? 'Open' : 'Resolved'
+                                incident.status === 'open'
+                                    ? t('Open')
+                                    : t('Resolved')
                             }}
                         </Badge>
                         <span>{{ formatDateTime(incident.started_at) }}</span>
@@ -298,27 +328,36 @@ const remove = () => router.visit(destroy(params.value));
         </section>
 
         <section class="space-y-3">
-            <h2 class="text-base font-medium">Check history</h2>
+            <h2 class="text-base font-medium">{{ t('Check history') }}</h2>
             <p
                 v-if="checks.data.length === 0"
                 class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
                 data-test="checks-empty-state"
             >
-                No checks recorded yet. The first one runs within a few seconds
-                when workers are online.
+                {{
+                    t(
+                        'No checks recorded yet. The first one runs within a few seconds when workers are online.',
+                    )
+                }}
             </p>
             <div v-else class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm" data-test="checks-table">
                     <thead class="bg-muted/50 text-left text-muted-foreground">
                         <tr>
-                            <th class="px-4 py-2 font-medium">Checked at</th>
-                            <th class="px-4 py-2 font-medium">Result</th>
-                            <th class="px-4 py-2 font-medium">Duration</th>
+                            <th class="px-4 py-2 font-medium">
+                                {{ t('Checked at') }}
+                            </th>
+                            <th class="px-4 py-2 font-medium">
+                                {{ t('Result') }}
+                            </th>
+                            <th class="px-4 py-2 font-medium">
+                                {{ t('Duration') }}
+                            </th>
                             <th
                                 v-if="monitor.type === 'http'"
                                 class="px-4 py-2 font-medium"
                             >
-                                Redirects
+                                {{ t('Redirects') }}
                             </th>
                         </tr>
                     </thead>
@@ -334,7 +373,7 @@ const remove = () => router.visit(destroy(params.value));
                                         v-if="check.in_maintenance"
                                         variant="outline"
                                         data-test="check-maintenance"
-                                        >Maintenance</Badge
+                                        >{{ t('Maintenance') }}</Badge
                                     >
                                 </span>
                             </td>
@@ -358,9 +397,9 @@ const remove = () => router.visit(destroy(params.value));
                     size="sm"
                     as-child
                 >
-                    <Link :href="checks.prev_page_url" preserve-scroll
-                        >Newer</Link
-                    >
+                    <Link :href="checks.prev_page_url" preserve-scroll>{{
+                        t('Newer')
+                    }}</Link>
                 </Button>
                 <span v-else-if="!isFirstPage" />
                 <Button
@@ -370,9 +409,9 @@ const remove = () => router.visit(destroy(params.value));
                     class="ml-auto"
                     as-child
                 >
-                    <Link :href="checks.next_page_url" preserve-scroll
-                        >Older</Link
-                    >
+                    <Link :href="checks.next_page_url" preserve-scroll>{{
+                        t('Older')
+                    }}</Link>
                 </Button>
             </div>
         </section>

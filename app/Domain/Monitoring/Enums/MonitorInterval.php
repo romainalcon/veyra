@@ -14,9 +14,9 @@ enum MonitorInterval: int
 
     public function label(): string
     {
-        return $this->value < 3600
-            ? ($this->value / 60).' min'
-            : '1 hour';
+        return (string) ($this->value < 3600
+            ? __(':count min', ['count' => $this->value / 60])
+            : __('1 hour'));
     }
 
     /**

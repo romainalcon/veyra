@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Organizations;
 
 use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Localization\SupportedLocales;
 use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Stats\IncidentSeries;
@@ -111,7 +112,8 @@ class OrganizationController extends Controller
         Gate::authorize('view', $organization);
 
         return Inertia::render('organizations/Settings', [
-            'organization' => $organization->only(['id', 'name', 'slug']),
+            'organization' => $organization->only(['id', 'name', 'slug', 'locale']),
+            'locales' => SupportedLocales::options(),
         ]);
     }
 
@@ -120,6 +122,9 @@ class OrganizationController extends Controller
         Gate::authorize('update', $organization);
 
         $updateOrganization->handle($organization, $request->toData());
+
+        // The confirmation already speaks the language that was just chosen.
+        app()->setLocale(SupportedLocales::resolve($organization->locale));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Organization updated.')]);
 

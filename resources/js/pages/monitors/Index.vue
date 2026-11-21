@@ -14,6 +14,9 @@ import {
 } from '@/lib/monitoring';
 import { create, index, show } from '@/routes/organizations/monitors';
 import type { CurrentOrganization, MonitorSummary, Paginated } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 defineProps<{
     monitors: Paginated<MonitorSummary>;
@@ -31,25 +34,33 @@ const paginationLabel = (label: string) =>
     label.replace('&laquo;', '«').replace('&raquo;', '»');
 
 setLayoutProps({
-    breadcrumbs: [{ title: 'Monitors', href: index(organization.value.slug) }],
+    breadcrumbs: [
+        { title: t('Monitors'), href: index(organization.value.slug) },
+    ],
 });
 </script>
 
 <template>
-    <Head title="Monitors" />
+    <Head :title="t('Monitors')" />
 
     <div class="flex flex-1 flex-col gap-4 p-4">
         <div class="flex items-center justify-between gap-4">
             <div>
-                <h1 class="text-xl font-semibold tracking-tight">Monitors</h1>
+                <h1 class="text-xl font-semibold tracking-tight">
+                    {{ t('Monitors') }}
+                </h1>
                 <p class="text-sm text-muted-foreground">
-                    Confirmed state, with the latest raw check alongside.
+                    {{
+                        t(
+                            'Confirmed state, with the latest raw check alongside.',
+                        )
+                    }}
                 </p>
             </div>
             <Button v-if="canCreate" as-child>
                 <Link :href="create(organization.slug)">
                     <Plus class="size-4" />
-                    New monitor
+                    {{ t('New monitor') }}
                 </Link>
             </Button>
         </div>
@@ -64,13 +75,18 @@ setLayoutProps({
             >
                 <Activity class="size-6 text-muted-foreground" />
             </div>
-            <h2 class="text-lg font-semibold">No monitors yet</h2>
+            <h2 class="text-lg font-semibold">{{ t('No monitors yet') }}</h2>
             <p class="mt-1 max-w-sm text-sm text-muted-foreground">
-                Add an HTTP or HTTPS endpoint to start checking it every minute
-                or more.
+                {{
+                    t(
+                        'Add an HTTP or HTTPS endpoint to start checking it every minute or more.',
+                    )
+                }}
             </p>
             <Button v-if="canCreate" class="mt-4" as-child>
-                <Link :href="create(organization.slug)">Create a monitor</Link>
+                <Link :href="create(organization.slug)">{{
+                    t('Create a monitor')
+                }}</Link>
             </Button>
         </div>
 
@@ -84,8 +100,10 @@ setLayoutProps({
                         <p class="flex items-center gap-2 truncate font-medium">
                             <StatusBadge :status="monitor.state.status" />
                             {{ monitor.name }}
-                            <Badge v-if="!monitor.enabled" variant="secondary"
-                                >Paused</Badge
+                            <Badge
+                                v-if="!monitor.enabled"
+                                variant="secondary"
+                                >{{ t('Paused') }}</Badge
                             >
                         </p>
                         <p class="truncate text-sm text-muted-foreground">
@@ -95,10 +113,13 @@ setLayoutProps({
                     <div
                         class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"
                     >
-                        <span
-                            >every
-                            {{ formatInterval(monitor.interval_seconds) }}</span
-                        >
+                        <span>{{
+                            t('every :interval', {
+                                interval: formatInterval(
+                                    monitor.interval_seconds,
+                                ),
+                            })
+                        }}</span>
                         <span v-if="monitor.latest_check">
                             {{
                                 formatDuration(monitor.latest_check.duration_ms)
@@ -117,7 +138,7 @@ setLayoutProps({
         <nav
             v-if="monitors.last_page > 1"
             class="flex flex-wrap gap-1"
-            aria-label="Pagination"
+            :aria-label="t('Pagination')"
         >
             <template v-for="link in monitors.links" :key="link.label">
                 <Button

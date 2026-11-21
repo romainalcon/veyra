@@ -1,5 +1,10 @@
 import type { PublicComponentStatus } from '@/types';
 
+/*
+ * `label` and `headline` are English source strings: translate them with t()
+ * where they are rendered.
+ */
+
 export const publicStatusStyles: Record<
     PublicComponentStatus,
     { label: string; headline: string; dot: string; banner: string }

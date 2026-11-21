@@ -19,12 +19,12 @@ enum OrganizationRole: string
 
     public function label(): string
     {
-        return match ($this) {
+        return (string) __(match ($this) {
             self::Owner => 'Owner',
             self::Admin => 'Admin',
             self::Member => 'Member',
             self::Viewer => 'Viewer',
-        };
+        });
     }
 
     /**

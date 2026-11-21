@@ -17,6 +17,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Interface Languages
+    |--------------------------------------------------------------------------
+    |
+    | Languages with shipped translations (`lang/{code}.json`), keyed by code
+    | with their native name. Each organization picks one; pages outside an
+    | organization follow the browser (see docs/DECISIONS.md, ADR-027).
+    |
+    */
+
+    'locales' => [
+        'en' => 'English',
+        'fr' => 'Français',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Release
     |--------------------------------------------------------------------------
     |

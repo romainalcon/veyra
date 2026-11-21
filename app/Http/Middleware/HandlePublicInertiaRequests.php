@@ -7,8 +7,8 @@ use Inertia\Middleware;
 
 /**
  * Inertia middleware for public, sessionless pages (status pages). Shares
- * nothing about users or organizations: only the instance name and the AGPL
- * source link.
+ * nothing about users or organizations: only the instance name, the page
+ * language (that of the owning organization) and the AGPL source link.
  */
 class HandlePublicInertiaRequests extends Middleware
 {
@@ -24,6 +24,7 @@ class HandlePublicInertiaRequests extends Middleware
     {
         return [
             'name' => config('app.name'),
+            'locale' => fn (): string => app()->getLocale(),
             'system' => [
                 'version' => (string) config('veyra.version'),
                 'sourceUrl' => config('veyra.source_url'),

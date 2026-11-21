@@ -25,6 +25,9 @@ import type {
     MonitorStatus,
     OrganizationAnalytics,
 } from '@/types';
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
 
 defineProps<{
     monitorCounts: {
@@ -57,13 +60,13 @@ useOrganizationRealtime(organization.value.id, {
 
 setLayoutProps({
     breadcrumbs: [
-        { title: 'Dashboard', href: dashboard(organization.value.slug) },
+        { title: t('Dashboard'), href: dashboard(organization.value.slug) },
     ],
 });
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="t('Dashboard')" />
 
     <div class="flex h-full flex-1 flex-col gap-6 p-4">
         <template v-if="monitorCounts.total > 0">
@@ -83,7 +86,9 @@ setLayoutProps({
                     </p>
                 </Link>
                 <div class="rounded-xl border p-4">
-                    <p class="text-sm text-muted-foreground">Paused</p>
+                    <p class="text-sm text-muted-foreground">
+                        {{ t('Paused') }}
+                    </p>
                     <p class="mt-3 text-2xl font-semibold">
                         {{ monitorCounts.paused }}
                     </p>
@@ -92,11 +97,13 @@ setLayoutProps({
 
             <section class="space-y-3">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-base font-medium">Open incidents</h2>
+                    <h2 class="text-base font-medium">
+                        {{ t('Open incidents') }}
+                    </h2>
                     <Link
                         :href="incidentsIndex(organization.slug)"
                         class="text-sm text-muted-foreground hover:underline"
-                        >All incidents</Link
+                        >{{ t('All incidents') }}</Link
                     >
                 </div>
                 <p
@@ -104,7 +111,11 @@ setLayoutProps({
                     class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
                     data-test="no-open-incidents"
                 >
-                    No open incidents. All confirmed failures are resolved.
+                    {{
+                        t(
+                            'No open incidents. All confirmed failures are resolved.',
+                        )
+                    }}
                 </p>
                 <ul v-else class="divide-y rounded-lg border text-sm">
                     <li v-for="incident in openIncidents" :key="incident.id">
@@ -115,18 +126,24 @@ setLayoutProps({
                             class="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-muted/50"
                         >
                             <span class="font-medium">{{
-                                incident.monitor?.name ?? 'Deleted monitor'
+                                incident.monitor?.name ?? t('Deleted monitor')
                             }}</span>
                             <span class="text-muted-foreground">
-                                since
-                                {{ formatDateTime(incident.started_at) }} ({{
-                                    formatElapsed(incident.duration_seconds)
-                                }})
+                                {{
+                                    t('since :date (:elapsed)', {
+                                        date: formatDateTime(
+                                            incident.started_at,
+                                        ),
+                                        elapsed: formatElapsed(
+                                            incident.duration_seconds,
+                                        ),
+                                    })
+                                }}
                             </span>
                             <span
                                 v-if="!incident.acknowledged_at"
                                 class="text-xs font-medium text-red-600 dark:text-red-400"
-                                >Not acknowledged</span
+                                >{{ t('Not acknowledged') }}</span
                             >
                         </Link>
                     </li>
@@ -148,7 +165,7 @@ setLayoutProps({
                             class="rounded-xl border p-4"
                         >
                             <p class="text-sm text-muted-foreground">
-                                Overall uptime {{ period }}
+                                {{ t('Overall uptime :period', { period }) }}
                             </p>
                             <p class="mt-1 text-2xl font-semibold">
                                 {{
@@ -169,20 +186,26 @@ setLayoutProps({
                     <section class="space-y-3 rounded-xl border p-4">
                         <div class="flex items-center justify-between">
                             <h2 class="text-sm font-medium">
-                                Incidents (30 days)
+                                {{ t('Incidents (30 days)') }}
                             </h2>
                             <span
                                 v-if="analytics.incidents.mttr_minutes !== null"
                                 class="text-xs text-muted-foreground"
-                                >Mean time to recovery:
-                                {{ analytics.incidents.mttr_minutes }} min</span
+                                >{{
+                                    t('Mean time to recovery: :minutes min', {
+                                        minutes:
+                                            analytics.incidents.mttr_minutes,
+                                    })
+                                }}</span
                             >
                         </div>
                         <IncidentsChart :days="analytics.incidents.days" />
                     </section>
 
                     <section class="space-y-3">
-                        <h2 class="text-base font-medium">Monitors</h2>
+                        <h2 class="text-base font-medium">
+                            {{ t('Monitors') }}
+                        </h2>
                         <div class="overflow-x-auto rounded-lg border">
                             <table
                                 class="w-full text-sm"
@@ -193,16 +216,16 @@ setLayoutProps({
                                 >
                                     <tr>
                                         <th class="px-4 py-2 font-medium">
-                                            Monitor
+                                            {{ t('Monitor') }}
                                         </th>
                                         <th class="px-4 py-2 font-medium">
-                                            State
+                                            {{ t('State') }}
                                         </th>
                                         <th class="px-4 py-2 font-medium">
-                                            Uptime 7d
+                                            {{ t('Uptime 7d') }}
                                         </th>
                                         <th class="px-4 py-2 font-medium">
-                                            Avg latency 24h
+                                            {{ t('Avg latency 24h') }}
                                         </th>
                                     </tr>
                                 </thead>
@@ -231,7 +254,7 @@ setLayoutProps({
                                             <span
                                                 v-if="row.partial"
                                                 class="text-xs text-muted-foreground"
-                                                >(partial)</span
+                                                >{{ t('(partial)') }}</span
                                             >
                                         </td>
                                         <td class="px-4 py-2">
@@ -259,17 +282,25 @@ setLayoutProps({
             >
                 <Activity class="size-6 text-muted-foreground" />
             </div>
-            <h2 class="text-lg font-semibold">No monitors yet</h2>
+            <h2 class="text-lg font-semibold">{{ t('No monitors yet') }}</h2>
             <p class="mt-1 max-w-sm text-sm text-muted-foreground">
-                Start watching your first HTTP endpoint for
-                {{ organization.name }}.
+                {{
+                    t(
+                        'Start watching your first HTTP endpoint for :organization.',
+                        {
+                            organization: organization.name,
+                        },
+                    )
+                }}
             </p>
             <Button
                 v-if="organization.can.update || organization.role === 'member'"
                 class="mt-4"
                 as-child
             >
-                <Link :href="create(organization.slug)">Create a monitor</Link>
+                <Link :href="create(organization.slug)">{{
+                    t('Create a monitor')
+                }}</Link>
             </Button>
         </div>
     </div>

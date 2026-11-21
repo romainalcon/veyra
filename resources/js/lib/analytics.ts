@@ -1,3 +1,4 @@
+import { currentLocale, t } from '@/lib/i18n';
 import type { UptimeFigure } from '@/types';
 
 /**
@@ -6,17 +7,13 @@ import type { UptimeFigure } from '@/types';
  */
 export function formatUptime(uptime: number | null): string {
     if (uptime === null) {
-        return 'No data';
+        return t('No data');
     }
 
-    if (uptime === 100) {
-        return '100%';
-    }
-
-    return `${uptime
-        .toFixed(uptime >= 99 ? 3 : 2)
-        .replace(/0+$/, '')
-        .replace(/\.$/, '')}%`;
+    return new Intl.NumberFormat(currentLocale(), {
+        style: 'percent',
+        maximumFractionDigits: uptime === 100 ? 0 : uptime >= 99 ? 3 : 2,
+    }).format(uptime / 100);
 }
 
 export function uptimeTone(
@@ -35,11 +32,13 @@ export function uptimeTone(
 
 export function coverageNote(figure: UptimeFigure): string | null {
     if (figure.uptime === null) {
-        return 'No checks recorded in this period';
+        return t('No checks recorded in this period');
     }
 
     if (figure.partial && figure.coverage !== null) {
-        return `Partial data (${Math.round(figure.coverage * 100)}% of expected checks)`;
+        return t('Partial data (:percent% of expected checks)', {
+            percent: Math.round(figure.coverage * 100),
+        });
     }
 
     return null;
@@ -49,13 +48,13 @@ export function formatBucketLabel(iso: string, range: string): string {
     const date = new Date(iso);
 
     return range === '24h' || range === '7d'
-        ? date.toLocaleString(undefined, {
+        ? date.toLocaleString(currentLocale(), {
               month: range === '7d' ? 'short' : undefined,
               day: range === '7d' ? 'numeric' : undefined,
               hour: '2-digit',
               minute: '2-digit',
           })
-        : date.toLocaleDateString(undefined, {
+        : date.toLocaleDateString(currentLocale(), {
               month: 'short',
               day: 'numeric',
           });

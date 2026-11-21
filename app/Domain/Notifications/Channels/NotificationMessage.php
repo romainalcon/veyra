@@ -5,7 +5,9 @@ namespace App\Domain\Notifications\Channels;
 use App\Domain\Notifications\Enums\NotificationEvent;
 
 /**
- * Channel-agnostic content of one notification. Contains no secrets.
+ * Channel-agnostic content of one notification. Contains no secrets. Text is
+ * rendered in the organization language carried by `$locale` (ADR-027),
+ * whatever the locale of the process that sends it.
  */
 final readonly class NotificationMessage
 {
@@ -21,27 +23,45 @@ final readonly class NotificationMessage
         public string $url,
         public ?string $certificateExpiresAt = null,
         public ?string $certificateIssuer = null,
+        public string $locale = 'en',
     ) {}
 
     public function title(): string
     {
-        return "[Veyra] {$this->event->headline()} — {$this->monitorName}";
+        return "[Veyra] {$this->event->headline($this->locale)} — {$this->monitorName}";
     }
 
     public function summary(): string
     {
-        return match ($this->event) {
-            NotificationEvent::Opened => "{$this->monitorName} is down.",
-            NotificationEvent::Resolved => "{$this->monitorName} is back up after ".self::humanDuration($this->durationSeconds).'.',
-            NotificationEvent::Acknowledged => "{$this->acknowledgedBy} acknowledged the incident on {$this->monitorName}.",
-            NotificationEvent::Reminder => "{$this->monitorName} has been down for ".self::humanDuration($this->durationSeconds).' and the incident is not acknowledged.',
-            NotificationEvent::Test => "This is a test notification from {$this->organizationName}.",
-            NotificationEvent::CertificateExpiring => "The TLS certificate of {$this->monitorName} expires in ".self::humanDuration($this->durationSeconds).'. Renew it before visitors get errors.',
-            NotificationEvent::CertificateExpired => "The TLS certificate of {$this->monitorName} has expired. HTTPS checks fail until it is renewed.",
-        };
+        $replace = [
+            'monitor' => $this->monitorName,
+            'organization' => $this->organizationName,
+            'person' => (string) $this->acknowledgedBy,
+            'duration' => self::humanDuration($this->durationSeconds, $this->locale),
+        ];
+
+        return $this->translate(match ($this->event) {
+            NotificationEvent::Opened => ':monitor is down.',
+            NotificationEvent::Resolved => ':monitor is back up after :duration.',
+            NotificationEvent::Acknowledged => ':person acknowledged the incident on :monitor.',
+            NotificationEvent::Reminder => ':monitor has been down for :duration and the incident is not acknowledged.',
+            NotificationEvent::Test => 'This is a test notification from :organization.',
+            NotificationEvent::CertificateExpiring => 'The TLS certificate of :monitor expires in :duration. Renew it before visitors get errors.',
+            NotificationEvent::CertificateExpired => 'The TLS certificate of :monitor has expired. HTTPS checks fail until it is renewed.',
+        }, $replace);
     }
 
-    public static function humanDuration(?int $seconds): string
+    /**
+     * Translates a label of the notification into its language.
+     *
+     * @param  array<string, string>  $replace
+     */
+    public function translate(string $key, array $replace = []): string
+    {
+        return (string) __($key, $replace, $this->locale);
+    }
+
+    public static function humanDuration(?int $seconds, string $locale = 'en'): string
     {
         $seconds = max(0, (int) $seconds);
 
@@ -49,7 +69,7 @@ final readonly class NotificationMessage
             $seconds < 60 => "{$seconds}s",
             $seconds < 3600 => intdiv($seconds, 60).'m',
             $seconds < 86400 => intdiv($seconds, 3600).'h '.intdiv($seconds % 3600, 60).'m',
-            default => intdiv($seconds, 86400).'d '.intdiv($seconds % 86400, 3600).'h',
+            default => (string) __(':daysd :hoursh', ['days' => intdiv($seconds, 86400), 'hours' => intdiv($seconds % 86400, 3600)], $locale),
         };
     }
 }
