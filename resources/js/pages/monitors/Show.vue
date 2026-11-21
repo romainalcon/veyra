@@ -63,10 +63,12 @@ setLayoutProps({
     ],
 });
 
-const isHttps = computed(
+/** Also shown when an http:// URL redirects to HTTPS on the same host. */
+const showCertificate = computed(
     () =>
         props.monitor.type === 'http' &&
-        (props.monitor.url ?? '').toLowerCase().startsWith('https://'),
+        (props.monitor.certificate !== null ||
+            (props.monitor.url ?? '').toLowerCase().startsWith('https://')),
 );
 
 const isFirstPage = computed(() => props.checks.prev_cursor === null);
@@ -244,7 +246,10 @@ const remove = () => router.visit(destroy(params.value));
             :can-update="can.update"
         />
 
-        <CertificatePanel v-if="isHttps" :certificate="monitor.certificate" />
+        <CertificatePanel
+            v-if="showCertificate"
+            :certificate="monitor.certificate"
+        />
 
         <Deferred data="stats">
             <template #fallback>

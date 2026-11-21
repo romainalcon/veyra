@@ -1,6 +1,11 @@
 <?php
 
+use App\Domain\Monitoring\Actions\UpdateMonitor;
 use App\Domain\Monitoring\Certificates\CheckCertificateExpiry;
+use App\Domain\Monitoring\DTOs\ExpectedStatuses;
+use App\Domain\Monitoring\DTOs\HttpTargetData;
+use App\Domain\Monitoring\DTOs\MonitorData;
+use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Jobs\PurgeExpiredHistory;
 use App\Domain\Monitoring\Models\Monitor;
@@ -199,3 +204,24 @@ test('the command is scheduled hourly and reports raised alerts', function () {
 
     $this->artisan('veyra:certificates:check')->expectsOutputToContain('Raised 1 certificate alert(s).')->assertSuccessful();
 });
+
+test('changing the monitored origin forgets the previous certificate', function (string $url, bool $kept) {
+    Queue::fake([SendNotificationDelivery::class]);
+    seeCertificate($this->monitor, now()->addDay());
+    $data = fn (string $target) => new MonitorData(
+        type: MonitorType::Http,
+        name: 'Checkout API',
+        intervalSeconds: 60,
+        timeoutSeconds: 10,
+        http: new HttpTargetData($target, HttpMethod::Get, ExpectedStatuses::default(), true, null),
+    );
+
+    app(UpdateMonitor::class)->handle($this->monitor->fresh(), $data($url));
+
+    expect(MonitorTlsCertificate::whereKey($this->monitor->id)->exists())->toBe($kept)
+        ->and(checkCertificates())->toBe($kept ? 1 : 0);
+})->with([
+    'same origin, other path' => ['https://EXAMPLE.com/status', true],
+    'other host' => ['https://shop.example.org/health', false],
+    'plain HTTP' => ['http://example.com/health', false],
+]);

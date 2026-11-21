@@ -24,6 +24,7 @@ class UpdateMonitor
         }
 
         return DB::transaction(function () use ($monitor, $data): Monitor {
+            $previousOrigin = $monitor->type === MonitorType::Http ? self::origin($monitor->httpConfig?->url) : null;
             $intervalChanged = $monitor->interval_seconds !== $data->intervalSeconds;
 
             $monitor->update([
@@ -46,6 +47,12 @@ class UpdateMonitor
                 ]),
             };
 
+            // A certificate seen for another origin would raise expiry warnings
+            // for a host that is no longer monitored; the next check records the new one.
+            if ($monitor->type === MonitorType::Http && $previousOrigin !== self::origin($data->http?->url)) {
+                $monitor->tlsCertificate()->delete();
+            }
+
             if ($monitor->enabled && $monitor->type === MonitorType::Heartbeat) {
                 // The deadline follows the new period and grace from the last ping.
                 $monitor->update(['next_check_at' => $this->heartbeatDeadline($monitor, $this->graceSeconds($data))]);
@@ -60,6 +67,17 @@ class UpdateMonitor
 
             return $monitor;
         });
+    }
+
+    /**
+     * Scheme and host of a URL, lower-cased ("https://example.com").
+     */
+    private static function origin(?string $url): ?string
+    {
+        $scheme = $url === null ? null : parse_url($url, PHP_URL_SCHEME);
+        $host = $url === null ? null : parse_url($url, PHP_URL_HOST);
+
+        return is_string($scheme) && is_string($host) ? strtolower($scheme.'://'.$host) : null;
     }
 
     private function graceSeconds(MonitorData $data): int
