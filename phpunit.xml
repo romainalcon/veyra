@@ -33,6 +33,7 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="VEYRA_REGISTRATION_ENABLED" value="true"/>
+        <env name="VEYRA_LANDING_PAGE" value="false"/>
         <env name="VEYRA_ADMIN_EMAILS" value=""/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
