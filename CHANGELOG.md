@@ -12,6 +12,9 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 - **Public incident updates** — messages published on status pages, distinct from internal incident notes.
 - **Custom status page domains** — ownership proven with a `_veyra-challenge` TXT record, re-checked daily and revoked after three consecutive failures. A verified domain only serves its status page. `/status-domains/tls-check` lets a reverse proxy issue certificates on demand; Caddy example in `deploy/docker/Caddyfile.example`.
 
+### Changed
+- Release images are built natively per architecture (amd64 and arm64 runners, no QEMU emulation) and assembled into multi-arch manifests with build provenance attestations.
+
 ### Security
 - Public pages never expose monitor identifiers, internal names, URLs, incident causes, internal notes or user data, and are rate limited per IP. Custom domains refuse IP literals, local suffixes and the instance's own host; the application (login, dashboards, session cookies) is never served on a custom domain. See `docs/SECURITY.md` and ADR-021 to ADR-023.
 
