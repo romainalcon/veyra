@@ -13,7 +13,12 @@
 app/Domain/
   Identity/        Fortify actions, validation concerns, RegistrationGate, DeleteUser
   Organizations/   Actions, DTOs, Enums (OrganizationRole), Models, Notifications, Services
-  # Monitoring, Incidents, Notifications, Metrics: added when their sprint starts
+  Monitoring/      Probes, outbox, confirmed state, statistics
+  Incidents/       Incidents, timeline events, public updates
+  Notifications/   Channels, deliveries, reminders
+  Maintenance/     Planned maintenance windows and state transitions (Sprint 6)
+  StatusPages/     Public status pages, snapshot, custom domains (Sprint 6)
+  Realtime/, System/
 app/Http/{Controllers,Requests,Middleware}/
 app/Policies/
 app/Models/User.php            # kept in the conventional location (Fortify/auth)
@@ -27,6 +32,9 @@ extensions/cloud/    # optional, separate from Community core (not created yet)
 - Authorization: `OrganizationPolicy` (registered with `#[UsePolicy]`), capabilities from `OrganizationRole`.
 - Inertia shares only whitelisted props: `auth.user` (id, name, email, verification), `organizations` (id, name, slug), `currentOrganization` (with `can.*` flags).
 - Broadcasting: private channel `organizations.{organizationId}` authorized for members only (`routes/channels.php`). The client reloads props over HTTP after reconnecting.
+
+## Public surface (Sprint 6)
+- `/status/{slug}` and verified custom domains (`ServeStatusPageForCustomDomain`, global middleware) render public status pages without session, from a cached whitelisted snapshot; they poll over HTTP and never subscribe to Reverb.
 
 ## Queue separation
 - `probes`: HTTP checks; strict timeout and concurrency controls.

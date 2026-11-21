@@ -30,3 +30,15 @@ Broadcasts on `private-organizations.{id}` carry identifiers and enum values onl
 - Discord webhooks must be `https://{discord.com|discordapp.com|ptb.discord.com|canary.discord.com}/api/webhooks/{id}/{token}`; the URL is re-validated before each send, requests use a 5 s timeout, no redirects and no proxy, and `allowed_mentions` is empty so monitor names or causes can never ping anyone.
 - Delivery errors are stored as generic messages (HTTP status or exception class); webhook URLs, tokens and recipient addresses never reach logs or `last_error`.
 - Rate limits: channel creation 30/min, "send test" 5/min per channel.
+
+## Public status pages (Sprint 6)
+- `/status/{slug}` runs without the `web` group: no session is started and no cookie is set; the Inertia middleware for public pages shares only the instance name, version and source link. Unpublished pages are 404.
+- The payload is a whitelist (`StatusPageSnapshot`): public display names and statuses, uptime, public incident updates and maintenance title/description. Monitor IDs, names, URLs, causes, error codes, internal notes, organization slugs and user data are never published; a test asserts their absence from the rendered HTML. Public keys are per-page HMACs, not database identifiers.
+- Missing data is "No data", never "Operational". Pages are cached 30 s, sent with `Cache-Control: public, max-age=30`, rate limited to 120 requests/min per IP, and refreshed by polling (no public WebSocket). The CSP (`frame-ancestors 'none'`) is unchanged.
+- Management: Members and above; creation 10/h per user, updates 30/min; public incident updates 30/min.
+
+## Custom domains (Sprint 6)
+- Ownership is proven by a TXT record with a random 40-character token, renewed when the domain changes; verified domains are re-checked daily and revoked after 3 consecutive failures.
+- Refused: IP literals, single-label names, `localhost`, `.local`, `.internal`, `.lan`, `home.arpa`, `.invalid`, `.onion`, ports or paths, and the `APP_URL` host and its subdomains.
+- On a verified domain only `GET|HEAD /` reaches the public page; every other path or method is 404 before any session starts, so login forms and session cookies are never served on a customer-controlled host. Other hosts are not affected.
+- `/status-domains/tls-check` approves certificates only for verified domains of published pages (on-demand TLS "ask"), rate limited to 60/min.

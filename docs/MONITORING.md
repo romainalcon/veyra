@@ -16,7 +16,7 @@
 - Raw check retention: 30 days by default; daily aggregates kept separately.
 
 ## State model
-- `UP`, `DOWN`, `DEGRADED`, `UNKNOWN`.
+- `UP`, `DOWN`, `DEGRADED`, `UNKNOWN`, `MAINTENANCE` (planned, Sprint 6).
 - Raw probe success/failure is distinct from confirmed state.
 - Missing/stale data means `UNKNOWN`, never automatically `DOWN`.
 - Handle delayed/out-of-order checks by a monotonic sequence or scheduled timestamp guard.
@@ -70,3 +70,16 @@
 - **Uptime** = successful / observed checks. **Coverage** = observed / expected checks (from the interval and the monitor's age). Periods without checks are "No data" (never 100 % or 0 %); coverage under 90 % is flagged as partial.
 - **Series** are bounded: 24 h = 96 × 15 min buckets, 7 d = 168 hourly buckets (raw checks), 30/90 d = daily aggregates.
 - **Retention**: `veyra:history:purge` (03:15 UTC) deletes raw checks older than `VEYRA_CHECK_RETENTION_DAYS` (default 30) per monitor in batches of 1000 with a time budget, finished dispatches older than 7 days and deliveries older than 90 days. Daily aggregates are kept.
+
+## Planned maintenance (Sprint 6)
+- One-off windows per organization, covering one or more monitors over `[starts_at, ends_at)` (UTC, max `VEYRA_MAINTENANCE_MAX_HOURS`, default 168 h). Members and above manage them; a started window keeps its start, an ended or cancelled one is read-only; only future windows can be cancelled, a running one is ended early ("End now").
+- Probes keep running. `RecordProbeResult` flags a check `in_maintenance` when a window covers its `scheduled_for` slot (deterministic on replay).
+- `ApplyMonitorState`: a flagged newest check (or a running window) holds the state at `MAINTENANCE` — no incident is opened or resolved, streaks are zero, `last_applied_scheduled_for` still advances. The first unflagged result after a window restarts the streaks from itself and is evaluated from `UNKNOWN`.
+- `veyra:maintenance:transition` (every minute, `onOneServer`) moves monitors into `MAINTENANCE` when a window starts and back to `UNKNOWN` (`streak_since` = window end) when it ends, under the `monitor_states` row lock; it is idempotent.
+- An incident open before the window stays open (`maintenance_started` / `maintenance_ended` timeline events), gets no reminder while in maintenance and resolves normally afterwards.
+- Stale detection ignores monitors in `MAINTENANCE`.
+- Statistics: flagged checks are excluded from uptime, latency and observed checks, counted in `monitor_daily_stats.maintenance_count` and removed from the expected checks (coverage). Chart series expose a `maintenance` count per bucket.
+
+## Status pages (Sprint 6)
+- Public status = confirmed state: `UP` → operational, `DEGRADED` → degraded, `DOWN` → outage, `MAINTENANCE` → maintenance, `UNKNOWN` or paused → no data. The overall status is the worst among components with data (no data only if none has any).
+- Incidents of listed monitors appear automatically (open, or resolved within 14 days) with a generic title; only `opened`, `public_update` and `resolved` events are published. Maintenance windows of listed monitors appear when running or starting within 7 days.

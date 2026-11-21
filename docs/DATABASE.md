@@ -25,6 +25,10 @@
 | monitor_notification_channels | monitor_id, notification_channel_id |
 | notification_deliveries | id, incident_id, channel_id, event_type, status, attempts, sent_at |
 | monitor_daily_stats | monitor_id, day, checks_count, success_count, failure_count, latency_avg_ms |
+| maintenance_windows | id, organization_id, title, description, starts_at, ends_at, cancelled_at, created_by |
+| maintenance_window_monitors | maintenance_window_id, monitor_id |
+| status_pages | id, organization_id, slug (unique), title, description, is_published, show_uptime, custom_domain (unique), domain_verification_token, domain_verified_at, domain_checked_at, domain_failures |
+| status_page_components | id, status_page_id, monitor_id, display_name, group_name, position |
 | audit_logs | id, organization_id, actor_id, action, subject_type, subject_id, metadata |
 
 ## Constraints and indexes
@@ -56,3 +60,9 @@
 - `notification_deliveries` is unique on `(incident_id, channel_id, event_type)` — the idempotency key of the delivery pipeline.
 - `monitor_daily_stats` (PK `(monitor_id, day)`, UTC days) is maintained with `INSERT … SELECT … ON DUPLICATE KEY UPDATE`; it survives raw-check retention.
 - Retention deletes use `DELETE … LIMIT 1000` loops on indexed columns (`monitor_checks (monitor_id, checked_at)`, `monitor_dispatches (status, completed_at)`, `notification_deliveries (created_at)`). `tests/Integration/AggregationTest.php` covers 10 000 checks.
+
+## Maintenance and status pages (Sprint 6)
+- `monitor_checks.in_maintenance` (boolean, default false) is a trailing column added instantly by MariaDB 11.4; it is not indexed (always read with the existing `(monitor_id, …)` indexes). `monitor_daily_stats.maintenance_count` stores flagged checks per day.
+- `maintenance_windows` is indexed by `(organization_id, starts_at)` and `(starts_at, ends_at)`; `maintenance_window_monitors` has PK `(maintenance_window_id, monitor_id)` and an index on `monitor_id`.
+- `status_pages.slug` and `status_pages.custom_domain` are globally unique (several NULL domains are allowed). `status_page_components` is unique on `(status_page_id, monitor_id)`.
+- Pivot and component rows cascade on hard deletes only (organization deletion); soft-deleted monitors are filtered out when building public pages.

@@ -20,8 +20,12 @@ The exact open-source license, commercial license boundaries and trademark/domai
 - Reverb updates with fallback resync; dark/light responsive UI.
 - Docker Compose Community installation; Vito Deploy private deployment documentation.
 
+## Added in 1.1 (Sprint 6)
+- One-off planned maintenance windows: checks keep running, no incident or notification, excluded from uptime.
+- Public status pages (`/status/{slug}` or a verified custom domain) with public incident updates.
+
 ## Not in V1
-Status pages, TCP/DNS/heartbeat probes, agent-based server metrics, multi-region checks, public API, billing, SSO, enterprise SLAs.
+Recurring maintenance windows, TCP/DNS/heartbeat probes, agent-based server metrics, multi-region checks, public API, billing, SSO, enterprise SLAs.
 
 ## Acceptance definition
 A fresh installation can create an organization and monitor, execute scheduled checks, detect confirmed downtime, send an alert, recover automatically and display history without manual intervention.
