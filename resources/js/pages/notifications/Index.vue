@@ -1,6 +1,15 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
-import { Hash, Mail, MessageSquare, Send, Trash2, Webhook } from '@lucide/vue';
+import {
+    BellRing,
+    Hash,
+    Mail,
+    MessageSquare,
+    Send,
+    Trash2,
+    Webhook,
+} from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import LimitNotice from '@/components/LimitNotice.vue';
@@ -86,17 +95,17 @@ const remove = (channel: NotificationChannelSummary) =>
                 "
             />
 
-            <p
+            <EmptyState
                 v-if="channels.length === 0"
-                class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
+                :icon="BellRing"
+                :title="t('No channels yet.')"
+                :description="
+                    canManage
+                        ? t('Add one below.')
+                        : t('Ask an admin to configure one.')
+                "
                 data-test="channels-empty-state"
-            >
-                {{ t('No channels yet.') }}
-                <template v-if="canManage">{{ t('Add one below.') }}</template>
-                <template v-else>{{
-                    t('Ask an admin to configure one.')
-                }}</template>
-            </p>
+            />
 
             <ul
                 v-else

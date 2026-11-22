@@ -140,9 +140,9 @@ setLayoutProps({
                 "
             />
             <div
-                class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10"
+                class="space-y-4 rounded-lg border border-status-down/30 bg-status-down-soft p-4"
             >
-                <p class="text-sm text-red-600 dark:text-red-100">
+                <p class="text-sm text-status-down-soft-foreground">
                     {{ t('This action cannot be undone.') }}
                 </p>
                 <Dialog>

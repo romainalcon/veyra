@@ -30,7 +30,7 @@ const message = computed(() => {
     <div
         v-if="monitoring?.paused"
         role="status"
-        class="flex items-start gap-3 border-b border-amber-300 bg-amber-50 px-6 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
+        class="flex items-start gap-3 border-b border-status-degraded/40 bg-status-degraded-soft px-6 py-3 text-sm text-status-degraded-soft-foreground"
         data-test="monitoring-paused-banner"
     >
         <PauseCircle class="mt-0.5 size-4 shrink-0" />

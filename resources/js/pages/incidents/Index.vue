@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { CheckCircle2 } from '@lucide/vue';
 import { computed } from 'vue';
@@ -80,17 +81,14 @@ setLayoutProps({
             </nav>
         </div>
 
-        <div
+        <EmptyState
             v-if="incidents.data.length === 0"
-            class="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed p-10 text-center"
+            :icon="CheckCircle2"
+            tone="success"
+            :title="t('No incidents')"
+            :description="t('Nothing to report for this filter.')"
             data-test="incidents-empty-state"
-        >
-            <CheckCircle2 class="mb-3 size-8 text-emerald-600" />
-            <h2 class="text-lg font-semibold">{{ t('No incidents') }}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">
-                {{ t('Nothing to report for this filter.') }}
-            </p>
-        </div>
+        />
 
         <ul
             v-else

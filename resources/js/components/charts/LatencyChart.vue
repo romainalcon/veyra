@@ -118,7 +118,11 @@ const tooltip = componentToString(config, ChartTooltipContent, {
                 v-for="point in points"
                 :key="point.t"
                 class="flex-1"
-                :class="point.maintenance > 0 ? 'bg-sky-500' : 'bg-transparent'"
+                :class="
+                    point.maintenance > 0
+                        ? 'bg-status-maintenance'
+                        : 'bg-transparent'
+                "
                 :title="
                     point.maintenance > 0
                         ? t(':date: maintenance', {
@@ -130,7 +134,7 @@ const tooltip = componentToString(config, ChartTooltipContent, {
         </div>
         <p class="text-xs text-muted-foreground">
             <span
-                class="mr-1 inline-block size-2 rounded-full bg-sky-500"
+                class="mr-1 inline-block size-2 rounded-full bg-status-maintenance"
                 aria-hidden="true"
             />{{ t('Planned maintenance (excluded from latency and uptime)') }}
         </p>

@@ -1,34 +1,54 @@
 <script setup lang="ts">
+import {
+    Check,
+    CircleHelp,
+    TriangleAlert,
+    Wrench,
+    X,
+    type LucideIcon,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
+import { useTranslations } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { MonitorStatus } from '@/types';
-import { useTranslations } from '@/lib/i18n';
 
 const { t } = useTranslations();
 
 const props = defineProps<{ status: MonitorStatus }>();
 
-const styles: Record<MonitorStatus, { label: string; class: string }> = {
+/*
+ * Colour, icon and label all carry the state (ADR-035), so it never depends
+ * on colour alone.
+ */
+const styles: Record<
+    MonitorStatus,
+    { label: string; icon: LucideIcon; class: string }
+> = {
     up: {
         label: 'Up',
-        class: 'bg-emerald-600 text-white hover:bg-emerald-600 dark:bg-emerald-500',
+        icon: Check,
+        class: 'bg-status-up text-status-up-foreground',
     },
     degraded: {
         label: 'Degraded',
-        class: 'bg-amber-500 text-white hover:bg-amber-500 dark:bg-amber-500',
+        icon: TriangleAlert,
+        class: 'bg-status-degraded text-status-degraded-foreground',
     },
     down: {
         label: 'Down',
-        class: 'bg-red-600 text-white hover:bg-red-600 dark:bg-red-500',
+        icon: X,
+        class: 'bg-status-down text-status-down-foreground',
     },
     unknown: {
         label: 'Unknown',
-        class: 'bg-muted text-muted-foreground hover:bg-muted',
+        icon: CircleHelp,
+        class: 'bg-status-unknown-soft text-status-unknown-soft-foreground border-border',
     },
     maintenance: {
         label: 'Maintenance',
-        class: 'bg-sky-600 text-white hover:bg-sky-600 dark:bg-sky-500',
+        icon: Wrench,
+        class: 'bg-status-maintenance text-status-maintenance-foreground',
     },
 };
 
@@ -37,11 +57,17 @@ const style = computed(() => styles[props.status] ?? styles.unknown);
 
 <template>
     <Badge
-        :class="cn('gap-1.5', style.class)"
+        :class="cn('gap-1', style.class)"
         :data-status="status"
         data-test="status-badge"
     >
-        <span class="size-1.5 rounded-full bg-current" aria-hidden="true" />
+        <component
+            :is="style.icon"
+            class="size-3"
+            stroke-width="2.75"
+            aria-hidden="true"
+            :data-icon="status"
+        />
         {{ t(style.label) }}
     </Badge>
 </template>

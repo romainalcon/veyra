@@ -13,7 +13,8 @@
         "format:check": "prettier --check resources/",
         "types:check": "vue-tsc --noEmit",
         "test": "vitest run",
-        "check": "npm run lint && npm run format:check && npm run types:check && npm run test"
+        "check": "npm run lint && npm run format:check && npm run types:check && npm run test",
+        "og:render": "node resources/og/render.mjs"
     },
     "dependencies": {
         "@inertiajs/vite": "^3.0.0",

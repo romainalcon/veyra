@@ -16,7 +16,11 @@ const { t } = useTranslations();
         :data-status="status"
         data-test="public-status"
     >
-        <span :class="['size-2 rounded-full', style.dot]" aria-hidden="true" />
+        <component
+            :is="style.icon"
+            :class="['size-4 shrink-0', style.text]"
+            aria-hidden="true"
+        />
         {{ t(style.label) }}
     </span>
 </template>

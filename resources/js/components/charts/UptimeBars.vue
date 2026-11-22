@@ -9,10 +9,11 @@ type Day = Pick<UptimeDay, 'day' | 'uptime' | 'coverage'>;
 defineProps<{ days: Day[] }>();
 
 const toneClass: Record<ReturnType<typeof uptimeTone>, string> = {
-    none: 'bg-muted',
-    good: 'bg-emerald-500',
-    warning: 'bg-amber-500',
-    bad: 'bg-red-500',
+    // No data is drawn as a short hatched stub, never as a full green bar.
+    none: 'mt-auto h-1/3 bg-[repeating-linear-gradient(135deg,var(--muted-foreground)_0_1px,transparent_1px_4px)] opacity-40',
+    good: 'bg-status-up',
+    warning: 'bg-status-degraded',
+    bad: 'bg-status-down',
 };
 
 const { t, tc } = useTranslations();

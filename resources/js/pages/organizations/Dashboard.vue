@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue';
 import { Deferred, Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Activity } from '@lucide/vue';
 import { computed } from 'vue';
@@ -142,7 +143,7 @@ setLayoutProps({
                             </span>
                             <span
                                 v-if="!incident.acknowledged_at"
-                                class="text-xs font-medium text-red-600 dark:text-red-400"
+                                class="text-xs font-medium text-destructive-foreground"
                                 >{{ t('Not acknowledged') }}</span
                             >
                         </Link>
@@ -152,7 +153,22 @@ setLayoutProps({
 
             <Deferred data="analytics">
                 <template #fallback>
-                    <Skeleton class="h-64 rounded-xl" />
+                    <div
+                        class="space-y-4"
+                        role="status"
+                        :aria-label="t('Loading analytics')"
+                        data-test="dashboard-analytics-loading"
+                    >
+                        <div class="grid gap-4 sm:grid-cols-3">
+                            <Skeleton
+                                v-for="n in 3"
+                                :key="n"
+                                class="h-24 rounded-xl"
+                            />
+                        </div>
+                        <Skeleton class="h-56 rounded-xl" />
+                        <Skeleton class="h-40 rounded-xl" />
+                    </div>
                 </template>
                 <template v-if="analytics">
                     <section
@@ -167,7 +183,9 @@ setLayoutProps({
                             <p class="text-sm text-muted-foreground">
                                 {{ t('Overall uptime :period', { period }) }}
                             </p>
-                            <p class="mt-1 text-2xl font-semibold">
+                            <p
+                                class="mt-1 text-2xl font-semibold tracking-tight tabular-nums"
+                            >
                                 {{
                                     formatUptime(
                                         analytics.uptime[period].uptime,
@@ -249,7 +267,7 @@ setLayoutProps({
                                         <td class="px-4 py-2">
                                             <StatusBadge :status="row.status" />
                                         </td>
-                                        <td class="px-4 py-2">
+                                        <td class="px-4 py-2 tabular-nums">
                                             {{ formatUptime(row.uptime_7d) }}
                                             <span
                                                 v-if="row.partial"
@@ -257,7 +275,7 @@ setLayoutProps({
                                                 >{{ t('(partial)') }}</span
                                             >
                                         </td>
-                                        <td class="px-4 py-2">
+                                        <td class="px-4 py-2 tabular-nums">
                                             {{
                                                 row.latency_24h === null
                                                     ? '—'
@@ -272,36 +290,28 @@ setLayoutProps({
                 </template>
             </Deferred>
         </template>
-        <div
+        <EmptyState
             v-else
-            class="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-sidebar-border/70 p-10 text-center dark:border-sidebar-border"
+            :icon="Activity"
+            :title="t('No monitors yet')"
+            :description="
+                t(
+                    'Start watching your first HTTP endpoint for :organization.',
+                    {
+                        organization: organization.name,
+                    },
+                )
+            "
             data-test="dashboard-empty-state"
         >
-            <div
-                class="mb-4 flex size-12 items-center justify-center rounded-full bg-muted"
-            >
-                <Activity class="size-6 text-muted-foreground" />
-            </div>
-            <h2 class="text-lg font-semibold">{{ t('No monitors yet') }}</h2>
-            <p class="mt-1 max-w-sm text-sm text-muted-foreground">
-                {{
-                    t(
-                        'Start watching your first HTTP endpoint for :organization.',
-                        {
-                            organization: organization.name,
-                        },
-                    )
-                }}
-            </p>
             <Button
                 v-if="organization.can.update || organization.role === 'member'"
-                class="mt-4"
                 as-child
             >
                 <Link :href="create(organization.slug)">{{
                     t('Create a monitor')
                 }}</Link>
             </Button>
-        </div>
+        </EmptyState>
     </div>
 </template>

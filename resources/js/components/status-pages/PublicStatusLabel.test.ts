@@ -22,6 +22,6 @@ describe('PublicStatusLabel', () => {
         });
 
         expect(wrapper.text()).not.toContain('Operational');
-        expect(wrapper.html()).not.toContain('emerald');
+        expect(wrapper.html()).not.toContain('status-up');
     });
 });

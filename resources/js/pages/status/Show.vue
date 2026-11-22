@@ -60,17 +60,25 @@ const updateLabel = {
         </header>
 
         <div
-            :class="['rounded-lg border p-4 font-medium', overall.banner]"
+            :class="[
+                'flex items-center gap-2 rounded-lg border p-4 font-medium',
+                overall.banner,
+            ]"
             :data-status="snapshot.status"
             data-test="overall-status"
         >
+            <component
+                :is="overall.icon"
+                class="size-5 shrink-0"
+                aria-hidden="true"
+            />
             {{ t(overall.headline) }}
         </div>
 
         <section
             v-for="incident in ongoingIncidents"
             :key="incident.key"
-            class="space-y-3 rounded-lg border border-red-200 p-4 dark:border-red-900/50"
+            class="space-y-3 rounded-lg border border-status-down/40 p-4"
             data-test="ongoing-incident"
         >
             <h2 class="font-medium">{{ incident.title }}</h2>
@@ -95,7 +103,7 @@ const updateLabel = {
         <section
             v-for="window in activeMaintenance"
             :key="window.key"
-            class="space-y-1 rounded-lg border border-sky-200 p-4 text-sm dark:border-sky-900/50"
+            class="space-y-1 rounded-lg border border-status-maintenance/40 p-4 text-sm"
             data-test="active-maintenance"
         >
             <h2 class="font-medium">{{ window.title }}</h2>

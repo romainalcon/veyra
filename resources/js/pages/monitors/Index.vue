@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Activity, Plus } from '@lucide/vue';
 import { computed } from 'vue';
@@ -83,30 +84,23 @@ setLayoutProps({
             "
         />
 
-        <div
+        <EmptyState
             v-if="monitors.data.length === 0"
-            class="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed p-10 text-center"
+            :icon="Activity"
+            :title="t('No monitors yet')"
+            :description="
+                t(
+                    'Add an HTTP or HTTPS endpoint to start checking it every minute or more.',
+                )
+            "
             data-test="monitors-empty-state"
         >
-            <div
-                class="mb-4 flex size-12 items-center justify-center rounded-full bg-muted"
-            >
-                <Activity class="size-6 text-muted-foreground" />
-            </div>
-            <h2 class="text-lg font-semibold">{{ t('No monitors yet') }}</h2>
-            <p class="mt-1 max-w-sm text-sm text-muted-foreground">
-                {{
-                    t(
-                        'Add an HTTP or HTTPS endpoint to start checking it every minute or more.',
-                    )
-                }}
-            </p>
-            <Button v-if="canCreate && !limitReached" class="mt-4" as-child>
+            <Button v-if="canCreate && !limitReached" as-child>
                 <Link :href="create(organization.slug)">{{
                     t('Create a monitor')
                 }}</Link>
             </Button>
-        </div>
+        </EmptyState>
 
         <ul v-else class="divide-y rounded-lg border" data-test="monitors-list">
             <li v-for="monitor in monitors.data" :key="monitor.id">
@@ -124,12 +118,14 @@ setLayoutProps({
                                 >{{ t('Paused') }}</Badge
                             >
                         </p>
-                        <p class="truncate text-sm text-muted-foreground">
+                        <p
+                            class="truncate font-mono text-xs text-muted-foreground"
+                        >
                             {{ monitor.target }}
                         </p>
                     </div>
                     <div
-                        class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"
+                        class="flex flex-wrap items-center gap-3 text-sm text-muted-foreground tabular-nums"
                     >
                         <span>{{
                             t('every :interval', {
