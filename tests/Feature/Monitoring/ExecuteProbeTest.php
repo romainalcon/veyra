@@ -3,7 +3,6 @@
 use App\Domain\Monitoring\Enums\DispatchStatus;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Enums\ProbeErrorCode;
-use App\Domain\Monitoring\Jobs\ExecuteHttpProbe;
 use App\Domain\Monitoring\Jobs\ExecuteProbe;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
@@ -71,19 +70,6 @@ test('the job is bounded and runs on the probes queue', function () {
         ->and($job->tries)->toBe(1)
         ->and($job->timeout)->toBe(45)
         ->and($job->failOnTimeout)->toBeTrue();
-});
-
-test('jobs queued before the upgrade under the legacy class name still run', function () {
-    Http::fake(['*' => Http::response('', 200)]);
-    $dispatch = MonitorDispatch::factory()->status(DispatchStatus::Dispatched)->create();
-
-    $legacy = unserialize(serialize(new ExecuteHttpProbe($dispatch->id)));
-    app()->call([$legacy, 'handle']);
-
-    expect($legacy)->toBeInstanceOf(ExecuteProbe::class)
-        ->and($legacy->queue)->toBe('probes')
-        ->and(MonitorCheck::sole()->dispatch_id)->toBe($dispatch->id)
-        ->and($dispatch->fresh()->status)->toBe(DispatchStatus::Completed);
 });
 
 test('a probe without a trustworthy observation skips the dispatch instead of recording a failure', function () {

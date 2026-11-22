@@ -7,7 +7,7 @@ Requirements: a Linux host with Docker Engine 24+ and the Compose plugin, a DNS 
 git clone https://github.com/romainalcon/veyra.git veyra && cd veyra
 cp deploy/docker/.env.docker.example .env.docker
 # Edit .env.docker: DB_PASSWORD, DB_ROOT_PASSWORD, REVERB_APP_KEY/SECRET (+ VITE_REVERB_APP_KEY), MAIL_*, APP_URL,
-# VEYRA_IMAGE_PREFIX=ghcr.io/romainalcon and VEYRA_VERSION=1.2.0 to pull the published images.
+# VEYRA_IMAGE_PREFIX=ghcr.io/romainalcon and VEYRA_VERSION=1.3.0 to pull the published images.
 docker compose --env-file .env.docker run --rm --no-deps app php artisan key:generate --show   # paste into APP_KEY
 docker compose --env-file .env.docker up -d --wait
 ```
