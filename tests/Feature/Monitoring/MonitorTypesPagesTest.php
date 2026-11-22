@@ -114,6 +114,8 @@ test('status pages show TCP and heartbeat components without leaking targets', f
 
     expect($response->getContent())
         ->not->toContain('db.internal-example.com')
-        ->not->toContain('5432')
+        // The port as a target or a field: a bare "5432" can occur in random ids or asset hashes.
+        ->not->toContain(':5432')
+        ->not->toContain('"port"')
         ->not->toContain(TYPES_PAGE_TOKEN);
 });
