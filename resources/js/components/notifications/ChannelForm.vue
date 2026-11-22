@@ -14,8 +14,8 @@ const { t } = useTranslations();
 
 /**
  * Secrets (webhook URLs) are never sent back to the browser: when editing a
- * Discord channel the field stays empty and only replaces the stored URL
- * when filled in.
+ * Discord or webhook channel the field stays empty and only replaces the
+ * stored URL when filled in.
  */
 const props = defineProps<{
     action: RouteFormDefinition<'post'>;
@@ -29,7 +29,12 @@ const emit = defineEmits<{ saved: [] }>();
 const type = ref<ChannelType>(props.channel?.type ?? 'email');
 const recipients = ref((props.channel?.recipients ?? []).join(', '));
 const isEdit = computed(() => props.channel !== undefined);
-const webhookPlaceholder = 'https://discord.com/api/webhooks/…';
+const isWebhook = computed(() => type.value === 'webhook');
+const webhookPlaceholder = computed(() =>
+    isWebhook.value
+        ? 'https://hooks.example.com/veyra'
+        : 'https://discord.com/api/webhooks/…',
+);
 </script>
 
 <template>
@@ -90,7 +95,7 @@ const webhookPlaceholder = 'https://discord.com/api/webhooks/…';
 
         <div v-else class="grid gap-2">
             <Label :for="`webhook-${channel?.id ?? 'new'}`">{{
-                t('Discord webhook URL')
+                isWebhook ? t('Endpoint URL') : t('Discord webhook URL')
             }}</Label>
             <Input
                 :id="`webhook-${channel?.id ?? 'new'}`"
@@ -103,6 +108,17 @@ const webhookPlaceholder = 'https://discord.com/api/webhooks/…';
                         : webhookPlaceholder
                 "
             />
+            <p
+                v-if="isWebhook && !isEdit"
+                class="text-xs text-muted-foreground"
+                data-test="webhook-hint"
+            >
+                {{
+                    t(
+                        'Receives a signed JSON POST for each notification. A signing secret is shown once the channel is created.',
+                    )
+                }}
+            </p>
             <p v-if="isEdit" class="text-xs text-muted-foreground">
                 {{ t('Current: :summary', { summary: channel?.summary }) }}
             </p>

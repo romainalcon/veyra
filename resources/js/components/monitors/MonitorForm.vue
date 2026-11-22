@@ -372,7 +372,12 @@ const methodOptions = computed(() =>
                 />
                 <span>{{ channel.name }}</span>
                 <span class="text-xs text-muted-foreground">
-                    {{ channel.type === 'email' ? t('E-mail') : 'Discord'
+                    {{
+                        channel.type === 'email'
+                            ? t('E-mail')
+                            : channel.type === 'webhook'
+                              ? 'Webhook'
+                              : 'Discord'
                     }}{{ channel.enabled ? '' : ` · ${t('disabled')}` }}
                 </span>
             </label>
