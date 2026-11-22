@@ -140,3 +140,11 @@ describe('raising monitor intervals', function () {
         expect(RaiseMonitorIntervals::intervalFor($minimum))->toBe($expected);
     })->with([[60, 60], [240, 300], [300, 300], [3601, 3600]]);
 });
+
+test('renders an extension page without preloading it from the core manifest', function () {
+    Route::middleware('web')->get('extension-page-test', fn () => Inertia\Inertia::render('cloud/billing/Show'));
+
+    $response = $this->get('extension-page-test')->assertOk();
+
+    expect($response->getContent())->not->toContain('resources/js/pages/cloud/billing/Show.vue');
+});

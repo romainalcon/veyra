@@ -35,7 +35,9 @@
 
         @fonts
 
-        @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
+        {{-- Core pages are preloaded; extension pages (ADR-030) load through app.ts. --}}
+        @php($pageEntry = "resources/js/pages/{$page['component']}.vue")
+        @vite(file_exists(base_path($pageEntry)) ? ['resources/css/app.css', 'resources/js/app.ts', $pageEntry] : ['resources/css/app.css', 'resources/js/app.ts'])
         <x-inertia::head>
             <title>{{ config('app.name', 'Veyra') }}</title>
         </x-inertia::head>
