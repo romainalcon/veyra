@@ -207,12 +207,6 @@ const copyCommands = async () => {
         copied.value = false;
     }
 };
-
-/** One heartbeat every 200 px, drawn across the hero background. */
-const ecgPath = Array.from(
-    { length: 6 },
-    () => 'h120 l12 -28 l16 70 l14 -62 l10 20 h28',
-).join(' ');
 </script>
 
 <template>
@@ -220,7 +214,7 @@ const ecgPath = Array.from(
 
     <div class="min-h-svh overflow-x-clip bg-background text-foreground">
         <header
-            class="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-lg"
+            class="sticky top-0 z-30 border-b bg-background/90 backdrop-blur"
         >
             <nav
                 class="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6"
@@ -280,76 +274,34 @@ const ecgPath = Array.from(
 
         <main>
             <!-- Hero -->
-            <section class="relative isolate">
+            <section>
                 <div
-                    class="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-                    aria-hidden="true"
-                >
-                    <div
-                        class="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)] bg-[size:56px_56px]"
-                    />
-                    <div
-                        class="absolute top-[-12rem] left-1/2 h-[36rem] w-[64rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklch,var(--primary)_32%,transparent),transparent)] blur-2xl"
-                    />
-                    <svg
-                        class="absolute top-[19rem] left-1/2 hidden h-24 w-[1200px] -translate-x-1/2 [mask-image:linear-gradient(to_right,black,transparent_28%,transparent_72%,black)] text-primary/25 sm:block"
-                        viewBox="0 0 1200 96"
-                        fill="none"
-                    >
-                        <path
-                            :d="`M0 60 ${ecgPath}`"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-                        <path
-                            :d="`M0 60 ${ecgPath}`"
-                            class="text-primary motion-safe:animate-ecg"
-                            stroke="currentColor"
-                            stroke-width="2.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-dasharray="160 1040"
-                        />
-                    </svg>
-                </div>
-
-                <div
-                    class="mx-auto flex max-w-4xl flex-col items-center gap-7 px-4 pt-16 pb-14 text-center sm:px-6 sm:pt-24"
+                    class="mx-auto flex max-w-6xl flex-col gap-7 px-4 pt-16 pb-12 sm:px-6 sm:pt-24"
                 >
                     <a
                         :href="repositoryUrl"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="group inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1 text-xs text-muted-foreground shadow-xs backdrop-blur transition-colors hover:text-foreground"
+                        class="inline-flex w-fit items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground"
                     >
-                        <span class="relative flex size-2" aria-hidden="true">
-                            <span
-                                class="absolute inline-flex size-full rounded-full bg-status-up opacity-75 motion-safe:animate-ping"
-                            />
-                            <span
-                                class="relative inline-flex size-2 rounded-full bg-status-up"
-                            />
-                        </span>
-                        {{ t('Open source · AGPL-3.0') }}
-                        <ArrowRight
-                            class="size-3 transition-transform group-hover:translate-x-0.5"
+                        <span
+                            class="size-2 rounded-full bg-status-up"
+                            aria-hidden="true"
                         />
+                        {{ t('Open source · AGPL-3.0') }}
                     </a>
 
                     <h1
-                        class="text-4xl font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl"
+                        class="max-w-4xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl"
                     >
                         {{ t('Know your services are down') }}
-                        <span
-                            class="bg-gradient-to-r from-primary via-chart-3 to-primary bg-clip-text text-transparent"
-                            >{{ t('before your users do.') }}</span
-                        >
+                        <span class="text-muted-foreground">{{
+                            t('before your users do.')
+                        }}</span>
                     </h1>
 
                     <p
-                        class="max-w-2xl text-lg text-pretty text-muted-foreground sm:text-xl"
+                        class="max-w-2xl text-lg text-pretty text-muted-foreground"
                     >
                         {{
                             t(
@@ -358,32 +310,17 @@ const ecgPath = Array.from(
                         }}
                     </p>
 
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <Button
-                            v-if="canRegister"
-                            size="lg"
-                            class="h-11 px-6 shadow-lg shadow-primary/25"
-                            as-child
-                        >
+                    <div class="flex flex-wrap items-center gap-3">
+                        <Button v-if="canRegister" size="lg" as-child>
                             <Link :href="register()">
                                 {{ t('Start monitoring') }}
                                 <ArrowRight class="size-4" />
                             </Link>
                         </Button>
-                        <Button
-                            v-else
-                            size="lg"
-                            class="h-11 px-6 shadow-lg shadow-primary/25"
-                            as-child
-                        >
+                        <Button v-else size="lg" as-child>
                             <Link :href="login()">{{ t('Log in') }}</Link>
                         </Button>
-                        <Button
-                            size="lg"
-                            variant="outline"
-                            class="h-11 bg-background/80 px-6 backdrop-blur"
-                            as-child
-                        >
+                        <Button size="lg" variant="outline" as-child>
                             <a href="#self-hosting">
                                 <Terminal class="size-4" />
                                 {{ t('Host it yourself') }}
@@ -392,7 +329,7 @@ const ecgPath = Array.from(
                     </div>
 
                     <ul
-                        class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground"
+                        class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground"
                     >
                         <li
                             v-for="point in [
@@ -409,29 +346,41 @@ const ecgPath = Array.from(
                     </ul>
                 </div>
 
+                <!-- A flat trace with a single beat: the last check came back. -->
+                <div
+                    class="mx-auto flex max-w-6xl items-center px-4 sm:px-6"
+                    aria-hidden="true"
+                >
+                    <span class="h-px flex-1 bg-border" />
+                    <svg
+                        viewBox="0 0 80 40"
+                        class="h-10 w-20 shrink-0 text-primary"
+                        fill="none"
+                    >
+                        <path
+                            d="M0 20h22l5-12 8 26 7-22 4 8h34"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                    <span class="h-px w-16 bg-border sm:w-40" />
+                </div>
+
                 <!-- Product preview -->
-                <div class="relative mx-auto max-w-5xl px-4 pb-20 sm:px-6">
-                    <div
-                        class="absolute inset-x-10 top-10 bottom-16 -z-10 rounded-[2rem] bg-primary/25 blur-3xl"
-                        aria-hidden="true"
-                    />
+                <div class="relative mx-auto max-w-6xl px-4 pt-6 pb-20 sm:px-6">
                     <figure
-                        class="overflow-hidden rounded-2xl border bg-card/95 shadow-2xl ring-1 shadow-primary/10 ring-foreground/5 backdrop-blur"
+                        class="overflow-hidden rounded-xl border bg-card shadow-sm"
                         :aria-label="t('Example of a Veyra dashboard')"
                     >
                         <div
                             class="flex items-center gap-2 border-b bg-muted/50 px-4 py-2.5"
                             aria-hidden="true"
                         >
-                            <span
-                                class="size-2.5 rounded-full bg-status-down/70"
-                            />
-                            <span
-                                class="size-2.5 rounded-full bg-status-degraded/70"
-                            />
-                            <span
-                                class="size-2.5 rounded-full bg-status-up/70"
-                            />
+                            <span class="size-2.5 rounded-full bg-border" />
+                            <span class="size-2.5 rounded-full bg-border" />
+                            <span class="size-2.5 rounded-full bg-border" />
                             <span
                                 class="mx-auto rounded-md border bg-background px-3 py-0.5 font-mono text-xs text-muted-foreground"
                                 >veyra.acme.example</span
@@ -522,7 +471,7 @@ const ecgPath = Array.from(
                     </figure>
 
                     <div
-                        class="absolute -right-2 bottom-6 hidden w-72 rounded-xl border bg-popover p-4 text-left shadow-xl motion-safe:animate-float sm:block lg:-right-10"
+                        class="absolute right-8 -bottom-2 hidden w-72 rounded-lg border bg-popover p-4 text-left shadow-md sm:block"
                         aria-hidden="true"
                     >
                         <div class="flex items-start gap-3">
@@ -589,7 +538,7 @@ const ecgPath = Array.from(
                     </div>
                     <ol class="relative mt-14 grid gap-10 md:grid-cols-3">
                         <div
-                            class="absolute top-6 right-[16%] left-[16%] hidden h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent md:block"
+                            class="absolute top-6 right-[16%] left-[16%] hidden h-px bg-border md:block"
                             aria-hidden="true"
                         />
                         <li
@@ -598,7 +547,7 @@ const ecgPath = Array.from(
                             class="relative flex flex-col items-center gap-3 text-center"
                         >
                             <span
-                                class="relative flex size-12 items-center justify-center rounded-2xl border bg-card text-primary shadow-sm"
+                                class="relative flex size-12 items-center justify-center rounded-xl border bg-card text-primary"
                             >
                                 <component :is="step.icon" class="size-5" />
                                 <span
@@ -644,17 +593,12 @@ const ecgPath = Array.from(
                             v-for="feature in features"
                             :key="feature.title"
                             :class="[
-                                'group relative flex flex-col gap-3 overflow-hidden rounded-2xl border bg-card p-6 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5',
+                                'flex flex-col gap-3 rounded-xl border bg-card p-6',
                                 feature.wide && 'lg:col-span-2',
                             ]"
                         >
-                            <div
-                                v-if="feature.wide"
-                                class="pointer-events-none absolute -top-16 -right-16 size-48 rounded-full bg-primary/10 blur-2xl"
-                                aria-hidden="true"
-                            />
                             <span
-                                class="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
+                                class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary"
                             >
                                 <component :is="feature.icon" class="size-5" />
                             </span>
@@ -664,7 +608,7 @@ const ecgPath = Array.from(
                             </p>
                         </article>
                         <article
-                            class="flex flex-col justify-between gap-3 rounded-2xl border border-dashed p-6 lg:col-span-2"
+                            class="flex flex-col justify-between gap-3 rounded-xl border border-dashed p-6 lg:col-span-2"
                         >
                             <Languages class="size-5 text-primary" />
                             <p class="text-sm text-muted-foreground">
@@ -738,11 +682,7 @@ const ecgPath = Array.from(
 
                     <div class="relative">
                         <div
-                            class="absolute -inset-4 -z-10 rounded-3xl bg-primary/15 blur-2xl"
-                            aria-hidden="true"
-                        />
-                        <div
-                            class="overflow-hidden rounded-2xl border border-white/10 bg-[oklch(0.17_0.02_265)] text-[oklch(0.92_0.01_265)] shadow-2xl"
+                            class="overflow-hidden rounded-xl border border-white/10 bg-[oklch(0.17_0.02_265)] text-[oklch(0.92_0.01_265)]"
                         >
                             <div
                                 class="flex items-center justify-between border-b border-white/10 px-4 py-2.5 text-xs text-[oklch(0.72_0.03_265)]"
@@ -774,12 +714,8 @@ const ecgPath = Array.from(
             <!-- Call to action -->
             <section class="px-4 pb-20 sm:px-6">
                 <div
-                    class="relative isolate mx-auto max-w-6xl overflow-hidden rounded-3xl bg-primary px-6 py-16 text-center text-primary-foreground shadow-xl shadow-primary/20 sm:px-16"
+                    class="mx-auto max-w-6xl rounded-2xl bg-primary px-6 py-16 text-center text-primary-foreground sm:px-16"
                 >
-                    <div
-                        class="absolute inset-0 -z-10 bg-[linear-gradient(to_right,color-mix(in_oklch,var(--primary-foreground)_12%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--primary-foreground)_12%,transparent)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)] bg-[size:40px_40px]"
-                        aria-hidden="true"
-                    />
                     <h2
                         class="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-balance sm:text-4xl"
                     >
