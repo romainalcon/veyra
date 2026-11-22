@@ -4,6 +4,18 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-11-22
+
+### Added
+- **Recurring maintenance** — maintenance windows that repeat daily, weekly (on chosen days) or monthly (a day past the end of a month means its last day), at a local start time, for a duration up to `VEYRA_MAINTENANCE_MAX_HOURS`, from a first day and until an optional last day. Occurrences are created 14 days ahead as ordinary maintenance windows, so they behave exactly like one-off windows (ADR-041).
+- Daylight saving time is handled: occurrences keep their local start time; a start that falls in the spring-forward gap moves forward, one in the fall-back overlap takes the first instant.
+- Editing a series only changes its future occurrences; running and past ones are never altered. A single occurrence can be skipped or ended early. Deleting a series removes its future occurrences and keeps the history.
+- Status pages show the next (or running) occurrence of each series, marked "Recurring"; subscribers are told about a new series once, not about every occurrence.
+- **Organization time zone** — Owners and Admins choose the time zone used by recurring maintenance in the organization settings (default UTC).
+- **DNS monitors** — a new monitor type checks an A, AAAA, CNAME, MX, TXT or NS record, optionally against expected values (contains or exact match), with a timeout up to 30 s. Results tell a missing domain, an empty answer, an unexpected answer and a resolver failure apart, and the detail page shows the last answers (ADR-042).
+- DNS queries go to the server's resolver or to Cloudflare, Google or Quad9 only, never to an arbitrary address (`VEYRA_DNS_RESOLVERS` narrows the list). Record names that are IP addresses or local names are refused. DNS monitors have their own confirmation thresholds (`VEYRA_DNS_DOWN_AFTER_FAILURES` / `VEYRA_DNS_UP_AFTER_SUCCESSES`, default 3/2).
+- **Domain expiry** — HTTP and DNS monitors follow the registration expiry of their domain through RDAP, at most once a day, and warn at the certificate thresholds (`VEYRA_CERTIFICATE_WARNING_DAYS`), once per expiry date, like certificates. Webhooks receive `domain.expiring` and `domain.expired` events. Set `VEYRA_DOMAIN_EXPIRY_ENABLED=false` to turn it off (ADR-043).
+
 ## [1.5.0] — 2026-11-22
 
 1.4 was not released on its own: this release includes the planned 1.4 work (visual identity, status page audience) and the 1.5 work (advanced HTTP checks, more channels, two-factor authentication).
@@ -113,7 +125,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/romainalcon/veyra/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/romainalcon/veyra/compare/v1.3.0...v1.5.0
 [1.3.0]: https://github.com/romainalcon/veyra/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/romainalcon/veyra/compare/v1.1.0...v1.2.0

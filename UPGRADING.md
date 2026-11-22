@@ -15,6 +15,14 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.6.0
+Two migrations run automatically; take a backup first as usual.
+- `create_maintenance_series_tables` adds `organizations.timezone` (default `UTC`), creates the recurring maintenance tables and adds two nullable columns and a foreign key to `maintenance_windows`. Existing windows and organizations are unchanged; set the organization time zone before creating recurring maintenance. New scheduled command `veyra:maintenance:materialize` (hourly) runs through the existing scheduler.
+- `create_dns_and_domain_expiry_tables` creates the DNS monitor and domain expiry tables and adds `notification_deliveries.domain_alert_id`, whose CHECK constraint now allows exactly one of incident, certificate alert and domain alert. MariaDB rebuilds `notification_deliveries` (deliveries are kept 90 days, so the table stays small). New scheduled command `veyra:domains:check` (hourly) runs through the existing scheduler.
+- Domain expiry is on by default: after the upgrade, existing HTTP monitors start sending domain expiry warnings to their channels when a domain is within `VEYRA_CERTIFICATE_WARNING_DAYS` of its expiry. Webhook endpoints receive the new `domain.expiring` / `domain.expired` events: make sure they ignore event types they do not know. Set `VEYRA_DOMAIN_EXPIRY_ENABLED=false` to keep the 1.5 behaviour.
+- Egress: DNS monitors need port 53 (UDP and TCP) from the `probes` workers to the system resolver and to the public resolvers of `VEYRA_DNS_RESOLVERS` (1.1.1.1/1.0.0.1, 8.8.8.8/8.8.4.4, 9.9.9.9/149.112.112.112); domain expiry needs HTTPS from the `maintenance` workers to `data.iana.org` and the RDAP servers it lists. See the deployment guides.
+- Optional: `VEYRA_DNS_RESOLVERS` (default `system,cloudflare,google,quad9`), `VEYRA_DNS_DOWN_AFTER_FAILURES` / `VEYRA_DNS_UP_AFTER_SUCCESSES` (default: the HTTP values, 3/2), `VEYRA_DOMAIN_EXPIRY_ENABLED` (default `true`).
+
 ### 1.5.0
 There is no 1.4.0 release: upgrade from 1.3 straight to 1.5. Three migrations run automatically; take a backup first as usual.
 - `create_status_page_audience_tables` adds two columns to `status_pages` (subscriptions are off by default) and creates the branding, subscriber and announcement tables. Nothing changes on existing pages until a manager enables subscriptions or adds branding. Subscription e-mails use the existing mail configuration (`MAIL_*`); configure it before enabling subscriptions. Changing `APP_KEY` invalidates subscriber lookups and links, as it already does for encrypted channel credentials.

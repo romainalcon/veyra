@@ -39,8 +39,13 @@ The exact open-source license, commercial license boundaries and trademark/domai
 - Advanced HTTP checks: POST/PUT/PATCH with a body and basic auth, keyword assertions, latency threshold (degraded).
 - ntfy, Gotify, Telegram, Microsoft Teams and PagerDuty notification channels; two-factor authentication, which Owners can require for their organization.
 
+## Added in 1.6 (Sprints 17–18)
+- Recurring maintenance (daily, weekly, monthly) in the organization time zone, DST-safe; skip one occurrence; status pages show the next one.
+- DNS monitors (A, AAAA, CNAME, MX, TXT, NS) with expected values, restricted to the system resolver or fixed public resolvers.
+- Domain registration expiry warnings (RDAP) for HTTP and DNS monitors.
+
 ## Not in V1
-Recurring maintenance windows, DNS probes, agent-based server metrics, multi-region checks, public API, billing, SSO, enterprise SLAs.
+Agent-based server metrics, multi-region checks, public API, billing, SSO, enterprise SLAs.
 
 ## Acceptance definition
 A fresh installation can create an organization and monitor, execute scheduled checks, detect confirmed downtime, send an alert, recover automatically and display history without manual intervention.
