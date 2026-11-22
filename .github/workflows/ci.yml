@@ -1,9 +1,10 @@
 name: CI
 
+# Pull requests only: main receives squash merges of code these runs already
+# validated, so re-running on push would test the same tree again.
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
