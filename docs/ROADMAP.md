@@ -97,7 +97,7 @@
 - [x] UI: type picker entry, Slack URL field, French translations.
 - [x] Tests: URL rule, payload and escaping, language, response classification, retries, tampered URL, authorization, tenant isolation, quota.
 
-## Sprint 13 — Visual identity (1.4)
+## Sprint 13 — Visual identity (1.5)
 - [x] Visual direction: palette, typography, logo/wordmark, iconography and tone; written down as design tokens (Tailwind 4 theme, light and dark).
 - [x] App shell, dashboard, monitor list/detail, incidents and charts restyled with the new tokens; status colours (UP/DOWN/DEGRADED/UNKNOWN/MAINTENANCE) distinct and accessible (WCAG AA contrast, not colour alone).
 - [x] Landing page, authentication pages, e-mails and public status pages aligned with the identity; status pages stay neutral enough for customers' own branding.
@@ -114,7 +114,7 @@
 ## Next — planned, not started
 Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's plan and ADR. The open Sprint 6 item (Caddy on a real host) is closed whenever a real host is available, before the next release at the latest.
 
-## Sprint 14 — Status page audience (1.4)
+## Sprint 14 — Status page audience (1.5)
 - [x] Branding per status page: logo, accent colour, favicon (uploaded images validated and size-limited, served without cookies); contrast checked against the accent colour.
 - [x] Visitor subscriptions by e-mail (double opt-in, one-click unsubscribe, rate-limited, addresses never shown) and RSS/Atom feeds for incidents and maintenance, in the organization language.
 - [x] SVG badges (status, uptime over 24 h / 7 d / 30 d) per published component, served from the whitelisted snapshot, cacheable, no data for unpublished monitors.

@@ -15,8 +15,12 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
-### Unreleased (1.4)
-One migration runs automatically: `create_status_page_audience_tables` adds two columns to `status_pages` (subscriptions are off by default) and creates the branding, subscriber and announcement tables. Nothing changes on existing pages until a manager enables subscriptions or adds branding. Subscription e-mails use the existing mail configuration (`MAIL_*`); configure it before enabling subscriptions. Changing `APP_KEY` invalidates subscriber lookups and links, as it already does for encrypted channel credentials.
+### 1.5.0
+There is no 1.4.0 release: upgrade from 1.3 straight to 1.5. Three migrations run automatically; take a backup first as usual.
+- `create_status_page_audience_tables` adds two columns to `status_pages` (subscriptions are off by default) and creates the branding, subscriber and announcement tables. Nothing changes on existing pages until a manager enables subscriptions or adds branding. Subscription e-mails use the existing mail configuration (`MAIL_*`); configure it before enabling subscriptions. Changing `APP_KEY` invalidates subscriber lookups and links, as it already does for encrypted channel credentials.
+- `add_advanced_http_checks` adds nullable columns to `monitor_http_configs` (small table) and a `monitor_checks.slow` column (instant `ADD COLUMN` on MariaDB 11.4, no rebuild of the check history). Existing monitors keep their behaviour: no body, no keyword, no latency threshold.
+- `add_two_factor_authentication` adds the Fortify two-factor columns to `users` and `organizations.require_two_factor` (default off). Nothing changes until a user enables two-factor authentication or an Owner requires it. Two-factor secrets are encrypted with `APP_KEY`: changing it disables every user's second factor.
+- New notification channels need outbound access from the `notifications` workers when used: `api.telegram.org:443` (Telegram), `events.pagerduty.com:443` (PagerDuty), `*.logic.azure.com:443` or `*.api.powerplatform.com:443` (Microsoft Teams workflows), and your ntfy or Gotify server (same public-only rules as outgoing webhooks).
 
 ### 1.3.0
 One migration runs automatically: `add_locale_to_organizations_table` adds `organizations.locale` (default `en`, so existing organizations stay in English). The table is small; take a backup first as usual.
