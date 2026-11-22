@@ -19,7 +19,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Log;
-use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
 /**
@@ -141,40 +140,15 @@ class HttpProbe
      */
     public function requestOptions(Destination $destination, int $timeoutSeconds, ?Closure $onStats = null): array
     {
-        $curl = [];
+        $options = PinnedConnection::options($destination, $timeoutSeconds, self::MAX_CONNECT_TIMEOUT, self::MAX_RESPONSE_BYTES);
 
         if ($onStats !== null) {
             // Exposes the presented chain (public data) to on_stats.
-            $curl[CURLOPT_CERTINFO] = true;
+            $options['curl'][CURLOPT_CERTINFO] = true;
+            $options['on_stats'] = $onStats;
         }
 
-        if (! $destination->url->hostIsIp) {
-            $ip = str_contains($destination->ip, ':') ? "[{$destination->ip}]" : $destination->ip;
-            $curl[CURLOPT_RESOLVE] = ["{$destination->url->host}:{$destination->url->port}:{$ip}"];
-        }
-
-        return [
-            'allow_redirects' => false,
-            'protocols' => ['http', 'https'],
-            'connect_timeout' => min($timeoutSeconds, self::MAX_CONNECT_TIMEOUT),
-            'timeout' => $timeoutSeconds,
-            'verify' => true,
-            'proxy' => '',
-            'http_errors' => false,
-            'decode_content' => false,
-            'curl' => $curl,
-            ...($onStats !== null ? ['on_stats' => $onStats] : []),
-            'on_headers' => function (ResponseInterface $response): void {
-                if ((int) $response->getHeaderLine('Content-Length') > self::MAX_RESPONSE_BYTES) {
-                    throw new ResponseTooLarge('Response exceeds the size limit.');
-                }
-            },
-            'progress' => function (int $downloadTotal, int $downloaded): void {
-                if ($downloaded > self::MAX_RESPONSE_BYTES) {
-                    throw new ResponseTooLarge('Response exceeds the size limit.');
-                }
-            },
-        ];
+        return $options;
     }
 
     /**

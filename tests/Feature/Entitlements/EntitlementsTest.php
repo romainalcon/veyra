@@ -287,6 +287,19 @@ describe('status pages, domains and channels', function () {
 
         expect($this->organization->notificationChannels()->count())->toBe(1);
     });
+
+    test('webhook channels count towards the notification channel limit', function () {
+        $this->entitlements->set(Feature::NotificationChannels, 1);
+        NotificationChannel::factory()->webhook()->for($this->organization)->create();
+
+        $this->actingAs($this->owner)
+            ->post(route('organizations.notification-channels.store', $this->organization), [
+                'type' => 'webhook', 'name' => 'Automation', 'webhook_url' => 'https://api.example.com/hooks/in',
+            ])
+            ->assertSessionHasErrors('limit');
+
+        expect($this->organization->notificationChannels()->count())->toBe(1);
+    });
 });
 
 describe('retention', function () {

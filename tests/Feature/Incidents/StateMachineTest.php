@@ -139,6 +139,8 @@ test('pausing makes the state unknown and keeps the incident open; resuming rest
     $this->actingAs($user = User::factory()->create());
     $this->monitor->organization->members()->create(['user_id' => $user->id, 'role' => 'member', 'joined_at' => now()]);
 
+    // Pause and resume between the old failures and the new checks, whatever the real clock says.
+    $this->travelTo('2026-11-22 11:00:00');
     $this->patch(route('organizations.monitors.enabled', [$this->monitor->organization, $this->monitor]), ['enabled' => false]);
     expect(state($this->monitor)->status)->toBe(MonitorStatus::Unknown)
         ->and(Incident::sole()->isOpen())->toBeTrue();

@@ -8,6 +8,9 @@ use App\Domain\Notifications\Enums\NotificationEvent;
  * Channel-agnostic content of one notification. Contains no secrets. Text is
  * rendered in the organization language carried by `$locale` (ADR-027),
  * whatever the locale of the process that sends it.
+ *
+ * The identifiers, `rawCause` (English source label) and `occurredAt` (UTC,
+ * stable across retries) feed the machine-readable webhook payload (ADR-033).
  */
 final readonly class NotificationMessage
 {
@@ -24,6 +27,15 @@ final readonly class NotificationMessage
         public ?string $certificateExpiresAt = null,
         public ?string $certificateIssuer = null,
         public string $locale = 'en',
+        public ?string $deliveryId = null,
+        public ?string $organizationId = null,
+        public ?string $organizationSlug = null,
+        public ?string $monitorId = null,
+        public ?string $monitorType = null,
+        public ?string $incidentId = null,
+        public ?string $rawCause = null,
+        public ?string $acknowledgedAt = null,
+        public ?string $occurredAt = null,
     ) {}
 
     public function title(): string

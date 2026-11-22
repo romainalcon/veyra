@@ -9,6 +9,7 @@ const action = {
 const types = [
     { value: 'email' as const, label: 'E-mail' },
     { value: 'discord' as const, label: 'Discord' },
+    { value: 'webhook' as const, label: 'Webhook' },
 ];
 
 describe('ChannelForm', () => {
@@ -62,5 +63,47 @@ describe('ChannelForm', () => {
                     .element as HTMLInputElement
             ).value,
         ).toBe('a@example.com, b@example.com');
+    });
+
+    it('never pre-fills the stored webhook endpoint', () => {
+        const wrapper = mount(ChannelForm, {
+            props: {
+                action,
+                types,
+                maxRecipients: 10,
+                channel: {
+                    id: '3',
+                    type: 'webhook',
+                    name: 'Automation',
+                    summary: 'POST to hooks.example.com',
+                    enabled: true,
+                    is_default: false,
+                    monitors_count: 0,
+                    recipients: [],
+                },
+            },
+        });
+
+        const input = wrapper.get('input[name="webhook_url"]');
+        expect((input.element as HTMLInputElement).value).toBe('');
+        expect(input.attributes('type')).toBe('password');
+        expect(wrapper.text()).toContain('Endpoint URL');
+        expect(wrapper.text()).toContain('Current: POST to hooks.example.com');
+        expect(wrapper.find('[data-test="webhook-hint"]').exists()).toBe(false);
+    });
+
+    it('explains the signing secret when creating a webhook', async () => {
+        const wrapper = mount(ChannelForm, {
+            props: { action, types, maxRecipients: 10 },
+        });
+
+        await wrapper.get('select#type').setValue('webhook');
+
+        expect(wrapper.get('[data-test="webhook-hint"]').text()).toContain(
+            'signing secret',
+        );
+        expect(
+            wrapper.get('input[name="webhook_url"]').attributes('placeholder'),
+        ).toBe('https://hooks.example.com/veyra');
     });
 });

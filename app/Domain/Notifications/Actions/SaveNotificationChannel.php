@@ -4,6 +4,7 @@ namespace App\Domain\Notifications\Actions;
 
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\Services\Quota;
+use App\Domain\Notifications\Channels\WebhookSignature;
 use App\Domain\Notifications\Enums\ChannelType;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
@@ -58,6 +59,11 @@ class SaveNotificationChannel
         return match ($type) {
             ChannelType::Email => ['recipients' => array_values(array_unique(array_map('strtolower', $data['recipients'] ?? [])))],
             ChannelType::Discord => ['webhook_url' => ($data['webhook_url'] ?? null) ?: ($current['webhook_url'] ?? null)],
+            // The signing secret is generated once and only replaced by RegenerateWebhookSecret.
+            ChannelType::Webhook => [
+                'webhook_url' => ($data['webhook_url'] ?? null) ?: ($current['webhook_url'] ?? null),
+                'signing_secret' => $current['signing_secret'] ?? WebhookSignature::generateSecret(),
+            ],
         };
     }
 }

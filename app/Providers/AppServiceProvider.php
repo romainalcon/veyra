@@ -143,6 +143,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perHour(10)->by('status-pages-create:'.($user instanceof User ? $user->id : (string) $request->ip()));
         });
 
+        RateLimiter::for('webhook-secrets', function (Request $request): Limit {
+            $user = $request->user();
+
+            return Limit::perMinute(10)->by('webhook-secrets:'.($user instanceof User ? $user->id : (string) $request->ip()));
+        });
+
         RateLimiter::for('notification-tests', function (Request $request): Limit {
             $channel = $request->route('notificationChannel');
 

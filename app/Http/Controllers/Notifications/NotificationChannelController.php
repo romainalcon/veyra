@@ -75,7 +75,12 @@ class NotificationChannelController extends Controller
     {
         Gate::authorize('create', [NotificationChannel::class, $organization]);
 
-        $saveNotificationChannel->create($organization, ChannelType::from((string) $request->validated('type')), $request->payload());
+        $channel = $saveNotificationChannel->create($organization, ChannelType::from((string) $request->validated('type')), $request->payload());
+
+        if ($channel->type === ChannelType::Webhook) {
+            // Shown once; the browser never receives it again (ADR-033).
+            Inertia::flash('webhookSecret', ['channel_id' => $channel->id, 'secret' => $channel->signingSecret()]);
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Notification channel created.')]);
 

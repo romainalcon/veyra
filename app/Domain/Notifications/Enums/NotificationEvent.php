@@ -29,6 +29,22 @@ enum NotificationEvent: string
     }
 
     /**
+     * Stable, language-independent event name of the webhook payload (ADR-033).
+     */
+    public function webhookName(): string
+    {
+        return match ($this) {
+            self::Opened => 'incident.opened',
+            self::Resolved => 'incident.resolved',
+            self::Acknowledged => 'incident.acknowledged',
+            self::Reminder => 'incident.reminder',
+            self::Test => 'test',
+            self::CertificateExpiring => 'certificate.expiring',
+            self::CertificateExpired => 'certificate.expired',
+        };
+    }
+
+    /**
      * Discord embed colour.
      */
     public function color(): int

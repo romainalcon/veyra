@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
-import { Mail, MessageSquare, Send, Trash2 } from '@lucide/vue';
+import { Mail, MessageSquare, Send, Trash2, Webhook } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import LimitNotice from '@/components/LimitNotice.vue';
 import ChannelForm from '@/components/notifications/ChannelForm.vue';
 import DeliveryStatus from '@/components/notifications/DeliveryStatus.vue';
+import WebhookSecretPanel from '@/components/notifications/WebhookSecretPanel.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useOrganizationLimit } from '@/composables/useOrganizationLimit';
@@ -52,6 +53,8 @@ setLayoutProps({
         { title: t('Notifications'), href: index(organization.value.slug) },
     ],
 });
+
+const channelIcons = { email: Mail, discord: MessageSquare, webhook: Webhook };
 
 const sendTest = (channel: NotificationChannelSummary) =>
     router.visit(test([organization.value.slug, channel.id]), {
@@ -108,11 +111,7 @@ const remove = (channel: NotificationChannelSummary) =>
                                 class="flex flex-wrap items-center gap-2 font-medium"
                             >
                                 <component
-                                    :is="
-                                        channel.type === 'email'
-                                            ? Mail
-                                            : MessageSquare
-                                    "
+                                    :is="channelIcons[channel.type]"
                                     class="size-4 text-muted-foreground"
                                 />
                                 {{ channel.name }}
@@ -173,6 +172,12 @@ const remove = (channel: NotificationChannelSummary) =>
                             </Button>
                         </div>
                     </div>
+                    <WebhookSecretPanel
+                        v-if="canManage && channel.type === 'webhook'"
+                        :channel="channel"
+                        :organization-slug="organization.slug"
+                        :can-manage="canManage"
+                    />
                     <ChannelForm
                         v-if="canManage && editing === channel.id"
                         :action="update.form([organization.slug, channel.id])"

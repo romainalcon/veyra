@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $organization_id
  * @property ChannelType $type
  * @property string $name
- * @property array{recipients?: list<string>, webhook_url?: string} $config_encrypted
+ * @property array{recipients?: list<string>, webhook_url?: string, signing_secret?: string} $config_encrypted
  * @property bool $enabled
  * @property bool $is_default
  * @property CarbonImmutable|null $created_at
@@ -67,13 +67,23 @@ class NotificationChannel extends Model
     }
 
     /**
-     * Non-secret description shown in the UI.
+     * Standard Webhooks secret of a webhook channel (ADR-033).
+     */
+    public function signingSecret(): ?string
+    {
+        return $this->config_encrypted['signing_secret'] ?? null;
+    }
+
+    /**
+     * Non-secret description shown in the UI. Webhook URLs often carry a
+     * token in their path or query: only the host is shown.
      */
     public function summary(): string
     {
         return match ($this->type) {
             ChannelType::Email => trans_choice(':count recipient: :list|:count recipients: :list', count($this->recipients()), ['list' => implode(', ', $this->recipients())]),
             ChannelType::Discord => (string) __('Webhook …:suffix', ['suffix' => substr((string) $this->webhookUrl(), -4)]),
+            ChannelType::Webhook => (string) __('POST to :host', ['host' => (string) parse_url((string) $this->webhookUrl(), PHP_URL_HOST)]),
         };
     }
 

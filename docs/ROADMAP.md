@@ -84,6 +84,13 @@
 - [x] Links rendered in the landing page header and footer, under authentication pages and in the application footer.
 - [x] Tests: empty on Community, translated for guests and signed-in users, absent from status pages, unknown placements refused.
 
+## Sprint 12a — Outgoing webhooks (core)
+- [x] `webhook` notification channel: versioned JSON payload for every notification event, Standard Webhooks signature (`webhook-id` = delivery id, stable across retries), server-generated `whsec_` secret shown once and regenerable (ADR-033).
+- [x] Probe SSRF policy on save and before each send, connection pinned to the validated IP (`PinnedConnection`, shared with HTTP probes), no redirects or proxy, 5 s timeout, 64 KiB response cap; HTTPS unless private networks are allowed.
+- [x] UI: type picker, endpoint field, one-time secret panel with copy, regeneration dialog, verification notes; host-only summary; French translations.
+- [x] Tests: reference signature vector, SSRF rejections (IPv4/IPv6, ports, DNS rebinding at send time), response classification, retries with a stable id, payload redaction, organization language, authorization and tenant isolation, quota.
+- [ ] Slack incoming webhooks (12b).
+
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
 
