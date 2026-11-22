@@ -1,6 +1,8 @@
 import type { ChannelOption } from './notification';
 
-export type HttpMethod = 'GET' | 'HEAD';
+export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH';
+
+export type KeywordMode = 'contains' | 'not_contains';
 
 export type MonitorType = 'http' | 'tcp' | 'heartbeat';
 
@@ -19,6 +21,8 @@ export type MonitorCheck = {
     id: string;
     checked_at: string;
     success: boolean;
+    /** Successful, but slower than the monitor's latency threshold. */
+    slow: boolean;
     duration_ms: number | null;
     status_code: number | null;
     error_code: string | null;
@@ -58,6 +62,13 @@ export type MonitorDetail = MonitorSummary & {
     expected_statuses: string | null;
     follow_redirects: boolean;
     header_names: string[];
+    /** The body itself is never sent to the browser. */
+    body: { content_type: string | null; bytes: number | null } | null;
+    basic_auth_username: string | null;
+    keyword: string | null;
+    keyword_mode: KeywordMode | null;
+    keyword_case_sensitive: boolean;
+    latency_threshold_ms: number | null;
     host: string | null;
     port: number | null;
     heartbeat: {
@@ -78,6 +89,9 @@ export type MonitorFormOptions = {
     channels: ChannelOption[];
     intervals: IntervalOption[];
     methods: HttpMethod[];
+    contentTypes: string[];
+    keywordModes: KeywordMode[];
+    maxBodyBytes: number;
     types: MonitorTypeOption[];
     tcpPorts: number[];
     heartbeatPeriods: IntervalOption[];

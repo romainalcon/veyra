@@ -11,6 +11,13 @@ defineProps<{ check: MonitorCheck | null }>();
 <template>
     <Badge v-if="!check" variant="outline">{{ t('No check yet') }}</Badge>
     <Badge
+        v-else-if="check.success && check.slow"
+        class="bg-status-degraded text-status-degraded-foreground"
+        data-test="check-slow"
+    >
+        {{ t('Slow') }}{{ check.status_code ? ` · ${check.status_code}` : '' }}
+    </Badge>
+    <Badge
         v-else-if="check.success"
         class="bg-status-up text-status-up-foreground"
     >

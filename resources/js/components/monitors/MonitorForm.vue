@@ -4,6 +4,7 @@ import type { RouteFormDefinition } from '@/wayfinder';
 import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import HeadersEditor from '@/components/monitors/HeadersEditor.vue';
+import HttpRequestOptions from '@/components/monitors/HttpRequestOptions.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -342,6 +343,16 @@ const methodOptions = computed(() =>
             <HeadersEditor v-else v-model="headers" :errors="errors" />
             <InputError :message="errors.headers" />
         </div>
+
+        <HttpRequestOptions
+            v-if="isHttp"
+            :method="httpMethod"
+            :monitor="monitor"
+            :content-types="contentTypes"
+            :keyword-modes="keywordModes"
+            :max-body-bytes="maxBodyBytes"
+            :errors="errors"
+        />
 
         <fieldset class="space-y-3">
             <legend class="text-sm font-medium">

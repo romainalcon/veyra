@@ -65,7 +65,8 @@ class MonitorFactory extends Factory
     public function http(array $attributes): static
     {
         return $this->afterCreating(function (Monitor $monitor) use ($attributes): void {
-            $monitor->httpConfig()->update($attributes);
+            // Model update, so encrypted casts apply.
+            $monitor->httpConfig()->sole()->update($attributes);
         });
     }
 

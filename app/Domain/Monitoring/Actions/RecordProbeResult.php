@@ -37,6 +37,7 @@ class RecordProbeResult
                 'scheduled_for' => $locked->scheduled_for->toDateTimeString(),
                 'checked_at' => $checkedAt->toDateTimeString(),
                 'success' => $result->success,
+                'slow' => $result->slow,
                 'duration_ms' => $result->durationMs,
                 'status_code' => $result->statusCode,
                 'error_code' => $result->errorCode?->value,

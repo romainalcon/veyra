@@ -6,9 +6,11 @@ use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Certificates\CheckCertificateExpiry;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\HttpMethod;
+use App\Domain\Monitoring\Enums\KeywordMode;
 use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Enums\MonitorType;
+use App\Domain\Monitoring\Enums\RequestContentType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorTlsCertificate;
@@ -19,8 +21,9 @@ use App\Http\Requests\Monitors\SaveMonitorRequest;
 use Carbon\CarbonImmutable;
 
 /**
- * Explicit, whitelisted Inertia representations. Header values never leave
- * the server; only header names are exposed.
+ * Explicit, whitelisted Inertia representations. Header values, request
+ * bodies and basic auth passwords never leave the server; only header names,
+ * the body size and content type and the basic auth user name are exposed.
  */
 final class MonitorPresenter
 {
@@ -62,6 +65,15 @@ final class MonitorPresenter
             'expected_statuses' => $config?->expected_statuses->toExpression(),
             'follow_redirects' => $config->follow_redirects ?? true,
             'header_names' => $config?->headerNames() ?? [],
+            'body' => $config !== null && $config->hasBody() ? [
+                'content_type' => $config->body_content_type?->value,
+                'bytes' => $config->bodyBytes(),
+            ] : null,
+            'basic_auth_username' => $config?->basicAuthUsername(),
+            'keyword' => $config?->keyword,
+            'keyword_mode' => $config?->keyword_mode?->value,
+            'keyword_case_sensitive' => $config->keyword_case_sensitive ?? false,
+            'latency_threshold_ms' => $config?->latency_threshold_ms,
             'host' => $monitor->tcpConfig?->host,
             'port' => $monitor->tcpConfig?->port,
             'heartbeat' => $monitor->heartbeatConfig === null ? null : [
@@ -115,6 +127,7 @@ final class MonitorPresenter
             'id' => $check->id,
             'checked_at' => $check->checked_at->toIso8601String(),
             'success' => $check->success,
+            'slow' => $check->slow,
             'duration_ms' => $check->duration_ms,
             'status_code' => $check->status_code,
             'error_code' => $check->error_code?->value,
@@ -151,6 +164,9 @@ final class MonitorPresenter
                 fn (array $option): bool => $minimumInterval === null || $option['value'] >= $minimumInterval || $option['value'] === $currentInterval,
             )),
             'methods' => array_map(fn (HttpMethod $method): string => $method->value, HttpMethod::cases()),
+            'contentTypes' => array_map(fn (RequestContentType $type): string => $type->value, RequestContentType::cases()),
+            'keywordModes' => array_map(fn (KeywordMode $mode): string => $mode->value, KeywordMode::cases()),
+            'maxBodyBytes' => SaveMonitorRequest::MAX_BODY_BYTES,
             'types' => array_map(fn (MonitorType $type): array => [
                 'value' => $type->value,
                 'label' => $type->label(),

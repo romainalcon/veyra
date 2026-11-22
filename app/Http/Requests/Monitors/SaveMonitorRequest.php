@@ -11,8 +11,10 @@ use App\Domain\Monitoring\DTOs\MonitorData;
 use App\Domain\Monitoring\DTOs\TcpTargetData;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\HttpMethod;
+use App\Domain\Monitoring\Enums\KeywordMode;
 use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Enums\MonitorType;
+use App\Domain\Monitoring\Enums\RequestContentType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Probes\DestinationGuard;
 use App\Domain\Monitoring\Probes\DestinationRejected;
@@ -36,6 +38,15 @@ class SaveMonitorRequest extends FormRequest
     public const MAX_HEADERS = 10;
 
     public const MAX_HEADER_VALUE_LENGTH = 1024;
+
+    /**
+     * Request bodies are small probes, not uploads (bytes, ADR-037).
+     */
+    public const MAX_BODY_BYTES = 16_384;
+
+    public const MAX_KEYWORD_LENGTH = 255;
+
+    public const MIN_LATENCY_THRESHOLD_MS = 100;
 
     /**
      * Headers controlled by the probe or hop-by-hop headers.
@@ -75,6 +86,7 @@ class SaveMonitorRequest extends FormRequest
             'host' => is_string($this->input('host')) ? trim($this->input('host')) : $this->input('host'),
             'url' => is_string($this->input('url')) ? trim($this->input('url')) : $this->input('url'),
             'follow_redirects' => $this->boolean('follow_redirects'),
+            'keyword_case_sensitive' => $this->boolean('keyword_case_sensitive'),
             'headers' => array_values(array_filter(
                 (array) $this->input('headers', []),
                 fn (mixed $header): bool => is_array($header) && trim((string) ($header['name'] ?? '')) !== '',
@@ -127,6 +139,16 @@ class SaveMonitorRequest extends FormRequest
                 'headers' => ['array', 'max:'.self::MAX_HEADERS],
                 'headers.*.name' => ['required', 'string', 'max:100', 'regex:/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+$/'],
                 'headers.*.value' => ['required', 'string', 'max:'.self::MAX_HEADER_VALUE_LENGTH, 'regex:/^[^\r\n\x00]*$/'],
+                'body_mode' => ['nullable', Rule::in(['keep', 'replace'])],
+                'body' => ['nullable', 'string'],
+                'body_content_type' => ['nullable', 'required_with:body', Rule::enum(RequestContentType::class)],
+                'auth_mode' => ['nullable', Rule::in(['keep', 'replace'])],
+                'basic_auth_username' => ['nullable', 'string', 'max:255', 'regex:/^[^:\x00-\x1F\x7F]*$/'],
+                'basic_auth_password' => ['nullable', 'required_with:basic_auth_username', 'string', 'max:255', 'regex:/^[^\x00-\x1F\x7F]*$/'],
+                'keyword' => ['nullable', 'string', 'max:'.self::MAX_KEYWORD_LENGTH, 'regex:/^[^\x00-\x1F\x7F]*$/'],
+                'keyword_mode' => ['nullable', Rule::enum(KeywordMode::class)],
+                'keyword_case_sensitive' => ['boolean'],
+                'latency_threshold_ms' => ['nullable', 'integer', 'min:'.self::MIN_LATENCY_THRESHOLD_MS, 'max:30000'],
             ],
         };
     }
@@ -216,6 +238,63 @@ class SaveMonitorRequest extends FormRequest
 
             $seen[$name] = true;
         }
+
+        $this->validateRequestOptions($validator, array_keys($seen));
+    }
+
+    /**
+     * Body, basic auth, keyword and latency rules that depend on the method,
+     * the timeout or the stored secrets (kept values are never re-sent).
+     *
+     * @param  list<string|int>  $submittedHeaders  lower-cased names of submitted headers
+     */
+    private function validateRequestOptions(Validator $validator, array $submittedHeaders): void
+    {
+        $method = HttpMethod::tryFrom((string) $this->input('method'));
+        $monitor = $this->route('monitor');
+        $config = $monitor instanceof Monitor ? $monitor->httpConfig : null;
+        $headerNames = $this->isUpdate() && $this->input('headers_mode') !== 'replace'
+            ? array_map('strtolower', $config?->headerNames() ?? [])
+            : array_map('strval', $submittedHeaders);
+
+        $replacesBody = ! $this->isUpdate() || $this->input('body_mode') === 'replace';
+        $body = $this->input('body');
+
+        if ($method !== null && ! $method->allowsBody() && $replacesBody && $body !== null) {
+            $validator->errors()->add('body', __('A request body can only be sent with POST, PUT or PATCH.'));
+        }
+
+        if (is_string($body) && strlen($body) > self::MAX_BODY_BYTES) {
+            $validator->errors()->add('body', __('The request body may not be larger than :size KiB.', ['size' => self::MAX_BODY_BYTES / 1024]));
+        }
+
+        if (is_string($body) && $this->input('body_content_type') === RequestContentType::Json->value && ! json_validate($body)) {
+            $validator->errors()->add('body', __('The request body is not valid JSON.'));
+        }
+
+        $hasBody = $method?->allowsBody() === true && ($replacesBody ? $body !== null : $config?->body_encrypted !== null);
+
+        if ($hasBody && in_array('content-type', $headerNames, true)) {
+            $validator->errors()->add('headers', __('Remove the Content-Type header: it is set from the body content type.'));
+        }
+
+        $hasBasicAuth = ! $this->isUpdate() || $this->input('auth_mode') === 'replace'
+            ? $this->input('basic_auth_username') !== null
+            : $config?->basic_auth_encrypted !== null;
+
+        if ($hasBasicAuth && in_array('authorization', $headerNames, true)) {
+            $validator->errors()->add('basic_auth_username', __('Basic authentication cannot be combined with an Authorization header.'));
+        }
+
+        if ($method === HttpMethod::Head && $this->input('keyword') !== null) {
+            $validator->errors()->add('keyword', __('HEAD responses have no body: use GET to check the content.'));
+        }
+
+        $threshold = $this->input('latency_threshold_ms');
+
+        if (is_numeric($threshold) && (int) $threshold >= (int) $this->input('timeout') * 1000) {
+            $validator->errors()->add('latency_threshold_ms', __('The latency threshold must be shorter than the timeout.'));
+        }
     }
 
     /**
@@ -272,12 +351,33 @@ class SaveMonitorRequest extends FormRequest
             }
         }
 
+        $method = HttpMethod::from((string) $this->validated('method'));
+        $body = $this->validated('body');
+        $username = $this->validated('basic_auth_username');
+        $keyword = $this->validated('keyword');
+        $threshold = $this->validated('latency_threshold_ms');
+
         return new HttpTargetData(
             url: (string) $this->validated('url'),
-            method: HttpMethod::from((string) $this->validated('method')),
+            method: $method,
             expectedStatuses: ExpectedStatuses::parse((string) $this->validated('expected_statuses')),
             followRedirects: (bool) $this->validated('follow_redirects'),
             headers: $headers,
+            body: match (true) {
+                ! $method->allowsBody() => false,
+                $this->isUpdate() && $this->input('body_mode') !== 'replace' => null,
+                $body === null => false,
+                default => ['content' => (string) $body, 'content_type' => RequestContentType::from((string) $this->validated('body_content_type'))],
+            },
+            basicAuth: match (true) {
+                $this->isUpdate() && $this->input('auth_mode') !== 'replace' => null,
+                $username === null => false,
+                default => ['username' => (string) $username, 'password' => (string) $this->validated('basic_auth_password')],
+            },
+            keyword: $keyword === null ? null : (string) $keyword,
+            keywordMode: KeywordMode::tryFrom((string) $this->validated('keyword_mode')) ?? KeywordMode::Contains,
+            keywordCaseSensitive: (bool) $this->validated('keyword_case_sensitive'),
+            latencyThresholdMs: $threshold === null ? null : (int) $threshold,
         );
     }
 

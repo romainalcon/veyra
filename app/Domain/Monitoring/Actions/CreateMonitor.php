@@ -48,7 +48,7 @@ class CreateMonitor
 
             match ($data->type) {
                 MonitorType::Http => $monitor->httpConfig()->create(
-                    ($data->http ?? throw new LogicException('Missing HTTP target.'))->toConfig() + ['headers_encrypted' => null],
+                    ($data->http ?? throw new LogicException('Missing HTTP target.'))->toConfig() + ['headers_encrypted' => null, 'body_encrypted' => null, 'body_content_type' => null, 'basic_auth_encrypted' => null],
                 ),
                 MonitorType::Tcp => $monitor->tcpConfig()->create(
                     ($data->tcp ?? throw new LogicException('Missing TCP target.'))->toConfig(),
