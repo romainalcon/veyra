@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Domain\Notifications\Channels\WebhookSignature;
 use App\Domain\Notifications\Enums\ChannelType;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
@@ -35,6 +36,15 @@ class NotificationChannelFactory extends Factory
             'type' => ChannelType::Discord,
             'name' => 'Discord #alerts',
             'config_encrypted' => ['webhook_url' => $url],
+        ]);
+    }
+
+    public function webhook(string $url = 'https://api.example.com/hooks/veyra?token=secret-query-token', ?string $secret = null): static
+    {
+        return $this->state(fn (): array => [
+            'type' => ChannelType::Webhook,
+            'name' => 'Automation webhook',
+            'config_encrypted' => ['webhook_url' => $url, 'signing_secret' => $secret ?? WebhookSignature::generateSecret()],
         ]);
     }
 }

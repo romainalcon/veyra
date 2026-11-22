@@ -15,6 +15,7 @@ final class SenderRegistry
         return match ($type) {
             ChannelType::Email => $this->container->make(EmailSender::class),
             ChannelType::Discord => $this->container->make(DiscordSender::class),
+            ChannelType::Webhook => $this->container->make(WebhookSender::class),
         };
     }
 }

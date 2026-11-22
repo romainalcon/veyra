@@ -11,6 +11,7 @@ use App\Http\Controllers\Monitors\MonitorCheckController;
 use App\Http\Controllers\Monitors\MonitorController;
 use App\Http\Controllers\Monitors\MonitorStatusController;
 use App\Http\Controllers\Notifications\NotificationChannelController;
+use App\Http\Controllers\Notifications\WebhookSecretController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
@@ -177,6 +178,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('notification-channels/{notificationChannel}/test', [NotificationChannelController::class, 'test'])
                 ->middleware('throttle:notification-tests')
                 ->name('notification-channels.test');
+            Route::post('notification-channels/{notificationChannel}/signing-secret', [WebhookSecretController::class, 'store'])
+                ->middleware('throttle:webhook-secrets')
+                ->name('notification-channels.signing-secret.store');
         });
 });
 
