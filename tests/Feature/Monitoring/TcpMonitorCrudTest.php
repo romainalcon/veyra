@@ -72,7 +72,7 @@ test('unknown types cannot be created', function (string $type) {
         ->assertSessionHasErrors('type');
 
     expect(Monitor::count())->toBe(0);
-})->with(['ftp', 'dns']);
+})->with(['ftp', 'icmp']);
 
 test('a TCP monitor can be updated but its type cannot change', function () {
     $monitor = Monitor::factory()->tcp('example.com', 443)->create(['organization_id' => $this->organization->id]);
@@ -109,7 +109,8 @@ test('pages expose the TCP target and the allowed ports', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('tcpPorts', [22, 443, 5432])
             ->where('types.1.value', 'tcp')
-            ->where('types.2.value', 'heartbeat'));
+            ->where('types.2.value', 'dns')
+            ->where('types.3.value', 'heartbeat'));
 });
 
 test('viewers are refused before validation and without DNS lookups', function (string $method) {

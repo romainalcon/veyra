@@ -15,10 +15,12 @@ use App\Domain\Incidents\Events\IncidentResolved;
 use App\Domain\Incidents\Events\PublicIncidentUpdatePosted;
 use App\Domain\Maintenance\Events\MaintenanceWindowScheduled;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Probes\Contracts\DnsQueryClient;
 use App\Domain\Monitoring\Probes\Contracts\DnsResolver;
 use App\Domain\Monitoring\Probes\Contracts\TcpConnector;
 use App\Domain\Monitoring\Probes\HttpProbe;
 use App\Domain\Monitoring\Probes\ProbeSettings;
+use App\Domain\Monitoring\Probes\SocketDnsQueryClient;
 use App\Domain\Monitoring\Probes\StreamTcpConnector;
 use App\Domain\Monitoring\Probes\SystemDnsResolver;
 use App\Domain\Notifications\Listeners\QueueNotificationsOnIncidentEvent;
@@ -54,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserNavigation::class);
         $this->app->bind(DnsResolver::class, SystemDnsResolver::class);
         $this->app->bind(TcpConnector::class, StreamTcpConnector::class);
+        $this->app->bind(DnsQueryClient::class, SocketDnsQueryClient::class);
         $this->app->bind(TxtResolver::class, SystemTxtResolver::class);
         $this->app->bind(ProbeSettings::class, fn (): ProbeSettings => ProbeSettings::fromConfig());
 

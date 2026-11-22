@@ -3,7 +3,6 @@
 namespace App\Domain\Notifications\Channels;
 
 use App\Domain\Notifications\Channels\Contracts\ChannelSender;
-use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Notifications\Rules\SlackWebhookUrl;
 use Illuminate\Http\Client\ConnectionException;
@@ -61,11 +60,13 @@ class SlackSender implements ChannelSender
         $fields = array_values(array_filter([
             $this->field($message->translate('Monitor'), $message->monitorName),
             $message->cause ? $this->field($message->translate('Cause'), mb_substr($message->cause, 0, 256)) : null,
-            $message->durationSeconds !== null && ! in_array($message->event, [NotificationEvent::Test, NotificationEvent::CertificateExpiring, NotificationEvent::CertificateExpired], true)
+            $message->durationSeconds !== null && $message->event->isIncidentEvent()
                 ? $this->field($message->translate('Duration'), NotificationMessage::humanDuration($message->durationSeconds, $message->locale))
                 : null,
             $message->certificateExpiresAt ? $this->field($message->translate('Expires'), $message->certificateExpiresAt.' UTC') : null,
             $message->certificateIssuer ? $this->field($message->translate('Issuer'), mb_substr($message->certificateIssuer, 0, 256)) : null,
+            $message->domainName ? $this->field($message->translate('Domain'), $message->domainName) : null,
+            $message->domainExpiresAt ? $this->field($message->translate('Expires'), $message->domainExpiresAt.' UTC') : null,
         ]));
 
         return [

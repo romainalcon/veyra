@@ -54,6 +54,7 @@ This configuration is an example and is not exercised in CI.
 
 ## Monitor types (Sprint 7)
 - TCP monitors connect to the ports of `VEYRA_PROBES_TCP_ALLOWED_PORTS`; allow them (to public destinations only) in the egress rules of the `horizon` service if you use TCP monitors.
+- DNS monitors (Sprint 18) query port 53 (UDP and TCP) of the worker's resolver or of 1.1.1.1/1.0.0.1, 8.8.8.8/8.8.4.4, 9.9.9.9/149.112.112.112; domain expiry (HTTP and DNS monitors) queries RDAP servers over HTTPS (`data.iana.org` and the registry servers it lists). Allow them in the `horizon` egress rules, or set `VEYRA_DNS_RESOLVERS` / `VEYRA_DOMAIN_EXPIRY_ENABLED=false`.
 - Heartbeat monitors are pinged on `/ping/{token}` by your jobs: the path must be reachable through your reverse proxy, and `TRUSTED_PROXIES` must be set for per-IP rate limits. Keep the `scheduler` service running: without its minute beats, missed pings are reported as UNKNOWN, not DOWN.
 
 ## Notifications (Sprint 4)

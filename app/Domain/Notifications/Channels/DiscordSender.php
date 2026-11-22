@@ -3,7 +3,6 @@
 namespace App\Domain\Notifications\Channels;
 
 use App\Domain\Notifications\Channels\Contracts\ChannelSender;
-use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Notifications\Rules\DiscordWebhookUrl;
 use Illuminate\Http\Client\ConnectionException;
@@ -56,11 +55,13 @@ class DiscordSender implements ChannelSender
         $fields = array_values(array_filter([
             ['name' => $message->translate('Monitor'), 'value' => $message->monitorName, 'inline' => true],
             $message->cause ? ['name' => $message->translate('Cause'), 'value' => mb_substr($message->cause, 0, 256), 'inline' => true] : null,
-            $message->durationSeconds !== null && ! in_array($message->event, [NotificationEvent::Test, NotificationEvent::CertificateExpiring, NotificationEvent::CertificateExpired], true)
+            $message->durationSeconds !== null && $message->event->isIncidentEvent()
                 ? ['name' => $message->translate('Duration'), 'value' => NotificationMessage::humanDuration($message->durationSeconds, $message->locale), 'inline' => true]
                 : null,
             $message->certificateExpiresAt ? ['name' => $message->translate('Expires'), 'value' => $message->certificateExpiresAt.' UTC', 'inline' => true] : null,
             $message->certificateIssuer ? ['name' => $message->translate('Issuer'), 'value' => mb_substr($message->certificateIssuer, 0, 256), 'inline' => true] : null,
+            $message->domainName ? ['name' => $message->translate('Domain'), 'value' => $message->domainName, 'inline' => true] : null,
+            $message->domainExpiresAt ? ['name' => $message->translate('Expires'), 'value' => $message->domainExpiresAt.' UTC', 'inline' => true] : null,
         ]));
 
         return [

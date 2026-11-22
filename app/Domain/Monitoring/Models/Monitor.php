@@ -38,6 +38,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read MonitorHttpConfig|null $httpConfig
  * @property-read MonitorTcpConfig|null $tcpConfig
  * @property-read MonitorHeartbeatConfig|null $heartbeatConfig
+ * @property-read MonitorDnsConfig|null $dnsConfig
+ * @property-read MonitorDomain|null $domain
  * @property-read MonitorTlsCertificate|null $tlsCertificate
  * @property-read MonitorCheck|null $latestCheck
  * @property-read MonitorState|null $state
@@ -97,6 +99,44 @@ class Monitor extends Model
     }
 
     /**
+     * @return HasOne<MonitorDnsConfig, $this>
+     */
+    public function dnsConfig(): HasOne
+    {
+        return $this->hasOne(MonitorDnsConfig::class);
+    }
+
+    /**
+     * @return HasOne<MonitorDomain, $this>
+     */
+    public function domain(): HasOne
+    {
+        return $this->hasOne(MonitorDomain::class);
+    }
+
+    /**
+     * Host whose domain registration is followed (ADR-043): the URL host of
+     * an HTTP monitor or the record name of a DNS monitor; null for other
+     * types and IP addresses.
+     */
+    public function domainHost(): ?string
+    {
+        $host = match ($this->type) {
+            MonitorType::Http => $this->httpConfig === null ? null : parse_url($this->httpConfig->url, PHP_URL_HOST),
+            MonitorType::Dns => $this->dnsConfig?->record_name,
+            default => null,
+        };
+
+        if (! is_string($host) || $host === '') {
+            return null;
+        }
+
+        $host = rtrim(strtolower(trim($host, '[]')), '.');
+
+        return filter_var($host, FILTER_VALIDATE_IP) === false && str_contains($host, '.') ? $host : null;
+    }
+
+    /**
      * @return HasOne<MonitorTlsCertificate, $this>
      */
     public function tlsCertificate(): HasOne
@@ -112,6 +152,7 @@ class Monitor extends Model
         return match ($this->type) {
             MonitorType::Http => $this->httpConfig === null ? null : "{$this->httpConfig->method->value} {$this->httpConfig->url}",
             MonitorType::Tcp => $this->tcpConfig?->target(),
+            MonitorType::Dns => $this->dnsConfig?->target(),
             MonitorType::Heartbeat => (string) __('Heartbeat every :period', ['period' => HeartbeatPeriod::tryFrom($this->interval_seconds)?->label() ?? "{$this->interval_seconds} s"]),
         };
     }

@@ -53,6 +53,9 @@ class CreateMonitor
                 MonitorType::Tcp => $monitor->tcpConfig()->create(
                     ($data->tcp ?? throw new LogicException('Missing TCP target.'))->toConfig(),
                 ),
+                MonitorType::Dns => $monitor->dnsConfig()->create(
+                    ($data->dns ?? throw new LogicException('Missing DNS target.'))->toConfig(),
+                ),
                 MonitorType::Heartbeat => $monitor->heartbeatConfig()->create([
                     'token_hash' => HeartbeatToken::hash($pingToken ?? throw new LogicException('Missing ping token.')),
                     'grace_seconds' => $graceSeconds,

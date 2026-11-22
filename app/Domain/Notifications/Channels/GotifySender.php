@@ -39,8 +39,8 @@ class GotifySender implements ChannelSender
             'title' => mb_substr($message->title(), 0, 250),
             'message' => mb_substr($message->plainText()."\n\n".$message->organizationName, 0, 4000),
             'priority' => match ($message->event) {
-                NotificationEvent::Opened, NotificationEvent::Reminder, NotificationEvent::CertificateExpired => 8,
-                NotificationEvent::CertificateExpiring => 6,
+                NotificationEvent::Opened, NotificationEvent::Reminder, NotificationEvent::CertificateExpired, NotificationEvent::DomainExpired => 8,
+                NotificationEvent::CertificateExpiring, NotificationEvent::DomainExpiring => 6,
                 NotificationEvent::Resolved, NotificationEvent::Acknowledged => 5,
                 NotificationEvent::Test => 2,
             },

@@ -17,6 +17,7 @@
 | monitors | id, organization_id, name, type, enabled, interval_seconds, timeout_seconds, next_check_at, deleted_at |
 | monitor_http_configs | monitor_id, url, method (≤ 8), expected_statuses (json), follow_redirects, headers_encrypted, body_encrypted, body_content_type, basic_auth_encrypted, keyword, keyword_mode, keyword_case_sensitive, latency_threshold_ms |
 | monitor_tcp_configs | monitor_id, host, port |
+| monitor_dns_configs | monitor_id (PK), record_name, record_type, resolver, expected_values (json), match_mode, last_answers (json), last_resolved_at |
 | monitor_heartbeat_configs | monitor_id, token_hash (unique, SHA-256), grace_seconds, last_ping_at, last_ping_failed |
 | monitor_states | monitor_id, status, consecutive_failures, consecutive_successes, last_checked_at, last_changed_at, last_applied_check_at |
 | monitor_checks | id, monitor_id, scheduled_for, checked_at, success, slow, duration_ms, status_code, error_code, metadata (json) |
@@ -27,7 +28,9 @@
 | monitor_notification_channels | monitor_id, notification_channel_id |
 | monitor_tls_certificates | monitor_id (PK), fingerprint (SHA-256), subject, issuer, not_before, not_after (indexed), checked_at |
 | tls_certificate_alerts | id, organization_id, monitor_id, fingerprint, threshold_days, not_after, created_at — unique (monitor_id, fingerprint, threshold_days) |
-| notification_deliveries | id, incident_id (nullable), certificate_alert_id (nullable), channel_id, event_type, status, attempts, sent_at |
+| monitor_domains | monitor_id (PK), host, domain, expires_at (indexed), registrar, checked_at (indexed), last_error |
+| domain_expiry_alerts | id, organization_id, monitor_id, domain, threshold_days, expires_at, created_at — unique (monitor_id, domain, expires_at, threshold_days) |
+| notification_deliveries | id, incident_id (nullable), certificate_alert_id (nullable), domain_alert_id (nullable), channel_id, event_type, status, attempts, sent_at |
 | monitor_daily_stats | monitor_id, day, checks_count, success_count, failure_count, latency_avg_ms |
 | maintenance_windows | id, organization_id, series_id (nullable), occurrence_date (nullable), title, description, starts_at, ends_at, cancelled_at, created_by — unique (series_id, occurrence_date) |
 | maintenance_window_monitors | maintenance_window_id, monitor_id |
@@ -67,7 +70,7 @@
 - Added index `monitor_checks (monitor_id, scheduled_for)` for streak evaluation.
 
 ## Notifications and statistics (Sprint 4)
-- `notification_deliveries` is unique on `(incident_id, channel_id, event_type)` — the idempotency key of the delivery pipeline. Certificate deliveries are unique on `(certificate_alert_id, channel_id)`; a CHECK constraint requires exactly one of `incident_id` and `certificate_alert_id` (ADR-026).
+- `notification_deliveries` is unique on `(incident_id, channel_id, event_type)` — the idempotency key of the delivery pipeline. Certificate deliveries are unique on `(certificate_alert_id, channel_id)` and domain deliveries on `(domain_alert_id, channel_id)`; a CHECK constraint requires exactly one of `incident_id`, `certificate_alert_id` and `domain_alert_id` (ADR-026, ADR-043).
 - Raw-check retention is per organization (`Quota::checkRetentionDays()`, ADR-029): `VEYRA_CHECK_RETENTION_DAYS` on the Community edition, an entitlement otherwise.
 - `monitor_daily_stats` (PK `(monitor_id, day)`, UTC days) is maintained with `INSERT … SELECT … ON DUPLICATE KEY UPDATE`; it survives raw-check retention.
 - Retention deletes use `DELETE … LIMIT 1000` loops on indexed columns (`monitor_checks (monitor_id, checked_at)`, `monitor_dispatches (status, completed_at)`, `notification_deliveries (created_at)`). `tests/Integration/AggregationTest.php` covers 10 000 checks.

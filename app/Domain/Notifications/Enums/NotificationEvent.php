@@ -14,6 +14,19 @@ enum NotificationEvent: string
     case CertificateExpiring = 'certificate_expiring';
     /** TLS certificate of an HTTPS monitor expired (no incident). */
     case CertificateExpired = 'certificate_expired';
+    /** Registration of a monitored domain close to expiry (no incident, ADR-043). */
+    case DomainExpiring = 'domain_expiring';
+    /** Registration of a monitored domain expired (no incident, ADR-043). */
+    case DomainExpired = 'domain_expired';
+
+    /**
+     * Expiry warnings and tests are not about an incident: no duration,
+     * acknowledgement or resolution.
+     */
+    public function isIncidentEvent(): bool
+    {
+        return in_array($this, [self::Opened, self::Resolved, self::Acknowledged, self::Reminder], true);
+    }
 
     public function headline(?string $locale = null): string
     {
@@ -25,6 +38,8 @@ enum NotificationEvent: string
             self::Test => 'TEST',
             self::CertificateExpiring => 'CERTIFICATE EXPIRES SOON',
             self::CertificateExpired => 'CERTIFICATE EXPIRED',
+            self::DomainExpiring => 'DOMAIN EXPIRES SOON',
+            self::DomainExpired => 'DOMAIN EXPIRED',
         }, [], $locale);
     }
 
@@ -41,6 +56,8 @@ enum NotificationEvent: string
             self::Test => 'test',
             self::CertificateExpiring => 'certificate.expiring',
             self::CertificateExpired => 'certificate.expired',
+            self::DomainExpiring => 'domain.expiring',
+            self::DomainExpired => 'domain.expired',
         };
     }
 
@@ -50,9 +67,9 @@ enum NotificationEvent: string
     public function color(): int
     {
         return match ($this) {
-            self::Opened, self::Reminder, self::CertificateExpired => 0xDC2626,
+            self::Opened, self::Reminder, self::CertificateExpired, self::DomainExpired => 0xDC2626,
             self::Resolved => 0x16A34A,
-            self::Acknowledged, self::CertificateExpiring => 0xD97706,
+            self::Acknowledged, self::CertificateExpiring, self::DomainExpiring => 0xD97706,
             self::Test => 0x6B7280,
         };
     }

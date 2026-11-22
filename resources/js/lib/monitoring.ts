@@ -83,6 +83,8 @@ const notificationEventLabels: Record<string, string> = {
     test: 'Test',
     certificate_expiring: 'Certificate expires soon',
     certificate_expired: 'Certificate expired',
+    domain_expiring: 'Domain expires soon',
+    domain_expired: 'Domain expired',
 };
 
 /**

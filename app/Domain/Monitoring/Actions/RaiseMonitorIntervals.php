@@ -7,7 +7,7 @@ use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Organizations\Models\Organization;
 
 /**
- * Raises the interval of the organization's probed monitors (HTTP, TCP)
+ * Raises the interval of the organization's probed monitors (HTTP, TCP, DNS)
  * that check more often than a minimum, for instance when a lower plan is
  * applied (ADR-030). Paused monitors are raised too, so that resuming them
  * respects the minimum. Heartbeat periods are passive and left unchanged.
@@ -21,7 +21,7 @@ class RaiseMonitorIntervals
     public function handle(Organization $organization, int $minimumSeconds): int
     {
         return $organization->monitors()
-            ->whereIn('type', [MonitorType::Http, MonitorType::Tcp])
+            ->whereIn('type', MonitorType::probed())
             ->where('interval_seconds', '<', $minimumSeconds)
             ->update(['interval_seconds' => self::intervalFor($minimumSeconds)]);
     }

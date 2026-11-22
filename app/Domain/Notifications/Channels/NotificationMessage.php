@@ -26,6 +26,8 @@ final readonly class NotificationMessage
         public string $url,
         public ?string $certificateExpiresAt = null,
         public ?string $certificateIssuer = null,
+        public ?string $domainName = null,
+        public ?string $domainExpiresAt = null,
         public string $locale = 'en',
         public ?string $deliveryId = null,
         public ?string $organizationId = null,
@@ -50,6 +52,7 @@ final readonly class NotificationMessage
             'organization' => $this->organizationName,
             'person' => (string) $this->acknowledgedBy,
             'duration' => self::humanDuration($this->durationSeconds, $this->locale),
+            'domain' => (string) $this->domainName,
         ];
 
         return $this->translate(match ($this->event) {
@@ -60,6 +63,8 @@ final readonly class NotificationMessage
             NotificationEvent::Test => 'This is a test notification from :organization.',
             NotificationEvent::CertificateExpiring => 'The TLS certificate of :monitor expires in :duration. Renew it before visitors get errors.',
             NotificationEvent::CertificateExpired => 'The TLS certificate of :monitor has expired. HTTPS checks fail until it is renewed.',
+            NotificationEvent::DomainExpiring => 'The domain :domain of :monitor expires in :duration. Renew it with your registrar.',
+            NotificationEvent::DomainExpired => 'The domain :domain of :monitor has expired. Renew it with your registrar before it is released.',
         }, $replace);
     }
 
@@ -71,7 +76,7 @@ final readonly class NotificationMessage
      */
     public function facts(): array
     {
-        $isIncident = ! in_array($this->event, [NotificationEvent::Test, NotificationEvent::CertificateExpiring, NotificationEvent::CertificateExpired], true);
+        $isIncident = $this->event->isIncidentEvent();
 
         return array_values(array_filter([
             ['label' => $this->translate('Monitor'), 'value' => $this->monitorName],
@@ -81,6 +86,8 @@ final readonly class NotificationMessage
                 : null,
             $this->certificateExpiresAt ? ['label' => $this->translate('Expires'), 'value' => $this->certificateExpiresAt.' UTC'] : null,
             $this->certificateIssuer ? ['label' => $this->translate('Issuer'), 'value' => mb_substr($this->certificateIssuer, 0, 256)] : null,
+            $this->domainName ? ['label' => $this->translate('Domain'), 'value' => $this->domainName] : null,
+            $this->domainExpiresAt ? ['label' => $this->translate('Expires'), 'value' => $this->domainExpiresAt.' UTC'] : null,
         ]));
     }
 

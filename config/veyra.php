@@ -120,6 +120,31 @@ return [
         ))),
     ],
 
+    /*
+    | DNS monitors (ADR-042): resolvers organizations may choose from (a subset
+    | of system, cloudflare, google, quad9; never arbitrary addresses) and the
+    | resolver configuration read for the system resolver.
+    */
+
+    'dns' => [
+        'resolvers' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('VEYRA_DNS_RESOLVERS', 'system,cloudflare,google,quad9')),
+        ))),
+        'resolv_conf' => '/etc/resolv.conf',
+    ],
+
+    /*
+    | Domain registration expiry (ADR-043), read through RDAP at most once a
+    | day per monitor. Warnings use the certificate thresholds.
+    */
+
+    'domains' => [
+        'enabled' => (bool) env('VEYRA_DOMAIN_EXPIRY_ENABLED', true),
+        'bootstrap_url' => 'https://data.iana.org/rdap/dns.json',
+        'lookups_per_run' => 200,
+    ],
+
     'monitors' => [
         'max_per_hour' => (int) env('VEYRA_MONITORS_PER_HOUR', 30),
     ],
@@ -139,6 +164,8 @@ return [
         'up_after_successes' => (int) env('VEYRA_UP_AFTER_SUCCESSES', 2),
         'heartbeat_down_after_misses' => (int) env('VEYRA_HEARTBEAT_DOWN_AFTER_MISSES', 1),
         'heartbeat_up_after_pings' => (int) env('VEYRA_HEARTBEAT_UP_AFTER_PINGS', 1),
+        'dns_down_after_failures' => (int) env('VEYRA_DNS_DOWN_AFTER_FAILURES', env('VEYRA_DOWN_AFTER_FAILURES', 3)),
+        'dns_up_after_successes' => (int) env('VEYRA_DNS_UP_AFTER_SUCCESSES', env('VEYRA_UP_AFTER_SUCCESSES', 2)),
         'stale_grace_seconds' => 120,
         'check_retention_days' => max(1, (int) env('VEYRA_CHECK_RETENTION_DAYS', 30)),
     ],

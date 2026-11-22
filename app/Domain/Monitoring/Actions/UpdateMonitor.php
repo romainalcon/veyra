@@ -42,6 +42,7 @@ class UpdateMonitor
                     ['monitor_id' => $monitor->id],
                     ($data->tcp ?? throw new LogicException('Missing TCP target.'))->toConfig(),
                 ),
+                MonitorType::Dns => $this->updateDnsConfig($monitor, $data),
                 MonitorType::Heartbeat => $monitor->heartbeatConfig()->update([
                     'grace_seconds' => $this->graceSeconds($data),
                 ]),
@@ -78,6 +79,25 @@ class UpdateMonitor
         $host = $url === null ? null : parse_url($url, PHP_URL_HOST);
 
         return is_string($scheme) && is_string($host) ? strtolower($scheme.'://'.$host) : null;
+    }
+
+    /**
+     * Answers received for another query would be misleading: they are
+     * cleared when the record, its type or the resolver changes.
+     */
+    private function updateDnsConfig(Monitor $monitor, MonitorData $data): void
+    {
+        $target = $data->dns ?? throw new LogicException('Missing DNS target.');
+        $config = $monitor->dnsConfig;
+        $queryChanged = $config === null
+            || $config->record_name !== $target->recordName
+            || $config->record_type !== $target->recordType
+            || $config->resolver !== $target->resolver;
+
+        $monitor->dnsConfig()->updateOrCreate(
+            ['monitor_id' => $monitor->id],
+            $target->toConfig() + ($queryChanged ? ['last_answers' => null, 'last_resolved_at' => null] : []),
+        );
     }
 
     private function graceSeconds(MonitorData $data): int

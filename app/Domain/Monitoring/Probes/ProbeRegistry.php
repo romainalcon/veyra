@@ -19,6 +19,7 @@ final class ProbeRegistry
             MonitorType::Http => $this->container->make(HttpMonitorProbe::class),
             MonitorType::Tcp => $this->container->make(TcpProbe::class),
             MonitorType::Heartbeat => $this->container->make(HeartbeatProbe::class),
+            MonitorType::Dns => $this->container->make(DnsProbe::class),
         };
     }
 }
