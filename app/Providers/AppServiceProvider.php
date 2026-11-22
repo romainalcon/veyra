@@ -7,6 +7,8 @@ use App\Domain\Entitlements\Contracts\Entitlements;
 use App\Domain\Extensions\OrganizationNavigation;
 use App\Domain\Extensions\PublicNavigation;
 use App\Domain\Extensions\UserNavigation;
+use App\Domain\Identity\Contracts\Impersonation;
+use App\Domain\Identity\NoImpersonation;
 use App\Domain\Incidents\Events\IncidentAcknowledged;
 use App\Domain\Incidents\Events\IncidentOpened;
 use App\Domain\Incidents\Events\IncidentResolved;
@@ -46,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(Entitlements::class, CommunityEntitlements::class);
+        $this->app->bind(Impersonation::class, NoImpersonation::class);
         $this->app->singleton(OrganizationNavigation::class);
         $this->app->singleton(PublicNavigation::class);
         $this->app->singleton(UserNavigation::class);

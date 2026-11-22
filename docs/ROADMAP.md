@@ -108,6 +108,7 @@
 - [x] Plans and Paddle billing, billing page, plan enforcement on downgrade (`Entitlements`, `RaiseMonitorIntervals`).
 - [x] Operator console for instance administrators with audit log (ADR-031).
 - [x] Pricing and legal public pages through `PublicNavigation`.
+- [x] Operator impersonation through the core `Impersonation` contract and banner (ADR-038).
 - Details live in `extensions/cloud/README.md`, never in this repository.
 
 ## Next — planned, not started

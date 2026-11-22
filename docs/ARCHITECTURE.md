@@ -11,7 +11,7 @@
 ## Domain layout
 ```
 app/Domain/
-  Identity/        Fortify actions, validation concerns, RegistrationGate, DeleteUser
+  Identity/        Fortify actions, validation concerns, RegistrationGate, DeleteUser, Impersonation contract (ADR-038)
   Organizations/   Actions, DTOs, Enums (OrganizationRole), Models, Notifications, Services
   Entitlements/    Entitlements contract, Community implementation (no limits), Quota (ADR-029)
   Extensions/      Extension points such as OrganizationNavigation (ADR-030)
@@ -53,4 +53,4 @@ extensions/<name>/   # optional extensions cloned from their own repositories, g
 - Use domain services/actions; no business logic in controllers.
 - Cloud entitlements behind an interface, never a dependency from the Community core: the core binds `CommunityEntitlements`; an extension rebinds `Entitlements` (ADR-029).
 - Probe workers are Laravel jobs, but must have outbound network controls.
-- Optional extensions depend on the core through documented extension points only (pages, translations, navigation, entitlements, `OrganizationDeleting`, `RaiseMonitorIntervals`); the core never references extension code (ADR-030).
+- Optional extensions depend on the core through documented extension points only (pages, translations, navigation, entitlements, `Impersonation`, `OrganizationDeleting`, `RaiseMonitorIntervals`); the core never references extension code (ADR-030).
