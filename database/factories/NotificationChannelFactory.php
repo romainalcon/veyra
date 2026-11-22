@@ -39,6 +39,15 @@ class NotificationChannelFactory extends Factory
         ]);
     }
 
+    public function slack(string $url = 'https://hooks.slack.com/services/T0123ABCD/B0456EFGH/abcdEFGHijklMNOPqrstUVwx'): static
+    {
+        return $this->state(fn (): array => [
+            'type' => ChannelType::Slack,
+            'name' => 'Slack #alerts',
+            'config_encrypted' => ['webhook_url' => $url],
+        ]);
+    }
+
     public function webhook(string $url = 'https://api.example.com/hooks/veyra?token=secret-query-token', ?string $secret = null): static
     {
         return $this->state(fn (): array => [

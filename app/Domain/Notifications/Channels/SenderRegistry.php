@@ -16,6 +16,7 @@ final class SenderRegistry
             ChannelType::Email => $this->container->make(EmailSender::class),
             ChannelType::Discord => $this->container->make(DiscordSender::class),
             ChannelType::Webhook => $this->container->make(WebhookSender::class),
+            ChannelType::Slack => $this->container->make(SlackSender::class),
         };
     }
 }

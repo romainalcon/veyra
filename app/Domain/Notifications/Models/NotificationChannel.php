@@ -82,7 +82,7 @@ class NotificationChannel extends Model
     {
         return match ($this->type) {
             ChannelType::Email => trans_choice(':count recipient: :list|:count recipients: :list', count($this->recipients()), ['list' => implode(', ', $this->recipients())]),
-            ChannelType::Discord => (string) __('Webhook …:suffix', ['suffix' => substr((string) $this->webhookUrl(), -4)]),
+            ChannelType::Discord, ChannelType::Slack => (string) __('Webhook …:suffix', ['suffix' => substr((string) $this->webhookUrl(), -4)]),
             ChannelType::Webhook => (string) __('POST to :host', ['host' => (string) parse_url((string) $this->webhookUrl(), PHP_URL_HOST)]),
         };
     }

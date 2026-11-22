@@ -58,7 +58,7 @@ class SaveNotificationChannel
     {
         return match ($type) {
             ChannelType::Email => ['recipients' => array_values(array_unique(array_map('strtolower', $data['recipients'] ?? [])))],
-            ChannelType::Discord => ['webhook_url' => ($data['webhook_url'] ?? null) ?: ($current['webhook_url'] ?? null)],
+            ChannelType::Discord, ChannelType::Slack => ['webhook_url' => ($data['webhook_url'] ?? null) ?: ($current['webhook_url'] ?? null)],
             // The signing secret is generated once and only replaced by RegenerateWebhookSecret.
             ChannelType::Webhook => [
                 'webhook_url' => ($data['webhook_url'] ?? null) ?: ($current['webhook_url'] ?? null),
