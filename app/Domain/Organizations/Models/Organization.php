@@ -35,6 +35,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, User> $users
  * @property-read Collection<int, OrganizationMember> $members
  * @property-read Collection<int, OrganizationInvitation> $invitations
+ * @property-read Collection<int, ApiToken> $apiTokens
  * @property-read Collection<int, Monitor> $monitors
  * @property-read Collection<int, MaintenanceWindow> $maintenanceWindows
  * @property-read Collection<int, MaintenanceSeries> $maintenanceSeries
@@ -99,6 +100,14 @@ class Organization extends Model
     public function invitations(): HasMany
     {
         return $this->hasMany(OrganizationInvitation::class);
+    }
+
+    /**
+     * @return HasMany<ApiToken, $this>
+     */
+    public function apiTokens(): HasMany
+    {
+        return $this->hasMany(ApiToken::class);
     }
 
     /**

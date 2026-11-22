@@ -78,3 +78,11 @@ Broadcasts on `private-organizations.{id}` carry identifiers and enum values onl
 - Bodies, basic auth and custom headers are only sent to the monitored host: a redirect to another host drops them, and a request with a body continues as a plain GET.
 - Every method goes through `DestinationGuard` on every hop (same SSRF rules); the response cap also bounds decompression for keyword checks. Monitor creation and manual-check rate limits are unchanged.
 - Keywords are not secrets (they are shown to organization members) but are kept out of check results and notifications.
+
+## Public API (Sprint 19, ADR-044)
+- Organization API tokens are `veyra_` + 40 random alphanumeric characters, stored as SHA-256 hashes only, shown once after creation, never returned afterwards (lists show `veyra_…abcd`), optionally expiring, revocable at once. Only Owners and Admins create, list and revoke them (10 creations/min per user, 50 active per organization).
+- Malformed, unknown, revoked and expired tokens all get the same `401`. A session cookie never authenticates the API and the API never starts a session or sets a cookie, so CSRF does not apply.
+- The tenant is the token's organization, never a URL or body parameter; child identifiers are resolved through it (another organization's identifier is `404`, tested for every API route and method). `read` tokens act as Viewers and `write` tokens as Members through the interface's policies.
+- Monitor and maintenance payloads go through the interface's Form Requests: same SSRF validation (every DNS answer, ports, credentials in URLs), quotas and limits. Responses are allow-listed resources without header values, bodies, basic auth passwords, ping tokens (a heartbeat's ping URL is returned once, on creation), check metadata, members' names or e-mail addresses.
+- Rate limits: 120 requests/min per token and 600/min per IP (configurable), monitor creation per hour, maintenance writes and acknowledgements 30/min, keyed by token.
+- Tokens are not subject to the organization's two-factor requirement (ADR-040); treat them like passwords and give automation the `read` ability unless it must write.

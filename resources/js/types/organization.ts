@@ -35,6 +35,7 @@ export type CurrentOrganization = OrganizationSummary & {
         update: boolean;
         delete: boolean;
         manageMembers: boolean;
+        manageApiTokens: boolean;
     };
     /** Only limited features are present; empty on the Community edition. */
     limits: Partial<Record<LimitFeature, LimitUsage>>;
@@ -64,4 +65,17 @@ export type PendingInvitation = {
 export type RoleOption = {
     value: OrganizationRole;
     label: string;
+};
+
+/** Organization API token (ADR-044); the secret is never sent after creation. */
+export type ApiTokenSummary = {
+    id: string;
+    name: string;
+    ability: 'read' | 'write';
+    masked: string;
+    creator: string | null;
+    created_at: string | null;
+    last_used_at: string | null;
+    expires_at: string | null;
+    expired: boolean;
 };

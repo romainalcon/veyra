@@ -46,6 +46,14 @@ class OrganizationPolicy
         return $this->roleOf($user, $organization)?->canManageMembers() ?? false;
     }
 
+    /**
+     * Organization API tokens act for the whole organization (ADR-044).
+     */
+    public function manageApiTokens(User $user, Organization $organization): bool
+    {
+        return $this->roleOf($user, $organization)?->canUpdateOrganization() ?? false;
+    }
+
     public function invite(User $user, Organization $organization, OrganizationRole $role): bool
     {
         return $this->roleOf($user, $organization)?->canAssign($role) ?? false;

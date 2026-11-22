@@ -42,6 +42,7 @@
 | status_page_subscribers | id, organization_id, status_page_id, email (encrypted), email_hash, confirmed_at, confirmation_sent_at |
 | status_page_announcements | id, organization_id, status_page_id, subject_id, event, payload (json) |
 | status_page_subscriber_deliveries | id, announcement_id, subscriber_id, status, attempts, sent_at, last_error |
+| api_tokens | id, organization_id, name, ability (read/write), token_hash (unique, SHA-256), last_four, created_by (nullable), last_used_at, expires_at, revoked_at |
 | audit_logs | id, organization_id, actor_id, action, subject_type, subject_id, metadata |
 
 ## Constraints and indexes
@@ -93,3 +94,7 @@
 - Heartbeat checks reference a `monitor_dispatches` row with `trigger = ping`; the unique `(monitor_id, scheduled_for)` key deduplicates pings within the same second.
 - Sprint 15 (ADR-037): `monitor_checks.slow` (boolean, default false) is added like `in_maintenance` (instant ADD COLUMN, not indexed). `monitor_http_configs.method` is widened to `VARCHAR(8)` for `PATCH`; the new columns are nullable or defaulted, so the migration is additive.
 - Sprint 17 (ADR-041): `organizations.timezone` (`VARCHAR(64)`, default `UTC`), `maintenance_series` and its monitor pivot are added; `maintenance_windows` gains a nullable `series_id` (FK, `ON DELETE SET NULL`) and `occurrence_date` with a unique `(series_id, occurrence_date)` key (one-off windows keep `NULL`, which MariaDB never treats as a duplicate). Additive only.
+
+## API tokens (Sprint 19, ADR-044)
+- `api_tokens.token_hash` is unique (the authentication lookup); `(organization_id, revoked_at)` serves the management list and the per-organization cap. Rows cascade with the organization and are never deleted otherwise (revocation sets `revoked_at`); `created_by` is `ON DELETE SET NULL`. Additive only.
+- API acknowledgements store the token in `incident_events.metadata` (`api_token_id`, `api_token_name`); no column was added to `incidents`.

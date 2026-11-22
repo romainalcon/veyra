@@ -3,6 +3,7 @@
 use App\Domain\Entitlements\LimitReached;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ResolveApiOrganization;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\ServeStatusPageForCustomDomain;
 use App\Http\Middleware\SetRequestLocale;
@@ -11,11 +12,13 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
@@ -27,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Verified custom domains only serve their status page (before any session starts).
         $middleware->append(ServeStatusPageForCustomDomain::class);
+
+        // The API tenant must be a route parameter before bindings resolve (ADR-044).
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ResolveApiOrganization::class);
 
         $middleware->web(append: [
             SetRequestLocale::class,

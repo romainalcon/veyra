@@ -11,6 +11,7 @@ class IncidentAcknowledged implements ShouldDispatchAfterCommit
 
     public function __construct(
         public readonly string $incidentId,
-        public readonly string $userId,
+        /** Null when an API token acknowledged it (ADR-044). */
+        public readonly ?string $userId,
     ) {}
 }

@@ -4,6 +4,7 @@ import {
     Activity,
     Bell,
     Globe,
+    KeyRound,
     LayoutGrid,
     Settings,
     Siren,
@@ -23,6 +24,7 @@ import {
 import { extensionIcon } from '@/lib/extension-icons';
 import { useTranslations } from '@/lib/i18n';
 import { dashboard, edit } from '@/routes/organizations';
+import { index as apiTokens } from '@/routes/organizations/api-tokens';
 import { index as incidents } from '@/routes/organizations/incidents';
 import { index as maintenance } from '@/routes/organizations/maintenance';
 import { index as members } from '@/routes/organizations/members';
@@ -85,6 +87,16 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: members(organization.slug),
             icon: Users,
         },
+        ...(organization.can.manageApiTokens
+            ? [
+                  {
+                      id: 'api-tokens',
+                      title: t('API tokens'),
+                      href: apiTokens(organization.slug),
+                      icon: KeyRound,
+                  },
+              ]
+            : []),
         // Already translated by the server; shown before the organization settings.
         ...(organization.navigation ?? []).map((item): NavItem => ({
             id: item.id,

@@ -39,7 +39,8 @@ final class IncidentPresenter
     {
         return [
             ...self::summary($incident),
-            'acknowledged_by' => $incident->acknowledger?->name,
+            'acknowledged_by' => $incident->acknowledger->name ?? self::apiTokenLabel($incident->events
+                ->firstWhere('type', IncidentEventType::Acknowledged)),
             'events' => $incident->events
                 ->sortBy([['created_at', 'asc'], ['id', 'asc']])
                 ->values()
@@ -49,10 +50,20 @@ final class IncidentPresenter
                     'label' => $event->type->label(),
                     // The opening event carries the stored (English) cause.
                     'message' => $event->type === IncidentEventType::Opened ? ProbeErrorCode::translateCause($event->message) : $event->message,
-                    'user' => $event->user?->name,
+                    'user' => $event->user->name ?? self::apiTokenLabel($event),
                     'created_at' => $event->created_at->toIso8601String(),
                 ])
                 ->all(),
         ];
+    }
+
+    /**
+     * Actions taken through the API name the token (ADR-044).
+     */
+    private static function apiTokenLabel(?IncidentEvent $event): ?string
+    {
+        $name = $event?->metadata['api_token_name'] ?? null;
+
+        return is_string($name) ? (string) __('API token :name', ['name' => $name]) : null;
     }
 }

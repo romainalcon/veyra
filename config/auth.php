@@ -42,6 +42,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Organization API tokens (ADR-044), resolved by ApiTokenAuthenticator.
+        'api' => [
+            'driver' => 'api-token',
+        ],
     ],
 
     /*

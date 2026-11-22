@@ -25,6 +25,8 @@ use App\Domain\Monitoring\Probes\StreamTcpConnector;
 use App\Domain\Monitoring\Probes\SystemDnsResolver;
 use App\Domain\Notifications\Listeners\QueueNotificationsOnIncidentEvent;
 use App\Domain\Notifications\Models\NotificationChannel;
+use App\Domain\Organizations\Models\ApiToken;
+use App\Domain\Organizations\Services\ApiTokenAuthenticator;
 use App\Domain\StatusPages\Contracts\TxtResolver;
 use App\Domain\StatusPages\Listeners\QueueAnnouncementsOnPublicEvent;
 use App\Domain\StatusPages\Support\SystemTxtResolver;
@@ -34,6 +36,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -79,6 +82,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Instance administrators (VEYRA_ADMIN_EMAILS): Horizon and extension operator pages.
         Gate::define('administerInstance', fn (User $user): bool => $user->isInstanceAdministrator());
+
+        // Organization API tokens (ADR-044): the `api` guard of config/auth.php.
+        Auth::viaRequest('api-token', fn (Request $request): ?ApiToken => app(ApiTokenAuthenticator::class)($request));
 
         $this->configureDefaults();
         $this->configureRateLimiting();
@@ -127,11 +133,18 @@ class AppServiceProvider extends ServiceProvider
                 ->by($user instanceof User ? $user->id : (string) $request->ip());
         });
 
-        RateLimiter::for('monitors', function (Request $request): Limit {
-            $user = $request->user();
+        RateLimiter::for('monitors', fn (Request $request): Limit => Limit::perHour((int) config('veyra.monitors.max_per_hour'))
+            ->by('monitors:'.self::actorKey($request)));
 
-            return Limit::perHour((int) config('veyra.monitors.max_per_hour'))
-                ->by('monitors:'.($user instanceof User ? $user->id : (string) $request->ip()));
+        // Per token (ADR-044); every API request also counts towards the IP limit.
+        RateLimiter::for('api', function (Request $request): array {
+            $token = $request->user('api');
+
+            return [
+                Limit::perMinute((int) config('veyra.api.requests_per_minute'))
+                    ->by('api:token:'.($token instanceof ApiToken ? $token->id : (string) $request->ip())),
+                Limit::perMinute((int) config('veyra.api.requests_per_minute_per_ip'))->by('api:ip:'.$request->ip()),
+            ];
         });
 
         RateLimiter::for('heartbeat-pings', fn (Request $request): array => [
@@ -170,13 +183,26 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('manual-checks', function (Request $request): array {
-            $user = $request->user();
             $monitor = $request->route('monitor');
 
             return [
-                Limit::perMinute(6)->by('manual-checks:user:'.($user instanceof User ? $user->id : (string) $request->ip())),
+                Limit::perMinute(6)->by('manual-checks:user:'.self::actorKey($request)),
                 Limit::perSecond(1, 30)->by('manual-checks:monitor:'.($monitor instanceof Monitor ? $monitor->id : 'unknown')),
             ];
         });
+    }
+
+    /**
+     * Members are limited per user, API tokens per token (ADR-044), anyone else per IP.
+     */
+    private static function actorKey(Request $request): string
+    {
+        $actor = $request->user() ?? $request->user('api');
+
+        return match (true) {
+            $actor instanceof User => $actor->id,
+            $actor instanceof ApiToken => 'token:'.$actor->id,
+            default => (string) $request->ip(),
+        };
     }
 }

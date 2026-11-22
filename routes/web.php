@@ -13,6 +13,7 @@ use App\Http\Controllers\Monitors\MonitorController;
 use App\Http\Controllers\Monitors\MonitorStatusController;
 use App\Http\Controllers\Notifications\NotificationChannelController;
 use App\Http\Controllers\Notifications\WebhookSecretController;
+use App\Http\Controllers\Organizations\ApiTokenController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
@@ -150,6 +151,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('throttle:invitations')
                 ->name('invitations.store');
             Route::delete('invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitations.destroy');
+
+            Route::get('api-tokens', [ApiTokenController::class, 'index'])->name('api-tokens.index');
+            Route::post('api-tokens', [ApiTokenController::class, 'store'])
+                ->middleware('throttle:10,1')
+                ->name('api-tokens.store');
+            Route::delete('api-tokens/{apiToken}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
 
             Route::get('monitors', [MonitorController::class, 'index'])->name('monitors.index');
             Route::get('monitors/create', [MonitorController::class, 'create'])->name('monitors.create');
