@@ -18,6 +18,7 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 - **Extension points** — optional extensions installed from their own repositories into `extensions/<name>/` can add pages, translations and organization navigation entries, react to organization deletion (`OrganizationDeleting`) and raise monitor intervals. Nothing changes without extensions; Community images never include them (ADR-030).
 
 - **Outgoing webhooks** — a new notification channel type POSTs a signed, versioned JSON payload for every notification (incidents, certificate warnings, tests) to your endpoint: incident tools, automation platforms or your own scripts. Deliveries use the Standard Webhooks signature scheme; the signing secret is shown once and can be regenerated. Webhook URLs get the same SSRF protections as HTTP probes (ADR-033).
+- **Slack** — a new notification channel type posts incidents, certificate warnings and tests to a Slack channel through an incoming webhook, with colours, details and a link back to Veyra, in the organization language. Monitor names can never mention `@channel` or anyone else (ADR-034).
 
 ### Changed
 - Dates, percentages and numbers are formatted according to the active language.

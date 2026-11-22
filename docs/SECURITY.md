@@ -29,8 +29,9 @@ Use rate limits, idempotency keys, bounded queue retries, health checks, audited
 Broadcasts on `private-organizations.{id}` carry identifiers and enum values only (`monitor_id`, `incident_id`, `status`). Clients fetch data over HTTP, where policies apply again; the channel itself is authorized for members only.
 
 ## Notification channels (Sprint 4)
-- Channel configuration (recipients, Discord webhook URL with its token) is stored with Laravel encryption, managed by Admin/Owner only, never returned to the browser (webhooks are summarized as "…abcd"; recipients are only shown to channel managers).
+- Channel configuration (recipients, Discord and Slack webhook URLs with their tokens) is stored with Laravel encryption, managed by Admin/Owner only, never returned to the browser (webhooks are summarized as "…abcd"; recipients are only shown to channel managers).
 - Discord webhooks must be `https://{discord.com|discordapp.com|ptb.discord.com|canary.discord.com}/api/webhooks/{id}/{token}`; the URL is re-validated before each send, requests use a 5 s timeout, no redirects and no proxy, and `allowed_mentions` is empty so monitor names or causes can never ping anyone.
+- Slack webhooks must be `https://hooks.slack.com/services/T…/B…/{token}` (no Workflow Builder `/triggers/` URLs); the URL is re-validated before each send with the same timeout, redirect and proxy rules, and every untrusted value is escaped (`&`, `<`, `>`) so it can never produce `<!channel>`, `<@user>` or a disguised link. Only Slack's short error codes are copied into `last_error`.
 - Delivery errors are stored as generic messages (HTTP status or exception class); webhook URLs, tokens and recipient addresses never reach logs or `last_error`.
 - Rate limits: channel creation 30/min, "send test" 5/min per channel.
 
