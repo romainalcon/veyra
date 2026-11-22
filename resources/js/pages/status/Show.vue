@@ -254,7 +254,15 @@ const updateLabel = {
                     :key="window.key"
                     class="space-y-1 p-4"
                 >
-                    <p class="font-medium">{{ window.title }}</p>
+                    <p class="font-medium">
+                        {{ window.title }}
+                        <span
+                            v-if="window.recurring"
+                            class="text-xs font-normal text-muted-foreground"
+                            data-test="recurring-maintenance"
+                            >· {{ t('Recurring') }}</span
+                        >
+                    </p>
                     <p class="text-muted-foreground">
                         {{ formatDateTime(window.starts_at) }} →
                         {{ formatDateTime(window.ends_at) }} ·

@@ -83,6 +83,13 @@
 - Stale detection ignores monitors in `MAINTENANCE`.
 - Statistics: flagged checks are excluded from uptime, latency and observed checks, counted in `monitor_daily_stats.maintenance_count` and removed from the expected checks (coverage). Chart series expose a `maintenance` count per bucket.
 
+## Recurring maintenance (Sprint 17, ADR-041)
+- Daily, weekly (chosen days) or monthly (day 1–31, last day for shorter months) series with a local start time and a duration, in the organization time zone (Settings → Time zone).
+- Occurrences are created 14 days ahead as ordinary windows by `veyra:maintenance:materialize` (hourly, `onOneServer`) and on every save; generation is idempotent and only creates future starts.
+- Daylight saving time: the start keeps its local wall-clock time; a start inside the spring-forward gap moves forward by the gap; a start in the fall-back overlap takes the first instant; durations are real time.
+- Editing a series or the organization time zone regenerates future occurrences only; running and past ones are never altered; skipped occurrences stay skipped. Deleting a series removes its future occurrences and keeps history.
+- An occurrence is skipped (cancelled) or ended early from the maintenance list; it cannot be edited on its own. Status pages show only the next or running occurrence of each series.
+
 ## Status pages (Sprint 6)
 - Public status = confirmed state: `UP` → operational, `DEGRADED` → degraded, `DOWN` → outage, `MAINTENANCE` → maintenance, `UNKNOWN` or paused → no data. The overall status is the worst among components with data (no data only if none has any).
 - Incidents of listed monitors appear automatically (open, or resolved within 14 days) with a generic title; only `opened`, `public_update` and `resolved` events are published. Maintenance windows of listed monitors appear when running or starting within 7 days.

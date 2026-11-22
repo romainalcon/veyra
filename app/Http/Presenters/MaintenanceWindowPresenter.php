@@ -17,6 +17,7 @@ final class MaintenanceWindowPresenter
 
         return [
             'id' => $window->id,
+            'series_id' => $window->series_id,
             'title' => $window->title,
             'description' => $window->description,
             'starts_at' => $window->starts_at->toIso8601String(),

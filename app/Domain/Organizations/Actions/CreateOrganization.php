@@ -23,6 +23,7 @@ class CreateOrganization
                 'name' => $data->name,
                 'slug' => $this->uniqueSlug($data->name),
                 'locale' => SupportedLocales::resolve($data->locale ?? app()->getLocale()),
+                'timezone' => $data->timezone ?? 'UTC',
             ]);
 
             $organization->members()->create([

@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Maintenance;
 use App\Domain\Maintenance\Actions\CancelMaintenanceWindow;
 use App\Domain\Maintenance\Actions\EndMaintenanceWindowNow;
 use App\Domain\Maintenance\Actions\SaveMaintenanceWindow;
+use App\Domain\Maintenance\Models\MaintenanceSeries;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\MaintenanceSeriesPresenter;
 use App\Http\Presenters\MaintenanceWindowPresenter;
 use App\Http\Requests\Maintenance\SaveMaintenanceWindowRequest;
 use App\Models\User;
@@ -45,8 +47,17 @@ class MaintenanceWindowController extends Controller
             ->paginate(20)
             ->through(fn (MaintenanceWindow $window): array => MaintenanceWindowPresenter::summary($window, $now));
 
+        $series = $organization->maintenanceSeries()
+            ->with(['monitors:id,name', 'creator:id,name'])
+            ->orderBy('title')
+            ->get()
+            ->map(fn (MaintenanceSeries $series): array => MaintenanceSeriesPresenter::summary($series))
+            ->all();
+
         return Inertia::render('maintenance/Index', [
             'upcoming' => $upcoming,
+            'series' => $series,
+            'timezone' => $organization->timezone,
             'past' => $past,
             'canManage' => $user->can('create', [MaintenanceWindow::class, $organization]),
         ]);
@@ -75,9 +86,14 @@ class MaintenanceWindowController extends Controller
         return to_route('organizations.maintenance.index', $organization);
     }
 
-    public function edit(Organization $organization, MaintenanceWindow $maintenanceWindow): Response
+    public function edit(Organization $organization, MaintenanceWindow $maintenanceWindow): Response|RedirectResponse
     {
         Gate::authorize('update', [$maintenanceWindow, $organization]);
+
+        // Occurrences are edited through their series (ADR-041).
+        if ($maintenanceWindow->series_id !== null) {
+            return to_route('organizations.maintenance.series.edit', [$organization, $maintenanceWindow->series_id]);
+        }
 
         $maintenanceWindow->load(['monitors:id,name', 'creator:id,name']);
 
@@ -105,7 +121,9 @@ class MaintenanceWindowController extends Controller
 
         $cancelMaintenanceWindow->handle($maintenanceWindow);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Maintenance window cancelled.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => $maintenanceWindow->series_id !== null
+            ? __('Occurrence skipped.')
+            : __('Maintenance window cancelled.')]);
 
         return to_route('organizations.maintenance.index', $organization);
     }

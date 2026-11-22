@@ -41,6 +41,8 @@ export type PublicMaintenance = {
     starts_at: string;
     ends_at: string;
     active: boolean;
+    /** Next or running occurrence of a recurring series. */
+    recurring: boolean;
     components: string[];
 };
 

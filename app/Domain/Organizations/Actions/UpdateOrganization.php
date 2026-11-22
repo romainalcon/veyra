@@ -2,20 +2,33 @@
 
 namespace App\Domain\Organizations\Actions;
 
+use App\Domain\Maintenance\Actions\MaterializeMaintenanceSeries;
+use App\Domain\Maintenance\Models\MaintenanceSeries;
 use App\Domain\Organizations\DTOs\OrganizationData;
 use App\Domain\Organizations\Models\Organization;
 
 class UpdateOrganization
 {
+    public function __construct(private readonly MaterializeMaintenanceSeries $materializeMaintenanceSeries) {}
+
     /**
      * The slug is intentionally immutable so that existing links keep working.
+     * A new time zone regenerates the future occurrences of recurring
+     * maintenance (ADR-041); started and past ones keep their instants.
      */
     public function handle(Organization $organization, OrganizationData $data): Organization
     {
         $organization->update(array_filter([
             'name' => $data->name,
             'locale' => $data->locale,
+            'timezone' => $data->timezone,
         ], fn (?string $value): bool => $value !== null));
+
+        if ($organization->wasChanged('timezone')) {
+            $organization->maintenanceSeries()->each(
+                fn (MaintenanceSeries $series): int => $this->materializeMaintenanceSeries->regenerate($series),
+            );
+        }
 
         return $organization;
     }

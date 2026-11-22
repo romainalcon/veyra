@@ -22,12 +22,13 @@ class SaveOrganizationRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'min:2', 'max:100'],
             'locale' => ['nullable', 'string', Rule::in(SupportedLocales::codes())],
+            'timezone' => ['nullable', 'string', 'timezone:all'],
         ];
     }
 
     public function toData(): OrganizationData
     {
-        /** @var array{name: string, locale?: string|null} $validated */
+        /** @var array{name: string, locale?: string|null, timezone?: string|null} $validated */
         $validated = $this->validated();
 
         return OrganizationData::fromArray($validated);

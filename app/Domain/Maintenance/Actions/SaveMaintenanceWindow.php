@@ -25,6 +25,10 @@ class SaveMaintenanceWindow
     {
         $now = CarbonImmutable::now();
 
+        if ($window !== null && $window->series_id !== null) {
+            throw ValidationException::withMessages(['title' => __('This window belongs to a recurring series; edit the series instead.')]);
+        }
+
         if ($window !== null && ($window->isCancelled() || $window->hasEnded($now))) {
             throw ValidationException::withMessages(['title' => __('This maintenance window is over and can no longer be changed.')]);
         }

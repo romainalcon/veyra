@@ -241,8 +241,11 @@ class StatusPageSnapshot
             ->whereHas('monitors', fn ($query) => $query->whereIn('monitors.id', $namesByMonitor->keys()->all()))
             ->with('monitors:id')
             ->orderBy('starts_at')
-            ->limit(20)
+            ->limit(200)
             ->get()
+            // A recurring series shows only its running or next occurrence (ADR-041).
+            ->unique(fn (MaintenanceWindow $window): string => $window->series_id ?? $window->id)
+            ->take(20)
             ->map(fn (MaintenanceWindow $window): array => [
                 'key' => self::publicKey($statusPage, $window->id),
                 'title' => $window->title,
@@ -250,6 +253,7 @@ class StatusPageSnapshot
                 'starts_at' => $window->starts_at->toIso8601String(),
                 'ends_at' => $window->ends_at->toIso8601String(),
                 'active' => $window->isActive($now),
+                'recurring' => $window->series_id !== null,
                 'components' => $window->monitors
                     ->map(fn (Monitor $monitor): ?string => $namesByMonitor->get($monitor->id))
                     ->filter()

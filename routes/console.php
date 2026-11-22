@@ -34,6 +34,11 @@ Schedule::command('veyra:maintenance:transition')
     ->onOneServer();
 
 /*
+ * Recurring maintenance: materialize occurrences ahead of time (ADR-041).
+ */
+Schedule::command('veyra:maintenance:materialize')->hourly()->withoutOverlapping()->onOneServer();
+
+/*
  * Status pages: custom domain ownership (TXT) checks.
  */
 Schedule::command('veyra:status-domains:verify')->hourly()->withoutOverlapping()->onOneServer();
