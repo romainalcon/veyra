@@ -4,6 +4,7 @@ import type {
     CurrentOrganization,
     OrganizationSummary,
 } from '@/types/organization';
+import type { PublicNavItem } from '@/types/navigation';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -36,6 +37,8 @@ declare module '@inertiajs/core' {
                 sourceUrl: string | null;
                 monitoring: { paused: boolean; reasons: string[] };
             };
+            /** Public site links from optional extensions; absent on public status pages (ADR-032). */
+            publicNavigation?: PublicNavItem[];
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

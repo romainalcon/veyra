@@ -15,3 +15,11 @@ export type NavItem = {
     isActive?: boolean;
     badge?: number;
 };
+
+/** Public site link contributed by an optional extension (ADR-032). */
+export type PublicNavItem = {
+    id: string;
+    title: string;
+    href: string;
+    placement: 'header' | 'footer';
+};

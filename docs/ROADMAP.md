@@ -79,6 +79,11 @@
 - [x] Shared extension icon list with `shield`; sidebar and user menu use the same mapping.
 - [x] Tests: empty on Community, ability and translation inside and outside an organization, entries without ability, unknown icons, administrator rule.
 
+## Sprint 11a — Public site links (core)
+- [x] `PublicNavigation` registry (header and footer placements) shared as `publicNavigation` on every `web` page, never on public status pages (ADR-032).
+- [x] Links rendered in the landing page header and footer, under authentication pages and in the application footer.
+- [x] Tests: empty on Community, translated for guests and signed-in users, absent from status pages, unknown placements refused.
+
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
 

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Extensions\OrganizationNavigation;
+use App\Domain\Extensions\PublicNavigation;
 use App\Domain\Extensions\UserNavigation;
 use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Organizations\Models\Organization;
@@ -62,6 +63,8 @@ class HandleInertiaRequests extends Middleware
                 'sourceUrl' => config('veyra.source_url'),
                 'monitoring' => $user === null ? ['paused' => false, 'reasons' => []] : app(MonitoringStatus::class)->current(),
             ],
+            // Public site links contributed by optional extensions: empty on the Community edition (ADR-032).
+            'publicNavigation' => fn (): array => app(PublicNavigation::class)->all(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

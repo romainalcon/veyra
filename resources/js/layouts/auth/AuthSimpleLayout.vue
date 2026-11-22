@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import { usePublicNavigation } from '@/composables/usePublicNavigation';
 import { home } from '@/routes';
 
 defineProps<{
     title?: string;
     description?: string;
 }>();
+
+const footerLinks = usePublicNavigation('footer');
 </script>
 
 <template>
@@ -39,5 +42,17 @@ defineProps<{
                 <slot />
             </div>
         </div>
+        <nav
+            v-if="footerLinks.length > 0"
+            class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground"
+        >
+            <Link
+                v-for="link in footerLinks"
+                :key="link.id"
+                :href="link.href"
+                class="hover:underline"
+                >{{ link.title }}</Link
+            >
+        </nav>
     </div>
 </template>

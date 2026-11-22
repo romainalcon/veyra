@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Extensions\OrganizationNavigation;
+use App\Domain\Extensions\PublicNavigation;
 use App\Domain\Extensions\UserNavigation;
 use App\Domain\Monitoring\Actions\RaiseMonitorIntervals;
 use App\Domain\Monitoring\Enums\MonitorType;
@@ -10,6 +11,7 @@ use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Domain\Organizations\Events\OrganizationDeleting;
 use App\Domain\Organizations\Models\Organization;
+use App\Domain\StatusPages\Models\StatusPage;
 use App\Models\User;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -110,6 +112,63 @@ describe('user navigation', function () {
 
     test('refuses icons the interface cannot render', function () {
         expect(fn () => app(UserNavigation::class)->add('x', 'X', 'extension-admin-test.index', icon: 'rocket'))
+            ->toThrow(InvalidArgumentException::class);
+    });
+});
+
+describe('public navigation', function () {
+    beforeEach(function () {
+        Route::middleware('web')->get('extension-pricing-test', fn () => 'ok')->name('extension-pricing-test');
+        Route::middleware('web')->get('extension-terms-test', fn () => 'ok')->name('extension-terms-test');
+        Route::getRoutes()->refreshNameLookups();
+        config(['veyra.landing_page' => true]);
+    });
+
+    test('is empty on the Community edition', function () {
+        $this->get('/')->assertInertia(fn (Assert $page) => $page->where('publicNavigation', []));
+    });
+
+    test('shares registered links, translated, with guests and signed-in users', function () {
+        app(PublicNavigation::class)->add('pricing', 'Features', 'extension-pricing-test', 'header');
+        app(PublicNavigation::class)->add('terms', 'Source code', 'extension-terms-test');
+        $links = [
+            ['id' => 'pricing', 'title' => 'Fonctionnalités', 'href' => route('extension-pricing-test'), 'placement' => 'header'],
+            ['id' => 'terms', 'title' => 'Code source', 'href' => route('extension-terms-test'), 'placement' => 'footer'],
+        ];
+
+        $this->withHeader('Accept-Language', 'fr')
+            ->get('/')
+            ->assertInertia(fn (Assert $page) => $page->where('publicNavigation', $links));
+
+        $this->withHeader('Accept-Language', 'fr')
+            ->get(route('login'))
+            ->assertInertia(fn (Assert $page) => $page->where('publicNavigation', $links));
+
+        $this->organization->update(['locale' => 'fr']);
+
+        $this->actingAs($this->owner)
+            ->get(route('organizations.dashboard', $this->organization))
+            ->assertInertia(fn (Assert $page) => $page->where('publicNavigation', $links));
+    });
+
+    test('the same id may be used in both placements', function () {
+        app(PublicNavigation::class)->add('pricing', 'Features', 'extension-pricing-test', 'header');
+        app(PublicNavigation::class)->add('pricing', 'Features', 'extension-pricing-test', 'footer');
+
+        expect(app(PublicNavigation::class)->all())->toHaveCount(2);
+    });
+
+    test('is never shared with public status pages', function () {
+        app(PublicNavigation::class)->add('terms', 'Source code', 'extension-terms-test');
+        StatusPage::factory()->create(['organization_id' => $this->organization->id, 'slug' => 'acme']);
+
+        $this->get(route('status-pages.public', 'acme'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->missing('publicNavigation'));
+    });
+
+    test('refuses unknown placements', function () {
+        expect(fn () => app(PublicNavigation::class)->add('x', 'X', 'extension-terms-test', 'sidebar'))
             ->toThrow(InvalidArgumentException::class);
     });
 });
