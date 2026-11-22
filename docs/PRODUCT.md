@@ -13,7 +13,7 @@ The exact open-source license, commercial license boundaries and trademark/domai
 ## V1 in scope
 - Account registration/login, email verification and password reset.
 - Organizations, membership invitations, Owner/Admin/Member/Viewer roles.
-- HTTP/HTTPS monitors: GET/HEAD, intervals, timeouts, expected statuses, secure custom headers.
+- HTTP/HTTPS monitors: GET/HEAD/POST/PUT/PATCH (encrypted body and basic auth), intervals, timeouts, expected statuses, keyword assertions, latency thresholds, secure custom headers.
 - Dashboard with current status, latency history, uptime and incident timeline.
 - Confirmed incident creation/resolution, acknowledgement and notes.
 - Email and Discord notifications, retries and delivery history.

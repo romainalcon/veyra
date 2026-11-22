@@ -5,6 +5,9 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 ## [Unreleased]
 
 ### Added
+- **POST, PUT and PATCH checks** — HTTP monitors can send a request body (up to 16 KiB, JSON validated) and basic auth credentials. Both are encrypted and never shown again after saving; they are only sent to the monitored host, never to a redirect target on another host (ADR-037).
+- **Content checks** — a keyword the response must contain, or must not contain, with a case-sensitivity option. Failures are reported as "Expected keyword not found" or "Forbidden keyword found".
+- **Latency threshold** — responses slower than the threshold are marked "Slow"; three in a row make the monitor degraded (never down), two fast responses bring it back up.
 - **Status page branding** — a logo, a favicon and an accent colour per status page. Images are checked and size-limited (no SVG). The accent colour is only used for text where it stays readable in light and dark themes (ADR-036).
 - **E-mail subscriptions** — visitors can subscribe to a status page by e-mail, once enabled in the page settings. They confirm their address first, then receive incident openings, public updates, resolutions and planned maintenance in the organization language. Every e-mail has a one-click unsubscribe link. Addresses are encrypted and never shown: page managers only see counts.
 - **Atom and RSS feeds** of public incidents and maintenance for every published page.

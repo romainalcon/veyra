@@ -13,6 +13,9 @@ enum ProbeErrorCode: string
     case TooManyRedirects = 'too_many_redirects';
     case ResponseTooLarge = 'response_too_large';
     case UnexpectedStatus = 'unexpected_status';
+    case KeywordMissing = 'keyword_missing';
+    case KeywordFound = 'keyword_found';
+    case BodyUnreadable = 'body_unreadable';
     case UnexpectedError = 'unexpected_error';
     case HeartbeatFailed = 'heartbeat_failed';
     case HeartbeatMissed = 'heartbeat_missed';
@@ -47,6 +50,9 @@ enum ProbeErrorCode: string
             self::TooManyRedirects => 'Too many redirects',
             self::ResponseTooLarge => 'Response too large',
             self::UnexpectedStatus => 'Unexpected status code',
+            self::KeywordMissing => 'Expected keyword not found',
+            self::KeywordFound => 'Forbidden keyword found',
+            self::BodyUnreadable => 'Response body could not be read',
             self::UnexpectedError => 'Unexpected error',
             self::HeartbeatFailed => 'Failure reported by the job',
             self::HeartbeatMissed => 'No ping received in time',

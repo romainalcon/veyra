@@ -12,6 +12,7 @@ final readonly class ProbeResult
 {
     /**
      * @param  array<string, scalar|null>  $metadata  never contains headers, bodies or full URLs
+     * @param  bool  $slow  successful, but slower than the monitor's latency threshold (ADR-037)
      */
     public function __construct(
         public bool $success,
@@ -20,6 +21,7 @@ final readonly class ProbeResult
         public ?ProbeErrorCode $errorCode,
         public array $metadata = [],
         public ?TlsCertificate $certificate = null,
+        public bool $slow = false,
     ) {}
 
     /**

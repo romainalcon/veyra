@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $scheduled_for
  * @property CarbonImmutable $checked_at
  * @property bool $success
+ * @property bool $slow successful but above the latency threshold (ADR-037)
  * @property int|null $duration_ms
  * @property int|null $status_code
  * @property ProbeErrorCode|null $error_code
@@ -28,7 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $in_maintenance
  * @property CarbonImmutable|null $created_at
  */
-#[Fillable(['monitor_id', 'dispatch_id', 'scheduled_for', 'checked_at', 'success', 'duration_ms', 'status_code', 'error_code', 'metadata', 'in_maintenance'])]
+#[Fillable(['monitor_id', 'dispatch_id', 'scheduled_for', 'checked_at', 'success', 'slow', 'duration_ms', 'status_code', 'error_code', 'metadata', 'in_maintenance'])]
 #[UseFactory(MonitorCheckFactory::class)]
 class MonitorCheck extends Model
 {
@@ -46,6 +47,7 @@ class MonitorCheck extends Model
             'scheduled_for' => 'datetime',
             'checked_at' => 'datetime',
             'success' => 'boolean',
+            'slow' => 'boolean',
             'duration_ms' => 'integer',
             'status_code' => 'integer',
             'error_code' => ProbeErrorCode::class,

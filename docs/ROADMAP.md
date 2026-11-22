@@ -121,11 +121,11 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Tests: opt-in flow, unsubscribe tokens, no data leak for unpublished components, custom domains, translations.
 
 ## Sprint 15 — Advanced HTTP checks (1.5)
-- [ ] Response content assertion: keyword present / absent in the body, case option, read limited to the existing response cap; result recorded as a distinct failure reason.
-- [ ] Latency threshold per monitor: above it the check is DEGRADED, with the usual confirmation thresholds; no effect on DOWN logic.
-- [ ] POST/PUT/PATCH with a request body (size-limited, content type) and authentication headers / basic auth stored encrypted, redacted in logs, UI and webhook payloads.
-- [ ] SSRF rules unchanged for every method; rate limits on manual checks still apply.
-- [ ] Tests: assertions, DEGRADED transitions, encryption and redaction, validation, translations.
+- [x] Response content assertion: keyword present / absent in the body, case option, read limited to the existing response cap; result recorded as a distinct failure reason.
+- [x] Latency threshold per monitor: above it the check is DEGRADED, with the usual confirmation thresholds; no effect on DOWN logic.
+- [x] POST/PUT/PATCH with a request body (size-limited, content type) and authentication headers / basic auth stored encrypted, redacted in logs, UI and webhook payloads.
+- [x] SSRF rules unchanged for every method; rate limits on manual checks still apply.
+- [x] Tests: assertions, DEGRADED transitions, encryption and redaction, validation, translations.
 
 ## Sprint 16 — More channels and account security (1.5)
 - [ ] Notification channels: ntfy and Gotify (self-hosted friendly, server URL under the probe SSRF policy), Telegram bot, Microsoft Teams (workflow webhook), PagerDuty Events v2 (trigger / resolve with a stable dedup key).

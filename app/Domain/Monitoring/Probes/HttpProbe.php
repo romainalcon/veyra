@@ -29,7 +29,10 @@ use Throwable;
  * - redirects are followed manually and bounded;
  * - proxies from the environment are ignored;
  * - responses are capped at MAX_RESPONSE_BYTES (Content-Length and progress
- *   callbacks); V1 checks only evaluate the status code.
+ *   callbacks); the status code and, optionally, a keyword are evaluated;
+ * - custom headers, basic auth and the request body are only sent to the
+ *   monitored host; 303 (and 301/302 for methods with a body) become GET
+ *   without body, as browsers do (ADR-037).
  */
 class HttpProbe
 {
@@ -45,14 +48,32 @@ class HttpProbe
 
     public function run(MonitorHttpConfig $config, int $timeoutSeconds): ProbeResult
     {
-        return $this->probe(
+        $result = $this->probe(
             url: $config->url,
             method: $config->method,
-            headers: $config->headers(),
+            headers: $config->requestHeaders(),
             expectedStatuses: $config->expected_statuses,
             followRedirects: $config->follow_redirects,
             timeoutSeconds: $timeoutSeconds,
+            body: $config->hasBody() ? (string) $config->body_encrypted : null,
+            contentType: $config->body_content_type?->value,
+            assertion: ContentAssertion::fromConfig($config),
         );
+
+        return self::withLatencyThreshold($result, $config->latency_threshold_ms);
+    }
+
+    /**
+     * A successful check slower than the threshold is flagged `slow`; it stays
+     * successful, so it never counts towards DOWN.
+     */
+    public static function withLatencyThreshold(ProbeResult $result, ?int $thresholdMs): ProbeResult
+    {
+        if (! $result->success || $thresholdMs === null || $result->durationMs === null || $result->durationMs <= $thresholdMs) {
+            return $result;
+        }
+
+        return new ProbeResult(true, $result->durationMs, $result->statusCode, null, $result->metadata, $result->certificate, slow: true);
     }
 
     /**
@@ -65,7 +86,16 @@ class HttpProbe
         ExpectedStatuses $expectedStatuses,
         bool $followRedirects,
         int $timeoutSeconds,
+        ?string $body = null,
+        ?string $contentType = null,
+        ?ContentAssertion $assertion = null,
     ): ProbeResult {
+        if ($assertion !== null && ! self::hasHeader($headers, 'Accept-Encoding')) {
+            // Ask for an uncompressed body; gzip/deflate are still decoded if the server ignores it.
+            $headers['Accept-Encoding'] = 'identity';
+        }
+
+        $body = $method->allowsBody() ? $body : null;
         $startedAt = hrtime(true);
         $redirects = 0;
         $currentUrl = $url;
@@ -76,16 +106,22 @@ class HttpProbe
         try {
             while (true) {
                 $destination = $this->guard->inspect($currentUrl);
+                $sameHost = $destination->url->host === $originHost;
 
-                // Custom headers (often credentials) are never sent to another host.
-                $hopHeaders = $destination->url->host === $originHost ? $headers : [];
+                // Custom headers and basic auth (often credentials) are never sent to another host.
+                $hopHeaders = $sameHost ? $headers : [];
+
+                // Nor is the request body: a cross-host hop becomes a plain GET.
+                if (! $sameHost && $body !== null) {
+                    [$method, $body] = [HttpMethod::Get, null];
+                }
 
                 // Track the certificate of the monitored host itself, not of redirect targets.
                 $captureCertificate = $certificate === null
                     && $destination->url->scheme === 'https'
                     && $destination->url->host === $originHost;
 
-                $response = $this->send($destination, $method, $hopHeaders, $timeoutSeconds, $captureCertificate
+                $response = $this->send($destination, $method, $hopHeaders, $body, $contentType, $timeoutSeconds, $captureCertificate
                     ? function (TransferStats $stats) use (&$certificate): void {
                         // on_stats may fire more than once; never overwrite a parsed certificate with nothing.
                         $certificate = CertificateParser::fromCertinfo($stats->getHandlerStats()['certinfo'] ?? null) ?? $certificate;
@@ -100,6 +136,12 @@ class HttpProbe
                     }
 
                     $redirects++;
+
+                    if ($status === 303 || (in_array($status, [301, 302], true) && $method->allowsBody())) {
+                        $method = $method === HttpMethod::Head ? HttpMethod::Head : HttpMethod::Get;
+                        $body = null;
+                    }
+
                     $currentUrl = (string) UriResolver::resolve(new Uri($currentUrl), new Uri($location));
 
                     continue;
@@ -107,9 +149,13 @@ class HttpProbe
 
                 $metadata = $this->metadata($redirects, $destination, $response);
 
-                return $expectedStatuses->contains($status)
-                    ? new ProbeResult(true, $this->elapsed($startedAt), $status, null, $metadata, $certificate)
-                    : new ProbeResult(false, $this->elapsed($startedAt), $status, ProbeErrorCode::UnexpectedStatus, $metadata, $certificate);
+                if (! $expectedStatuses->contains($status)) {
+                    return new ProbeResult(false, $this->elapsed($startedAt), $status, ProbeErrorCode::UnexpectedStatus, $metadata, $certificate);
+                }
+
+                $assertionFailure = $method->hasResponseBody() ? $assertion?->evaluate($response, self::MAX_RESPONSE_BYTES) : null;
+
+                return new ProbeResult($assertionFailure === null, $this->elapsed($startedAt), $status, $assertionFailure, $metadata, $certificate);
             }
         } catch (DestinationRejected $exception) {
             return ProbeResult::failure($exception->errorCode, $this->elapsed($startedAt), null, ['redirects' => $redirects]);
@@ -154,13 +200,32 @@ class HttpProbe
     /**
      * @param  array<string, string>  $headers
      */
-    private function send(Destination $destination, HttpMethod $method, array $headers, int $timeoutSeconds, ?Closure $onStats = null): Response
+    private function send(Destination $destination, HttpMethod $method, array $headers, ?string $body, ?string $contentType, int $timeoutSeconds, ?Closure $onStats = null): Response
     {
-        return $this->http
+        $request = $this->http
             ->withOptions($this->requestOptions($destination, $timeoutSeconds, $onStats))
             ->withUserAgent($this->settings->userAgent)
-            ->withHeaders($headers)
-            ->send($method->value, $destination->url->url);
+            ->withHeaders($headers);
+
+        if ($body !== null) {
+            $request = $request->withBody($body, $contentType ?? 'text/plain');
+        }
+
+        return $request->send($method->value, $destination->url->url);
+    }
+
+    /**
+     * @param  array<string, string>  $headers
+     */
+    private static function hasHeader(array $headers, string $name): bool
+    {
+        foreach (array_keys($headers) as $header) {
+            if (strcasecmp($header, $name) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function classify(ConnectionException $exception): ProbeErrorCode

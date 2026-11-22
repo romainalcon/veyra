@@ -60,7 +60,7 @@ class ApplyMonitorState
                 ->orderByDesc('scheduled_for')
                 ->orderByDesc('id')
                 ->limit(max(self::LOOKBACK, $thresholds->window()))
-                ->get(['id', 'scheduled_for', 'checked_at', 'success', 'status_code', 'error_code', 'in_maintenance']);
+                ->get(['id', 'scheduled_for', 'checked_at', 'success', 'slow', 'status_code', 'error_code', 'in_maintenance']);
 
             $newest = $checks->first();
 
@@ -87,7 +87,8 @@ class ApplyMonitorState
 
             $checks = $checks->reject(fn (MonitorCheck $check): bool => $check->in_maintenance)->values();
             $results = array_values($checks->map(fn (MonitorCheck $check): bool => $check->success)->all());
-            $evaluation = StateEvaluator::evaluate($baseline, $results, $thresholds);
+            $slow = array_values($checks->map(fn (MonitorCheck $check): bool => $check->slow)->all());
+            $evaluation = StateEvaluator::evaluate($baseline, $results, $thresholds, $slow);
             $streak = $checks->take(max($evaluation->consecutiveFailures, $evaluation->consecutiveSuccesses));
             $streakStart = $streak->last() ?? $newest;
 
@@ -105,7 +106,8 @@ class ApplyMonitorState
                 $incident = $this->openIncident->handle($monitor, $streakStart->checked_at, $this->cause($newest));
             }
 
-            if ($evaluation->status === MonitorStatus::Up && $incident !== null) {
+            // Recovery: the confirmation streak of successes, even if they are slow (DEGRADED).
+            if ($incident !== null && $evaluation->status !== MonitorStatus::Down && $evaluation->consecutiveSuccesses >= $thresholds->upAfter) {
                 $this->resolveIncident->handle($incident, $streakStart->checked_at);
                 $incident = null;
             }

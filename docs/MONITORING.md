@@ -11,7 +11,7 @@
 ## Defaults
 - Intervals: 60, 120, 300, 600, 900, 1800, 3600 seconds.
 - HTTP timeout 10 seconds (maximum 30); up to 3 redirects.
-- Expected statuses default to HTTP 2xx; GET/HEAD only for V1.
+- Expected statuses default to HTTP 2xx; methods GET, HEAD, POST, PUT, PATCH (body only with the last three, ADR-037).
 - Confirm DOWN after 3 consecutive failed probes; UP after 2 successful probes.
 - Raw check retention: 30 days by default; daily aggregates kept separately.
 
@@ -40,7 +40,7 @@
 - **Job**: `ExecuteProbe` (1 try, 45 s timeout) skips paused/deleted monitors; `RecordProbeResult` inserts the check with a unique `dispatch_id`, so replays are no-ops.
 - **Manual checks** ("Check now") use the same outbox with `trigger = manual`.
 - **Probe**: see `app/Domain/Monitoring/Probes/HttpProbe.php`. Every hop is validated by `DestinationGuard`, the connection is pinned with `CURLOPT_RESOLVE`, redirects are followed manually (max 3), environment proxies are ignored, custom headers are dropped on cross-host redirects and responses are capped at 1 MiB.
-- **Error codes**: `invalid_url`, `forbidden_destination`, `dns_failure`, `connection_failed`, `timeout`, `tls_error`, `too_many_redirects`, `response_too_large`, `unexpected_status`, `unexpected_error`.
+- **Error codes**: `invalid_url`, `forbidden_destination`, `dns_failure`, `connection_failed`, `timeout`, `tls_error`, `too_many_redirects`, `response_too_large`, `unexpected_status`, `keyword_missing`, `keyword_found`, `body_unreadable` (Sprint 15), `unexpected_error`.
 - The UI shows the latest **raw** check; confirmed UP/DOWN states arrive in Sprint 3.
 
 ## Confirmed state (Sprint 3)
@@ -94,3 +94,10 @@
 - The type is chosen on creation and is immutable.
 - **Heartbeat**: jobs call `/ping/{token}` (GET/POST/HEAD) or `/ping/{token}/fail`. Each ping moves `next_check_at` to `ping + period + grace`; a check is recorded (dispatch `trigger = ping`) for the first successful ping of a period, the first ping after a failure, and every failure signal. One failure → DOWN, one ping → UP. Paused monitors acknowledge and ignore pings; "Check now" is not available. When the deadline is due, `HeartbeatProbe` records `heartbeat_missed` only if `scheduler_beats` shows the scheduler alive during the whole window (no gap > 180 s); otherwise nothing is recorded (UNKNOWN through stale detection, `2 × period + grace + 120 s`). Missed deadlines repeat every period while no ping arrives.
 - **TLS certificates** (HTTPS monitors, ADR-026): the probe captures the leaf certificate of the monitored host on the first HTTPS hop (`CURLOPT_CERTINFO`, never for redirect targets on other hosts); parse failures are ignored. `monitor_tls_certificates` is refreshed when the fingerprint changes or hourly. `veyra:certificates:check` (hourly) raises the most urgent threshold reached among `VEYRA_CERTIFICATE_WARNING_DAYS` (default `14,7,1`) or "expired", once per certificate and threshold, for enabled HTTP monitors, and notifies their enabled channels (`certificate_expiring` / `certificate_expired`). Expiry never opens an incident: an expired certificate already fails the TLS-verified check.
+
+## Advanced HTTP checks (Sprint 15, ADR-037)
+- **Methods and body**: POST, PUT and PATCH may send a body of at most 16 KiB with a content type from a closed list (`application/json` — validated as JSON —, `application/x-www-form-urlencoded`, `application/xml`, `text/plain`). A `Content-Type` custom header is refused when a body is set. GET and HEAD never send one; switching a monitor to them drops the stored body.
+- **Redirects**: 303, and 301/302 after a method with a body, continue as GET without body (HEAD stays HEAD); 307/308 keep the method and body on the monitored host. On a hop to another host, custom headers and basic auth are dropped as before and a body request becomes a plain GET without body.
+- **Basic auth**: user name and password, sent as `Authorization: Basic …` to the monitored host only; it cannot be combined with an `Authorization` custom header.
+- **Content assertion**: an optional keyword (≤ 255 characters) that the body must contain (`contains`) or must not contain (`not_contains`), case-insensitive by default (UTF-8 aware). It is evaluated only when the status is expected, on the body already downloaded under the 1 MiB cap. The probe sends `Accept-Encoding: identity` unless a custom header sets it; gzip/deflate answers are decoded under the same cap, other encodings or corrupt/oversized bodies fail with `body_unreadable`, never with a pass. Not available with HEAD. Failures are `keyword_missing` / `keyword_found`; neither the keyword nor the body is stored in the check.
+- **Latency threshold**: optional, 100 ms to just below the timeout. A successful check slower than it is stored with `monitor_checks.slow = true` (still `success = true`: uptime, DOWN logic and incidents ignore it). In the state machine slow checks are successes; where the result would be UP, `VEYRA_DOWN_AFTER_FAILURES` (3) slow checks in a row give DEGRADED, and leaving that DEGRADED needs `VEYRA_UP_AFTER_SUCCESSES` (2) fast checks in a row. An incident is resolved by the usual success streak even if those checks are slow. DEGRADED never opens an incident; status pages show it as "degraded".

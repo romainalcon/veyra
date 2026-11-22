@@ -48,3 +48,45 @@ test('thresholds are configurable', function () {
         ->and(evaluateState(MonitorStatus::Down, 'SS', $strict))->toBe(MonitorStatus::Down)
         ->and(evaluateState(MonitorStatus::Down, 'SSS', $strict))->toBe(MonitorStatus::Up);
 });
+
+/**
+ * @param  string  $results  newest first: "F" = fail, "S" = fast success, "L" = slow success
+ */
+function evaluateLatency(MonitorStatus $current, string $results): MonitorStatus
+{
+    $chars = str_split($results);
+
+    return StateEvaluator::evaluate(
+        $current,
+        array_map(fn (string $char): bool => $char !== 'F', $chars),
+        new StateThresholds,
+        array_map(fn (string $char): bool => $char === 'L', $chars),
+    )->status;
+}
+
+test('slow responses degrade after the usual thresholds and never confirm down', function (MonitorStatus $current, string $results, MonitorStatus $expected) {
+    expect(evaluateLatency($current, $results))->toBe($expected);
+})->with([
+    'one slow response keeps up' => [MonitorStatus::Up, 'LSS', MonitorStatus::Up],
+    'two slow responses keep up' => [MonitorStatus::Up, 'LLS', MonitorStatus::Up],
+    'three slow responses degrade' => [MonitorStatus::Up, 'LLLS', MonitorStatus::Degraded],
+    'many slow responses never go down' => [MonitorStatus::Degraded, 'LLLLLLLL', MonitorStatus::Degraded],
+    'unknown to degraded when slow' => [MonitorStatus::Unknown, 'LLL', MonitorStatus::Degraded],
+    'unknown to up on two slow responses' => [MonitorStatus::Unknown, 'LL', MonitorStatus::Up],
+    'one fast response keeps degraded' => [MonitorStatus::Degraded, 'SLLL', MonitorStatus::Degraded],
+    'two fast responses recover' => [MonitorStatus::Degraded, 'SSLLL', MonitorStatus::Up],
+    'an isolated slow response keeps degraded' => [MonitorStatus::Degraded, 'LSLLL', MonitorStatus::Degraded],
+    'slow responses recover from down' => [MonitorStatus::Down, 'LLFFF', MonitorStatus::Up],
+    'down to degraded on a slow streak' => [MonitorStatus::Down, 'LLLFFF', MonitorStatus::Degraded],
+    'failures still confirm down' => [MonitorStatus::Degraded, 'FFFLLL', MonitorStatus::Down],
+    'failure degradation recovers on a fast response' => [MonitorStatus::Degraded, 'SFF', MonitorStatus::Up],
+    'no slow flags: unchanged behaviour' => [MonitorStatus::Degraded, 'SFF', MonitorStatus::Up],
+]);
+
+test('slow successes count as successes in the streaks', function () {
+    $evaluation = StateEvaluator::evaluate(MonitorStatus::Up, [true, true, true, false], new StateThresholds, [true, true, true, false]);
+
+    expect($evaluation->status)->toBe(MonitorStatus::Degraded)
+        ->and($evaluation->consecutiveSuccesses)->toBe(3)
+        ->and($evaluation->consecutiveFailures)->toBe(0);
+});

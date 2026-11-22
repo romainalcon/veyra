@@ -83,7 +83,7 @@ test('monitor input is validated', function (array $overrides, string $field) {
     'missing name' => [['name' => ''], 'name'],
     'bad scheme' => [['url' => 'ftp://example.com'], 'url'],
     'credentials in url' => [['url' => 'https://user:pass@example.com'], 'url'],
-    'unknown method' => [['method' => 'POST'], 'method'],
+    'unknown method' => [['method' => 'DELETE'], 'method'],
     'unknown interval' => [['interval' => 30], 'interval'],
     'timeout too long' => [['timeout' => 45], 'timeout'],
     'timeout not below interval' => [['interval' => 60, 'timeout' => 60], 'timeout'],

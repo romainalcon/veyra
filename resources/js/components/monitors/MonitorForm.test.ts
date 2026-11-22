@@ -7,7 +7,16 @@ const props = {
     action: { action: '/o/acme/monitors', method: 'post' as const },
     channels: [],
     intervals: [{ value: 60, label: '1 minute' }],
-    methods: ['GET' as const, 'HEAD' as const],
+    methods: [
+        'GET' as const,
+        'HEAD' as const,
+        'POST' as const,
+        'PUT' as const,
+        'PATCH' as const,
+    ],
+    contentTypes: ['application/json', 'text/plain'],
+    keywordModes: ['contains' as const, 'not_contains' as const],
+    maxBodyBytes: 16384,
     types: [
         { value: 'http' as const, label: 'HTTP(S)' },
         { value: 'tcp' as const, label: 'TCP port' },
@@ -38,6 +47,12 @@ const tcpMonitor: MonitorDetail = {
     expected_statuses: null,
     follow_redirects: true,
     header_names: [],
+    body: null,
+    basic_auth_username: null,
+    keyword: null,
+    keyword_mode: null,
+    keyword_case_sensitive: false,
+    latency_threshold_ms: null,
     host: 'db.example.com',
     port: 22,
     heartbeat: null,
@@ -93,5 +108,70 @@ describe('MonitorForm', () => {
             (wrapper.get('input[name="host"]').element as HTMLInputElement)
                 .value,
         ).toBe('db.example.com');
+    });
+
+    it('offers a request body only for POST, PUT and PATCH', async () => {
+        const wrapper = mount(MonitorForm, { props });
+
+        expect(wrapper.find('textarea[name="body"]').exists()).toBe(false);
+        expect(wrapper.find('input[name="keyword"]').exists()).toBe(true);
+
+        await wrapper.get('select[name="method"]').setValue('POST');
+
+        expect(wrapper.find('textarea[name="body"]').exists()).toBe(true);
+        expect(wrapper.find('select[name="body_content_type"]').exists()).toBe(
+            true,
+        );
+
+        await wrapper.get('select[name="method"]').setValue('HEAD');
+
+        expect(wrapper.find('textarea[name="body"]').exists()).toBe(false);
+        expect(wrapper.find('input[name="keyword"]').exists()).toBe(false);
+    });
+
+    it('keeps the stored body and credentials when editing', async () => {
+        const httpMonitor: MonitorDetail = {
+            ...tcpMonitor,
+            type: 'http',
+            url: 'https://example.com/login',
+            method: 'POST',
+            expected_statuses: '200-299',
+            host: null,
+            port: null,
+            body: { content_type: 'application/json', bytes: 42 },
+            basic_auth_username: 'robot',
+            keyword: 'ok',
+            keyword_mode: 'contains',
+            latency_threshold_ms: 800,
+        };
+        const wrapper = mount(MonitorForm, {
+            props: { ...props, monitor: httpMonitor, submitLabel: 'Save' },
+        });
+
+        expect(
+            (wrapper.get('input[name="body_mode"]').element as HTMLInputElement)
+                .value,
+        ).toBe('keep');
+        expect(
+            (wrapper.get('input[name="auth_mode"]').element as HTMLInputElement)
+                .value,
+        ).toBe('keep');
+        expect(wrapper.find('textarea[name="body"]').exists()).toBe(false);
+        expect(wrapper.find('input[name="basic_auth_password"]').exists()).toBe(
+            false,
+        );
+        expect(wrapper.text()).toContain('robot');
+
+        await wrapper.get('[data-test="replace-body"]').trigger('click');
+        await wrapper.get('[data-test="replace-auth"]').trigger('click');
+
+        expect(
+            (wrapper.get('input[name="body_mode"]').element as HTMLInputElement)
+                .value,
+        ).toBe('replace');
+        expect(wrapper.find('textarea[name="body"]').exists()).toBe(true);
+        expect(wrapper.find('input[name="basic_auth_password"]').exists()).toBe(
+            true,
+        );
     });
 });

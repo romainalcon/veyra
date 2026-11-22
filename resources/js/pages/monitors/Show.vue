@@ -258,6 +258,46 @@ const remove = () => router.visit(destroy(params.value));
                 <dt class="text-muted-foreground">{{ t('Check') }}</dt>
                 <dd class="mt-1">{{ t('TCP connection') }}</dd>
             </div>
+            <div v-if="monitor.body">
+                <dt class="text-muted-foreground">{{ t('Request body') }}</dt>
+                <dd class="mt-1">
+                    {{
+                        t(':type, :bytes bytes', {
+                            type: monitor.body.content_type ?? '',
+                            bytes: monitor.body.bytes ?? 0,
+                        })
+                    }}
+                </dd>
+            </div>
+            <div v-if="monitor.basic_auth_username">
+                <dt class="text-muted-foreground">
+                    {{ t('Basic authentication') }}
+                </dt>
+                <dd class="mt-1">{{ monitor.basic_auth_username }}</dd>
+            </div>
+            <div v-if="monitor.keyword" class="sm:col-span-2">
+                <dt class="text-muted-foreground">{{ t('Content check') }}</dt>
+                <dd class="mt-1 break-all">
+                    {{
+                        monitor.keyword_mode === 'not_contains'
+                            ? t('Must not contain')
+                            : t('Must contain')
+                    }}
+                    <code class="font-mono">{{ monitor.keyword }}</code>
+                    <span
+                        v-if="monitor.keyword_case_sensitive"
+                        class="text-muted-foreground"
+                    >
+                        · {{ t('Case-sensitive') }}</span
+                    >
+                </dd>
+            </div>
+            <div v-if="monitor.latency_threshold_ms">
+                <dt class="text-muted-foreground">
+                    {{ t('Latency threshold') }}
+                </dt>
+                <dd class="mt-1">{{ monitor.latency_threshold_ms }} ms</dd>
+            </div>
             <div v-if="monitor.header_names.length" class="sm:col-span-4">
                 <dt class="text-muted-foreground">
                     {{ t('Custom headers') }}
