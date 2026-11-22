@@ -58,3 +58,5 @@ The paths in `deploy/vito/` (`/home/vito/veyra.example.com`, `php8.4`) are examp
 
 ## Notifications (Sprint 4)
 The Horizon workers (queue `notifications`) need outbound access to your SMTP server (`MAIL_*`) and, if Discord channels are used, to `discord.com:443`. Keep these destinations in the egress allow-list of the probe/worker hosts.
+
+Outgoing webhook channels (ADR-033) POST to hosts chosen by organizations, on the ports of `VEYRA_PROBES_ALLOWED_PORTS`: the notification workers need the same public-only egress filtering as the probe workers (block private, loopback, link-local, CGNAT, multicast, IPv6 ULA/link-local and metadata ranges).

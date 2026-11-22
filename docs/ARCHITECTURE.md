@@ -41,7 +41,7 @@ extensions/<name>/   # optional extensions cloned from their own repositories, g
 ## Queue separation
 - `probes`: HTTP checks; strict timeout and concurrency controls.
 - `incidents`: state transitions and incident events.
-- `notifications`: email and Discord delivery.
+- `notifications`: email, Discord and outgoing webhook delivery.
 - `maintenance`: aggregation and batched retention.
 
 ## Deployment

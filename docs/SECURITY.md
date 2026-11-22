@@ -34,6 +34,12 @@ Broadcasts on `private-organizations.{id}` carry identifiers and enum values onl
 - Delivery errors are stored as generic messages (HTTP status or exception class); webhook URLs, tokens and recipient addresses never reach logs or `last_error`.
 - Rate limits: channel creation 30/min, "send test" 5/min per channel.
 
+## Outgoing webhooks (Sprint 12a, ADR-033)
+- Webhook URLs get the probe SSRF policy when saved and before every send: allowed ports (`VEYRA_PROBES_ALLOWED_PORTS`), host name rules, every DNS answer checked against the forbidden IPv4/IPv6 ranges, connection pinned to the validated IP, no redirects, no proxy, 5 s timeout, response body ignored and capped at 64 KiB. HTTPS is required unless the instance allows private networks (never on the cloud edition).
+- Deliveries are signed with the Standard Webhooks scheme (HMAC-SHA256). The `whsec_` signing secret is generated server-side, stored encrypted with the channel configuration, shown once after creation or regeneration and never returned to the browser; regeneration is limited to Admins/Owners (10/min per user).
+- The UI shows only the host of a webhook URL (paths and queries often carry tokens). Payloads never contain the monitored URL or host, request headers or recipients; stored errors and logs never contain the webhook URL.
+- Notification workers now reach organization-chosen hosts: apply the probe egress filtering to the `notifications` workers as well (they run in the same Horizon service by default).
+
 ## Public status pages (Sprint 6)
 - `/status/{slug}` runs without the `web` group: no session is started and no cookie is set; the Inertia middleware for public pages shares only the instance name, version and source link. Unpublished pages are 404.
 - The payload is a whitelist (`StatusPageSnapshot`): public display names and statuses, uptime, public incident updates and maintenance title/description. Monitor IDs, names, URLs, causes, error codes, internal notes, organization slugs and user data are never published; a test asserts their absence from the rendered HTML. Public keys are per-page HMACs, not database identifiers.
