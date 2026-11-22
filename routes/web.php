@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Incidents\IncidentController;
 use App\Http\Controllers\InvitationAcceptanceController;
+use App\Http\Controllers\Maintenance\MaintenanceSeriesController;
 use App\Http\Controllers\Maintenance\MaintenanceWindowController;
 use App\Http\Controllers\Monitors\HeartbeatPingController;
 use App\Http\Controllers\Monitors\HeartbeatTokenController;
@@ -168,6 +169,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('monitors.ping-token.store');
 
             Route::get('maintenance', [MaintenanceWindowController::class, 'index'])->name('maintenance.index');
+            Route::get('maintenance/series/create', [MaintenanceSeriesController::class, 'create'])->name('maintenance.series.create');
+            Route::post('maintenance/series', [MaintenanceSeriesController::class, 'store'])
+                ->middleware('throttle:30,1')
+                ->name('maintenance.series.store');
+            Route::get('maintenance/series/{maintenanceSeries}/edit', [MaintenanceSeriesController::class, 'edit'])->name('maintenance.series.edit');
+            Route::put('maintenance/series/{maintenanceSeries}', [MaintenanceSeriesController::class, 'update'])
+                ->middleware('throttle:30,1')
+                ->name('maintenance.series.update');
+            Route::delete('maintenance/series/{maintenanceSeries}', [MaintenanceSeriesController::class, 'destroy'])
+                ->middleware('throttle:30,1')
+                ->name('maintenance.series.destroy');
             Route::get('maintenance/create', [MaintenanceWindowController::class, 'create'])->name('maintenance.create');
             Route::post('maintenance', [MaintenanceWindowController::class, 'store'])
                 ->middleware('throttle:30,1')

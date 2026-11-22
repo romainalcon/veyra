@@ -21,11 +21,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * A one-off planned maintenance window. It covers the half-open interval
+ * A planned maintenance window. It covers the half-open interval
  * [starts_at, ends_at) unless cancelled (only possible before it starts).
+ * Windows with a series_id are occurrences of a recurring series (ADR-041);
+ * cancelling one skips that occurrence.
  *
  * @property string $id
  * @property string $organization_id
+ * @property string|null $series_id
+ * @property CarbonImmutable|null $occurrence_date
  * @property string $title
  * @property string|null $description
  * @property CarbonImmutable $starts_at
@@ -37,8 +41,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property-read Organization $organization
  * @property-read Collection<int, Monitor> $monitors
  * @property-read User|null $creator
+ * @property-read MaintenanceSeries|null $series
  */
-#[Fillable(['organization_id', 'title', 'description', 'starts_at', 'ends_at', 'cancelled_at', 'created_by'])]
+#[Fillable(['organization_id', 'series_id', 'occurrence_date', 'title', 'description', 'starts_at', 'ends_at', 'cancelled_at', 'created_by'])]
 #[UseFactory(MaintenanceWindowFactory::class)]
 #[UsePolicy(MaintenanceWindowPolicy::class)]
 class MaintenanceWindow extends Model
@@ -55,6 +60,7 @@ class MaintenanceWindow extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'occurrence_date' => 'date',
         ];
     }
 
@@ -72,6 +78,14 @@ class MaintenanceWindow extends Model
     public function monitors(): BelongsToMany
     {
         return $this->belongsToMany(Monitor::class, 'maintenance_window_monitors');
+    }
+
+    /**
+     * @return BelongsTo<MaintenanceSeries, $this>
+     */
+    public function series(): BelongsTo
+    {
+        return $this->belongsTo(MaintenanceSeries::class, 'series_id');
     }
 
     /**

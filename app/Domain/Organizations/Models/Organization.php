@@ -3,6 +3,7 @@
 namespace App\Domain\Organizations\Models;
 
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Maintenance\Models\MaintenanceSeries;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Notifications\Models\NotificationChannel;
@@ -26,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $slug
  * @property string $locale
+ * @property string $timezone IANA name; recurring maintenance rules use it (ADR-041)
  * @property array<string, mixed>|null $settings
  * @property bool $require_two_factor
  * @property Carbon|null $created_at
@@ -35,9 +37,10 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, OrganizationInvitation> $invitations
  * @property-read Collection<int, Monitor> $monitors
  * @property-read Collection<int, MaintenanceWindow> $maintenanceWindows
+ * @property-read Collection<int, MaintenanceSeries> $maintenanceSeries
  * @property-read Collection<int, StatusPage> $statusPages
  */
-#[Fillable(['name', 'slug', 'locale', 'settings', 'require_two_factor'])]
+#[Fillable(['name', 'slug', 'locale', 'timezone', 'settings', 'require_two_factor'])]
 #[UseFactory(OrganizationFactory::class)]
 #[UsePolicy(OrganizationPolicy::class)]
 class Organization extends Model
@@ -50,6 +53,7 @@ class Organization extends Model
      */
     protected $attributes = [
         'locale' => 'en',
+        'timezone' => 'UTC',
         'require_two_factor' => false,
     ];
 
@@ -111,6 +115,14 @@ class Organization extends Model
     public function maintenanceWindows(): HasMany
     {
         return $this->hasMany(MaintenanceWindow::class);
+    }
+
+    /**
+     * @return HasMany<MaintenanceSeries, $this>
+     */
+    public function maintenanceSeries(): HasMany
+    {
+        return $this->hasMany(MaintenanceSeries::class);
     }
 
     /**

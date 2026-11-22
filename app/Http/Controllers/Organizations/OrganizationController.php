@@ -18,6 +18,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Presenters\IncidentPresenter;
 use App\Http\Requests\Organizations\SaveOrganizationRequest;
 use App\Models\User;
+use DateTimeZone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -115,8 +116,9 @@ class OrganizationController extends Controller
         $user = $request->user();
 
         return Inertia::render('organizations/Settings', [
-            'organization' => $organization->only(['id', 'name', 'slug', 'locale', 'require_two_factor']),
+            'organization' => $organization->only(['id', 'name', 'slug', 'locale', 'timezone', 'require_two_factor']),
             'locales' => SupportedLocales::options(),
+            'timezones' => DateTimeZone::listIdentifiers(DateTimeZone::ALL),
             'twoFactor' => [
                 'canRequire' => $user->can('requireTwoFactor', $organization),
                 'ownEnabled' => $user->hasEnabledTwoFactorAuthentication(),

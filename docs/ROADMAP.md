@@ -135,10 +135,10 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Tests: payloads per channel, retries, SSRF, 2FA enforcement and recovery, tenant isolation, translations.
 
 ## Sprint 17 — Recurring maintenance (1.6)
-- [ ] Recurring windows (daily/weekly/monthly rule, organization time zone, duration ≤ `VEYRA_MAINTENANCE_MAX_HOURS`), occurrences materialized ahead of time into the existing one-off windows (ADR-021 semantics unchanged).
-- [ ] DST-safe occurrence generation, idempotent and concurrency-safe; editing or deleting a series never alters past or running occurrences.
-- [ ] UI: create/edit series, skip one occurrence, upcoming occurrences list; status pages show the next occurrence.
-- [ ] Tests: rule expansion (DST, month ends), idempotent generation, tenant isolation, translations.
+- [x] Recurring windows (daily/weekly/monthly rule, organization time zone, duration ≤ `VEYRA_MAINTENANCE_MAX_HOURS`), occurrences materialized ahead of time into the existing one-off windows (ADR-021 semantics unchanged).
+- [x] DST-safe occurrence generation, idempotent and concurrency-safe; editing or deleting a series never alters past or running occurrences.
+- [x] UI: create/edit series, skip one occurrence, upcoming occurrences list; status pages show the next occurrence.
+- [x] Tests: rule expansion (DST, month ends), idempotent generation, tenant isolation, translations.
 
 ## Sprint 18 — DNS monitors and domain expiry (1.6)
 - [ ] `dns` `MonitorType` with its own config table: record name, type (A, AAAA, CNAME, MX, TXT, NS), optional expected values (contains / exact), timeout ≤ 30 s (ADR-024 dispatch by type).

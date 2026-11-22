@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Maintenance\Models\MaintenanceSeries;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Notifications\Models\NotificationChannel;
@@ -8,6 +9,7 @@ use App\Domain\Organizations\Models\OrganizationInvitation;
 use App\Domain\StatusPages\Models\StatusPage;
 use App\Models\User;
 use Illuminate\Routing\Route as RouteDefinition;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,6 +31,7 @@ test('every tenant route is unreachable for non-members', function () {
         'incident' => Incident::factory()->create(['monitor_id' => $monitor->id])->id,
         'notificationChannel' => NotificationChannel::factory()->create(['organization_id' => $victim->id])->id,
         'maintenanceWindow' => MaintenanceWindow::factory()->create(['organization_id' => $victim->id])->id,
+        'maintenanceSeries' => MaintenanceSeries::factory()->create(['organization_id' => $victim->id])->id,
         'statusPage' => StatusPage::factory()->create(['organization_id' => $victim->id])->id,
         'kind' => 'logo',
     ];
@@ -41,6 +44,10 @@ test('every tenant route is unreachable for non-members', function () {
     $this->actingAs($intruder);
 
     foreach ($routes as $route) {
+        // Anonymous `throttle:x,y` limits share one key per user across routes:
+        // reset them so every route is judged on tenancy, not on rate limits.
+        Cache::flush();
+
         $missing = array_diff($route->parameterNames(), array_keys($ids));
         expect($missing)->toBe([], "Unknown route parameter(s) in {$route->uri()}: add them to the sweep.");
 

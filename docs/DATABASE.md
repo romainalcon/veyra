@@ -29,8 +29,10 @@
 | tls_certificate_alerts | id, organization_id, monitor_id, fingerprint, threshold_days, not_after, created_at — unique (monitor_id, fingerprint, threshold_days) |
 | notification_deliveries | id, incident_id (nullable), certificate_alert_id (nullable), channel_id, event_type, status, attempts, sent_at |
 | monitor_daily_stats | monitor_id, day, checks_count, success_count, failure_count, latency_avg_ms |
-| maintenance_windows | id, organization_id, title, description, starts_at, ends_at, cancelled_at, created_by |
+| maintenance_windows | id, organization_id, series_id (nullable), occurrence_date (nullable), title, description, starts_at, ends_at, cancelled_at, created_by — unique (series_id, occurrence_date) |
 | maintenance_window_monitors | maintenance_window_id, monitor_id |
+| maintenance_series | id, organization_id, title, description, frequency, weekdays (json), month_day, start_time, duration_minutes, starts_on, ends_on, created_by |
+| maintenance_series_monitors | maintenance_series_id, monitor_id |
 | status_pages | id, organization_id, slug (unique), title, description, is_published, show_uptime, accent_color, subscriptions_enabled, custom_domain (unique), domain_verification_token, domain_verified_at, domain_checked_at, domain_failures |
 | status_page_components | id, status_page_id, monitor_id, display_name, group_name, position |
 | status_page_assets | id, status_page_id, kind (logo/favicon), mime, sha256, width, height, size, content (MEDIUMBLOB) |
@@ -87,3 +89,4 @@
 - `scheduler_beats` (PK `beat_at`, one row per minute) is written by `veyra:heartbeat` and purged by `veyra:history:purge` after 9 days; gap detection uses the `LAG()` window function (MariaDB 10.2+).
 - Heartbeat checks reference a `monitor_dispatches` row with `trigger = ping`; the unique `(monitor_id, scheduled_for)` key deduplicates pings within the same second.
 - Sprint 15 (ADR-037): `monitor_checks.slow` (boolean, default false) is added like `in_maintenance` (instant ADD COLUMN, not indexed). `monitor_http_configs.method` is widened to `VARCHAR(8)` for `PATCH`; the new columns are nullable or defaulted, so the migration is additive.
+- Sprint 17 (ADR-041): `organizations.timezone` (`VARCHAR(64)`, default `UTC`), `maintenance_series` and its monitor pivot are added; `maintenance_windows` gains a nullable `series_id` (FK, `ON DELETE SET NULL`) and `occurrence_date` with a unique `(series_id, occurrence_date)` key (one-off windows keep `NULL`, which MariaDB never treats as a duplicate). Additive only.

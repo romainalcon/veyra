@@ -30,9 +30,11 @@ const props = defineProps<{
         name: string;
         slug: string;
         locale: string;
+        timezone: string;
         require_two_factor: boolean;
     };
     locales: { code: string; name: string }[];
+    timezones: string[];
     twoFactor: {
         canRequire: boolean;
         ownEnabled: boolean;
@@ -42,6 +44,10 @@ const props = defineProps<{
 
 const { t, tc } = useTranslations();
 const locale = ref(props.organization.locale);
+const timezone = ref(props.organization.timezone);
+const timezoneOptions = computed(() =>
+    props.timezones.map((zone) => ({ value: zone, label: zone })),
+);
 const localeOptions = computed(() =>
     props.locales.map((option) => ({
         value: option.code,
@@ -71,7 +77,7 @@ setLayoutProps({
                 :title="t('General')"
                 :description="
                     t(
-                        'The organization name and language apply to all members.',
+                        'The organization name, language and time zone apply to all members.',
                     )
                 "
             />
@@ -130,6 +136,27 @@ setLayoutProps({
                         }}
                     </p>
                     <InputError :message="errors.locale" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="timezone">{{ t('Time zone') }}</Label>
+                    <NativeSelect
+                        id="timezone"
+                        v-model="timezone"
+                        name="timezone"
+                        class="w-full"
+                        :options="timezoneOptions"
+                        :disabled="!current.can.update"
+                        data-test="organization-timezone"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        {{
+                            t(
+                                'Recurring maintenance follows this time zone, including daylight saving time changes.',
+                            )
+                        }}
+                    </p>
+                    <InputError :message="errors.timezone" />
                 </div>
 
                 <Button
