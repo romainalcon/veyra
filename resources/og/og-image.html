@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link
+            href="https://fonts.bunny.net/css?family=inter:500,600,700,800|jetbrains-mono:500"
+            rel="stylesheet"
+        />
+        <style>
+            * {
+                margin: 0;
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                width: 1200px;
+                height: 630px;
+                overflow: hidden;
+            }
+            body {
+                font-family: Inter, system-ui, sans-serif;
+                background: #0f111a;
+                color: #f1f3f9;
+                position: relative;
+            }
+            .grid {
+                position: absolute;
+                inset: 0;
+                background-image:
+                    linear-gradient(
+                        to right,
+                        rgba(255, 255, 255, 0.06) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(255, 255, 255, 0.06) 1px,
+                        transparent 1px
+                    );
+                background-size: 48px 48px;
+                -webkit-mask-image: radial-gradient(
+                    ellipse 80% 70% at 30% 20%,
+                    #000,
+                    transparent
+                );
+            }
+            .glow {
+                position: absolute;
+                width: 900px;
+                height: 600px;
+                left: -150px;
+                top: -300px;
+                background: radial-gradient(
+                    closest-side,
+                    rgba(99, 102, 241, 0.55),
+                    transparent
+                );
+                filter: blur(20px);
+            }
+            .glow2 {
+                position: absolute;
+                width: 700px;
+                height: 500px;
+                right: -200px;
+                bottom: -250px;
+                background: radial-gradient(
+                    closest-side,
+                    rgba(192, 38, 211, 0.28),
+                    transparent
+                );
+                filter: blur(20px);
+            }
+            .wrap {
+                position: absolute;
+                inset: 0;
+                padding: 64px 80px;
+                display: flex;
+                flex-direction: column;
+            }
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                font-size: 34px;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+            }
+            h1 {
+                margin-top: 44px;
+                font-size: 62px;
+                line-height: 1.05;
+                font-weight: 600;
+                letter-spacing: -0.03em;
+                max-width: 680px;
+            }
+            h1 span {
+                color: #8b93ad;
+            }
+            p {
+                margin-top: 24px;
+                font-size: 24px;
+                color: #a3aac2;
+                max-width: 620px;
+                line-height: 1.35;
+            }
+            .foot {
+                margin-top: auto;
+                display: flex;
+                gap: 28px;
+                font-size: 19px;
+                color: #a3aac2;
+            }
+            .foot b {
+                color: #c7d2fe;
+                font-weight: 600;
+            }
+            .card {
+                position: absolute;
+                right: 64px;
+                top: 130px;
+                width: 340px;
+                background: rgba(26, 29, 42, 0.94);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 20px;
+                padding: 22px;
+                box-shadow: none;
+            }
+            .ok {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: rgba(34, 197, 94, 0.12);
+                color: #86efac;
+                border: 1px solid rgba(34, 197, 94, 0.3);
+                border-radius: 12px;
+                padding: 12px 14px;
+                font-size: 16px;
+                font-weight: 600;
+            }
+            .row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-top: 18px;
+                font-size: 17px;
+                font-weight: 600;
+            }
+            .row small {
+                display: block;
+                font-family: 'JetBrains Mono', monospace;
+                font-weight: 500;
+                font-size: 12px;
+                color: #8b93ad;
+                margin-top: 3px;
+            }
+            .badge {
+                background: #4ade80;
+                color: #0f111a;
+                font-size: 13px;
+                font-weight: 700;
+                border-radius: 999px;
+                padding: 3px 10px;
+            }
+            .bars {
+                display: flex;
+                gap: 3px;
+                margin-top: 8px;
+                height: 22px;
+            }
+            .bars i {
+                flex: 1;
+                background: #4ade80;
+                border-radius: 2px;
+            }
+            .bars i.w {
+                background: #fbbf24;
+            }
+            svg.ecg {
+                position: absolute;
+                left: 0;
+                bottom: 110px;
+                opacity: 0.3;
+            }
+            .trace {
+                display: flex;
+                align-items: center;
+                margin-top: auto;
+                margin-bottom: 22px;
+                width: 1040px;
+            }
+            .trace i {
+                flex: 1;
+                height: 1px;
+                background: rgba(255, 255, 255, 0.14);
+            }
+            .foot {
+                margin-top: 0 !important;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <div class="brand">
+                <svg width="52" height="52" viewBox="0 0 32 32">
+                    <mask id="m">
+                        <rect width="32" height="32" fill="#fff" />
+                        <path
+                            d="M6 16.5h5l2.6-7 5.2 14 2.9-8.75 1.45 1.75H26"
+                            fill="none"
+                            stroke="#000"
+                            stroke-width="2.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </mask>
+                    <rect
+                        width="32"
+                        height="32"
+                        rx="8"
+                        fill="#6366f1"
+                        mask="url(#m)"
+                    /></svg
+                >Veyra
+            </div>
+            <h1>{{h1a}} <span>{{h1b}}</span></h1>
+            <p>{{sub}}</p>
+            <div class="trace">
+                <i></i
+                ><svg width="80" height="40" viewBox="0 0 80 40" fill="none">
+                    <path
+                        d="M0 20h22l5-12 8 26 7-22 4 8h34"
+                        stroke="#818cf8"
+                        stroke-width="2.25"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    /></svg
+                ><i style="flex: 0 0 440px"></i>
+            </div>
+            <div class="foot">
+                <span><b>Open source · AGPL-3.0</b></span
+                ><span>HTTP · TCP · Heartbeats</span><span>{{f3}}</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="ok">✓ {{ok}}</div>
+            {{rows}}
+        </div>
+    </body>
+</html>
