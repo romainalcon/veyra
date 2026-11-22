@@ -15,6 +15,7 @@ use App\Http\Controllers\Notifications\WebhookSecretController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
+use App\Http\Controllers\Organizations\TwoFactorRequirementController;
 use App\Http\Controllers\StatusPages\PublicStatusPageAssetController;
 use App\Http\Controllers\StatusPages\PublicStatusPageController;
 use App\Http\Controllers\StatusPages\StatusPageAssetController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\StatusPages\StatusPageFeedController;
 use App\Http\Controllers\StatusPages\StatusPageSubscriptionController;
 use App\Http\Controllers\StatusPages\TlsCheckController;
 use App\Http\Controllers\System\HealthController;
+use App\Http\Middleware\EnsureOrganizationTwoFactor;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandlePublicInertiaRequests;
 use App\Http\Middleware\ResolveOrganization;
@@ -128,7 +130,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * Child resources are scoped to the organization via scoped bindings.
      */
     Route::prefix('o/{organization}')
-        ->middleware(ResolveOrganization::class)
+        ->middleware([ResolveOrganization::class, EnsureOrganizationTwoFactor::class])
         ->scopeBindings()
         ->name('organizations.')
         ->group(function () {
@@ -136,6 +138,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('settings', [OrganizationController::class, 'edit'])->name('edit');
             Route::patch('settings', [OrganizationController::class, 'update'])->name('update');
+            Route::put('settings/two-factor', [TwoFactorRequirementController::class, 'update'])->name('two-factor.update');
             Route::delete('/', [OrganizationController::class, 'destroy'])->name('destroy');
 
             Route::get('members', [MemberController::class, 'index'])->name('members.index');

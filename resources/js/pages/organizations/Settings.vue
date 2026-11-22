@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Form, Head, setLayoutProps, usePage } from '@inertiajs/vue3';
+import { Form, Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import OrganizationController from '@/actions/App/Http/Controllers/Organizations/OrganizationController';
+import TwoFactorRequirementController from '@/actions/App/Http/Controllers/Organizations/TwoFactorRequirementController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
@@ -20,14 +21,26 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslations } from '@/lib/i18n';
 import { edit } from '@/routes/organizations';
+import { edit as securityEdit } from '@/routes/security';
 import type { CurrentOrganization } from '@/types';
 
 const props = defineProps<{
-    organization: { id: string; name: string; slug: string; locale: string };
+    organization: {
+        id: string;
+        name: string;
+        slug: string;
+        locale: string;
+        require_two_factor: boolean;
+    };
     locales: { code: string; name: string }[];
+    twoFactor: {
+        canRequire: boolean;
+        ownEnabled: boolean;
+        membersWithout: number | null;
+    };
 }>();
 
-const { t } = useTranslations();
+const { t, tc } = useTranslations();
 const locale = ref(props.organization.locale);
 const localeOptions = computed(() =>
     props.locales.map((option) => ({
@@ -126,6 +139,82 @@ setLayoutProps({
                 >
                     {{ t('Save') }}
                 </Button>
+            </Form>
+        </section>
+
+        <section
+            v-if="twoFactor.canRequire"
+            class="space-y-6"
+            data-test="two-factor-requirement"
+        >
+            <Heading
+                variant="small"
+                :title="t('Two-factor authentication')"
+                :description="
+                    t(
+                        'Require every member to sign in with a second factor. Members without one are asked to enable it before they can open this organization.',
+                    )
+                "
+            />
+
+            <p
+                v-if="!twoFactor.ownEnabled && !organization.require_two_factor"
+                class="text-sm text-muted-foreground"
+            >
+                {{
+                    t(
+                        'Enable two-factor authentication on your own account first.',
+                    )
+                }}
+                <Link
+                    :href="securityEdit()"
+                    class="underline underline-offset-4"
+                    >{{ t('Security settings') }}</Link
+                >
+            </p>
+
+            <Form
+                v-else
+                v-bind="
+                    TwoFactorRequirementController.update.form(
+                        organization.slug,
+                    )
+                "
+                :options="{ preserveScroll: true }"
+                class="space-y-3"
+                v-slot="{ errors, processing }"
+            >
+                <input
+                    type="hidden"
+                    name="require_two_factor"
+                    :value="organization.require_two_factor ? '0' : '1'"
+                />
+                <p class="text-sm">
+                    {{
+                        organization.require_two_factor
+                            ? t(
+                                  'Two-factor authentication is required for every member.',
+                              )
+                            : tc(
+                                  ':count member would have to enable it before their next visit.|:count members would have to enable it before their next visit.',
+                                  twoFactor.membersWithout ?? 0,
+                              )
+                    }}
+                </p>
+                <Button
+                    :variant="
+                        organization.require_two_factor ? 'outline' : 'default'
+                    "
+                    :disabled="processing"
+                    data-test="toggle-two-factor-requirement"
+                >
+                    {{
+                        organization.require_two_factor
+                            ? t('Stop requiring two-factor authentication')
+                            : t('Require two-factor authentication')
+                    }}
+                </Button>
+                <InputError :message="errors.require_two_factor" />
             </Form>
         </section>
 

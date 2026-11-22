@@ -7,12 +7,27 @@ import PasswordInput from '@/components/PasswordInput.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/security';
+import {
+    confirm as confirmTwoFactor,
+    disable as disableTwoFactor,
+    enable as enableTwoFactor,
+    regenerateRecoveryCodes,
+} from '@/routes/two-factor';
+import { Input } from '@/components/ui/input';
 import { useTranslations } from '@/lib/i18n';
 
 const { t } = useTranslations();
 
 type Props = {
     passwordRules: string;
+    twoFactor: {
+        enabled: boolean;
+        pending: boolean;
+        qrCodeSvg: string | null;
+        setupKey: string | null;
+        recoveryCodes: string[] | null;
+        requiredBy: string[];
+    };
 };
 
 const props = defineProps<Props>();
@@ -108,5 +123,163 @@ setLayoutProps({
                 </Button>
             </div>
         </Form>
+        <div class="space-y-6 border-t pt-6" data-test="two-factor-section">
+            <Heading
+                variant="small"
+                :title="t('Two-factor authentication')"
+                :description="
+                    t(
+                        'Ask for a code from an authenticator app at sign-in, in addition to your password.',
+                    )
+                "
+            />
+
+            <p
+                v-if="twoFactor.requiredBy.length > 0 && !twoFactor.enabled"
+                class="rounded-md border border-status-degraded/30 bg-status-degraded-soft p-3 text-sm text-status-degraded-soft-foreground"
+                data-test="two-factor-required"
+            >
+                {{
+                    t('Required by :organizations.', {
+                        organizations: twoFactor.requiredBy.join(', '),
+                    })
+                }}
+            </p>
+
+            <template v-if="twoFactor.enabled">
+                <p class="text-sm font-medium text-status-up">
+                    {{ t('Two-factor authentication is enabled.') }}
+                </p>
+
+                <div
+                    v-if="twoFactor.recoveryCodes"
+                    class="space-y-2 rounded-md border p-4"
+                    data-test="recovery-codes"
+                >
+                    <p class="text-sm">
+                        {{
+                            t(
+                                'Store these recovery codes somewhere safe. Each one signs you in once if you lose your device; they are not shown again.',
+                            )
+                        }}
+                    </p>
+                    <ul class="grid gap-1 font-mono text-sm sm:grid-cols-2">
+                        <li v-for="code in twoFactor.recoveryCodes" :key="code">
+                            {{ code }}
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <Form
+                        v-bind="regenerateRecoveryCodes.form()"
+                        :options="{ preserveScroll: true }"
+                        v-slot="{ processing }"
+                    >
+                        <Button
+                            variant="outline"
+                            :disabled="processing"
+                            data-test="regenerate-recovery-codes"
+                        >
+                            {{ t('Regenerate recovery codes') }}
+                        </Button>
+                    </Form>
+                    <Form
+                        v-bind="disableTwoFactor.form()"
+                        :options="{ preserveScroll: true }"
+                        v-slot="{ processing }"
+                    >
+                        <Button
+                            variant="destructive"
+                            :disabled="processing"
+                            data-test="disable-two-factor"
+                        >
+                            {{ t('Disable two-factor authentication') }}
+                        </Button>
+                    </Form>
+                </div>
+                <p
+                    v-if="twoFactor.requiredBy.length > 0"
+                    class="text-xs text-muted-foreground"
+                >
+                    {{
+                        t(
+                            'Disabling it blocks your access to the organizations that require it.',
+                        )
+                    }}
+                </p>
+            </template>
+
+            <template v-else-if="twoFactor.pending">
+                <p class="text-sm">
+                    {{
+                        t(
+                            'Scan this QR code with your authenticator app, or enter the setup key, then type the code it shows.',
+                        )
+                    }}
+                </p>
+                <div class="flex flex-wrap items-start gap-6">
+                    <!-- SVG generated server-side by Fortify from the user's own secret. -->
+                    <div
+                        class="rounded-md bg-white p-2"
+                        data-test="two-factor-qr"
+                        v-html="twoFactor.qrCodeSvg"
+                    />
+                    <div class="grid gap-1 text-sm">
+                        <span class="text-muted-foreground">{{
+                            t('Setup key')
+                        }}</span>
+                        <code
+                            class="font-mono break-all"
+                            data-test="two-factor-setup-key"
+                            >{{ twoFactor.setupKey }}</code
+                        >
+                    </div>
+                </div>
+
+                <Form
+                    v-bind="confirmTwoFactor.form()"
+                    :options="{ preserveScroll: true }"
+                    error-bag="confirmTwoFactorAuthentication"
+                    reset-on-error
+                    class="flex flex-wrap items-end gap-3"
+                    v-slot="{ errors, processing }"
+                >
+                    <div class="grid gap-2">
+                        <Label for="two-factor-code">{{
+                            t('Authentication code')
+                        }}</Label>
+                        <Input
+                            id="two-factor-code"
+                            name="code"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            maxlength="6"
+                            autocomplete="one-time-code"
+                            required
+                            class="w-40"
+                        />
+                        <InputError :message="errors.code" />
+                    </div>
+                    <Button
+                        :disabled="processing"
+                        data-test="confirm-two-factor"
+                    >
+                        {{ t('Confirm') }}
+                    </Button>
+                </Form>
+            </template>
+
+            <Form
+                v-else
+                v-bind="enableTwoFactor.form()"
+                :options="{ preserveScroll: true }"
+                v-slot="{ processing }"
+            >
+                <Button :disabled="processing" data-test="enable-two-factor">
+                    {{ t('Enable two-factor authentication') }}
+                </Button>
+            </Form>
+        </div>
     </div>
 </template>

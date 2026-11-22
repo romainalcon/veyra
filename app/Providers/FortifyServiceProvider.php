@@ -72,6 +72,8 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::confirmPasswordView(fn () => Inertia::render('auth/ConfirmPassword'));
+
+        Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/TwoFactorChallenge'));
     }
 
     /**
@@ -84,5 +86,8 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($throttleKey);
         });
+
+        // Keyed by the pending login (set by Fortify before the challenge), so codes cannot be brute-forced.
+        RateLimiter::for('two-factor', fn (Request $request) => Limit::perMinute(5)->by((string) $request->session()->get('login.id')));
     }
 }

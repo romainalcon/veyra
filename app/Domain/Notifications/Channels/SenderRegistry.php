@@ -17,6 +17,11 @@ final class SenderRegistry
             ChannelType::Discord => $this->container->make(DiscordSender::class),
             ChannelType::Webhook => $this->container->make(WebhookSender::class),
             ChannelType::Slack => $this->container->make(SlackSender::class),
+            ChannelType::Ntfy => $this->container->make(NtfySender::class),
+            ChannelType::Gotify => $this->container->make(GotifySender::class),
+            ChannelType::Telegram => $this->container->make(TelegramSender::class),
+            ChannelType::Teams => $this->container->make(TeamsSender::class),
+            ChannelType::PagerDuty => $this->container->make(PagerDutySender::class),
         };
     }
 }

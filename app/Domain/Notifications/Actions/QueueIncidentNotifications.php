@@ -3,6 +3,7 @@
 namespace App\Domain\Notifications\Actions;
 
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Notifications\Enums\ChannelType;
 use App\Domain\Notifications\Enums\DeliveryStatus;
 use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Jobs\SendNotificationDelivery;
@@ -26,6 +27,8 @@ class QueueIncidentNotifications
             ->where('organization_id', $incident->organization_id)
             ->where('enabled', true)
             ->whereHas('monitors', fn ($query) => $query->where('monitors.id', $incident->monitor_id))
+            // PagerDuty runs its own escalations: reminders would only add noise (ADR-039).
+            ->when($event === NotificationEvent::Reminder, fn ($query) => $query->where('type', '!=', ChannelType::PagerDuty->value))
             ->pluck('id');
 
         $created = 0;

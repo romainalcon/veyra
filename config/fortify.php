@@ -116,6 +116,7 @@ return [
 
     'limiters' => [
         'login' => 'login',
+        'two-factor' => 'two-factor',
     ],
 
     /*
@@ -146,6 +147,11 @@ return [
         Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
+        // TOTP with recovery codes; a code must be confirmed before it is enforced (ADR-040).
+        Features::twoFactorAuthentication([
+            'confirm' => true,
+            'confirmPassword' => true,
+        ]),
     ],
 
 ];

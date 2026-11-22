@@ -4,6 +4,7 @@ namespace App\Domain\Notifications\Models;
 
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Notifications\Enums\ChannelType;
+use App\Domain\Notifications\Rules\NtfyTopicUrl;
 use App\Domain\Organizations\Models\Organization;
 use App\Policies\NotificationChannelPolicy;
 use Carbon\CarbonImmutable;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $organization_id
  * @property ChannelType $type
  * @property string $name
- * @property array{recipients?: list<string>, webhook_url?: string, signing_secret?: string} $config_encrypted
+ * @property array{recipients?: list<string>, webhook_url?: string, signing_secret?: string, token?: string|null, chat_id?: string} $config_encrypted
  * @property bool $enabled
  * @property bool $is_default
  * @property CarbonImmutable|null $created_at
@@ -67,6 +68,23 @@ class NotificationChannel extends Model
     }
 
     /**
+     * Access token (ntfy, optional), application token (Gotify), bot token
+     * (Telegram) or integration routing key (PagerDuty) — ADR-039.
+     */
+    public function token(): ?string
+    {
+        return $this->config_encrypted['token'] ?? null;
+    }
+
+    /**
+     * Telegram chat, group or channel the bot posts to.
+     */
+    public function chatId(): ?string
+    {
+        return $this->config_encrypted['chat_id'] ?? null;
+    }
+
+    /**
      * Standard Webhooks secret of a webhook channel (ADR-033).
      */
     public function signingSecret(): ?string
@@ -76,14 +94,21 @@ class NotificationChannel extends Model
 
     /**
      * Non-secret description shown in the UI. Webhook URLs often carry a
-     * token in their path or query: only the host is shown.
+     * token in their path or query: only the host is shown. Tokens and
+     * keys are never shown, only their last four characters.
      */
     public function summary(): string
     {
         return match ($this->type) {
             ChannelType::Email => trans_choice(':count recipient: :list|:count recipients: :list', count($this->recipients()), ['list' => implode(', ', $this->recipients())]),
-            ChannelType::Discord, ChannelType::Slack => (string) __('Webhook …:suffix', ['suffix' => substr((string) $this->webhookUrl(), -4)]),
-            ChannelType::Webhook => (string) __('POST to :host', ['host' => (string) parse_url((string) $this->webhookUrl(), PHP_URL_HOST)]),
+            ChannelType::Discord, ChannelType::Slack, ChannelType::Teams => (string) __('Webhook …:suffix', ['suffix' => substr((string) $this->webhookUrl(), -4)]),
+            ChannelType::Webhook, ChannelType::Gotify => (string) __('POST to :host', ['host' => (string) parse_url((string) $this->webhookUrl(), PHP_URL_HOST)]),
+            ChannelType::Ntfy => (string) __('Topic :topic on :host', [
+                'topic' => (string) (NtfyTopicUrl::parse($this->webhookUrl())['topic'] ?? ''),
+                'host' => (string) parse_url((string) $this->webhookUrl(), PHP_URL_HOST),
+            ]),
+            ChannelType::Telegram => (string) __('Chat :chat', ['chat' => (string) $this->chatId()]),
+            ChannelType::PagerDuty => (string) __('Integration key …:suffix', ['suffix' => substr((string) $this->token(), -4)]),
         };
     }
 

@@ -107,13 +107,24 @@ class OrganizationController extends Controller
         ]);
     }
 
-    public function edit(Organization $organization): Response
+    public function edit(Request $request, Organization $organization): Response
     {
         Gate::authorize('view', $organization);
 
+        /** @var User $user */
+        $user = $request->user();
+
         return Inertia::render('organizations/Settings', [
-            'organization' => $organization->only(['id', 'name', 'slug', 'locale']),
+            'organization' => $organization->only(['id', 'name', 'slug', 'locale', 'require_two_factor']),
             'locales' => SupportedLocales::options(),
+            'twoFactor' => [
+                'canRequire' => $user->can('requireTwoFactor', $organization),
+                'ownEnabled' => $user->hasEnabledTwoFactorAuthentication(),
+                // Members who would lose access: shown to Owners only, as a count.
+                'membersWithout' => $user->can('requireTwoFactor', $organization)
+                    ? $organization->members()->whereHas('user', fn ($query) => $query->whereNull('two_factor_confirmed_at'))->count()
+                    : null,
+            ],
         ]);
     }
 
