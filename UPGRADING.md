@@ -15,8 +15,13 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
-### Unreleased
+### 1.3.0
+One migration runs automatically: `add_locale_to_organizations_table` adds `organizations.locale` (default `en`, so existing organizations stay in English). The table is small; take a backup first as usual.
+- Organization language: Owners and Admins can switch an organization to French in its settings. Nothing changes until they do.
+- The deprecated `ExecuteHttpProbe` job alias is removed. Upgrading from 1.2 needs nothing. Upgrading **straight from 1.1**, let the `probes` queue drain first (stop the scheduler, wait until Horizon shows no pending `probes` jobs, then upgrade). A 1.1 job left in the queue fails once in `failed_jobs`, and its dispatch is redelivered as `ExecuteProbe` after 5 minutes: one check may be missing, never a false DOWN.
+- Optional: `VEYRA_LANDING_PAGE=true` shows a public landing page to guests on `/` (default `false`: the login page, as before).
 - Outgoing webhook channels (ADR-033) send requests from the notification workers to hosts chosen by organizations. No migration. If you filter egress per service, give the `notifications` workers the same public-only rules as the probe workers (see the deployment guides).
+- Slack channels (ADR-034) need outbound access from the `notifications` workers to `hooks.slack.com:443`.
 
 ### 1.2.0
 Four migrations run automatically: `create_monitor_tcp_configs_table`, `create_monitor_heartbeat_configs_table` (also widens `monitors.interval_seconds` to `INT UNSIGNED`), `create_scheduler_beats_table` and `create_tls_certificate_tables` (new tables; `notification_deliveries.incident_id` becomes nullable and gains a `certificate_alert_id` column). The two altered tables are small (`monitors`, and deliveries kept 90 days), but MariaDB rebuilds them: take a backup first as usual.

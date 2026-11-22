@@ -28,6 +28,11 @@ The exact open-source license, commercial license boundaries and trademark/domai
 - Monitor types: HTTP(S), TCP port and heartbeat (secret ping URL for cron jobs and workers), sharing states, incidents, notifications, analytics and status pages.
 - TLS certificate expiry warnings for HTTPS monitors (14/7/1 days and on expiry).
 
+## Added in 1.3 (Sprints 8–12)
+- Organization language (English or French) for the interface, public status pages, notifications and invitations; optional landing page.
+- Outgoing signed webhooks (Standard Webhooks) and Slack notification channels.
+- Groundwork for hosted plans and optional extensions (entitlements, extension points); the Community edition limits nothing.
+
 ## Not in V1
 Recurring maintenance windows, DNS probes, agent-based server metrics, multi-region checks, public API, billing, SSO, enterprise SLAs.
 

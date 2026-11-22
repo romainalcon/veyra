@@ -4,6 +4,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-11-22
+
 ### Added
 - **Organization language** — Owners and Admins choose the language of an organization (English or French) in its settings. Members see the organization in that language; pages outside an organization (sign-in, profile) follow the browser language. New organizations start in the language of their creator's browser (ADR-027).
 - Public status pages, including custom domains, are shown in the organization language, whatever the visitor's browser.
@@ -26,6 +28,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ### Fixed
 - Deleting an account now purges the monitoring history of the organizations deleted with it (raw checks were previously left behind).
+### Removed
+- The deprecated `ExecuteHttpProbe` job alias, announced in 1.2. Probe jobs are `ExecuteProbe` only. See `UPGRADING.md` if you upgrade straight from 1.1.
 
 ## [1.2.0] — 2026-11-21
 
@@ -83,7 +87,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/romainalcon/veyra/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/romainalcon/veyra/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/romainalcon/veyra/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/romainalcon/veyra/compare/v1.0.1...v1.0.2

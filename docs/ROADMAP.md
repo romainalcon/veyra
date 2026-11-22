@@ -58,7 +58,7 @@
 - [x] Coverage tests: every `t()`/`__()` literal and enum label must exist in `lang/fr.json`, with the same placeholders.
 - [x] Landing page on `/` for guests behind `VEYRA_LANDING_PAGE` (off by default); signed-in users keep the dashboard redirect (ADR-028).
 
-## Sprint 9 — Entitlements (1.4)
+## Sprint 9 — Entitlements (1.3)
 - [x] `Entitlements` contract with a Community implementation that limits nothing; `Quota` service locking the organization row before counting (ADR-029).
 - [x] Limits enforced on growth only: active monitors (creation, resume), members and pending invitations (invite, accept), status pages, custom domains, notification channels, minimum probe interval; per-organization raw-check retention.
 - [x] `LimitReached` rendered as a `limit` validation error and toast; `veyra:doctor` fails a cloud edition without cloud entitlements.
