@@ -3,6 +3,7 @@
 use App\Domain\Extensions\OrganizationNavigation;
 use App\Domain\Extensions\PublicNavigation;
 use App\Domain\Extensions\UserNavigation;
+use App\Domain\Identity\Contracts\Impersonation;
 use App\Domain\Monitoring\Actions\RaiseMonitorIntervals;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Jobs\PurgeMonitorHistory;
@@ -13,6 +14,7 @@ use App\Domain\Organizations\Events\OrganizationDeleting;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\StatusPages\Models\StatusPage;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
@@ -113,6 +115,33 @@ describe('user navigation', function () {
     test('refuses icons the interface cannot render', function () {
         expect(fn () => app(UserNavigation::class)->add('x', 'X', 'extension-admin-test.index', icon: 'rocket'))
             ->toThrow(InvalidArgumentException::class);
+    });
+});
+
+describe('impersonation', function () {
+    test('is never in progress on the Community edition', function () {
+        $this->actingAs($this->owner)
+            ->get(route('organizations.dashboard', $this->organization))
+            ->assertInertia(fn (Assert $page) => $page->where('auth.impersonation', null));
+    });
+
+    test('shares the impersonation an extension reports on every authenticated page', function () {
+        app()->bind(Impersonation::class, fn (): Impersonation => new class implements Impersonation
+        {
+            public function current(Request $request): ?array
+            {
+                return ['operator' => 'operator@example.com', 'stopUrl' => 'https://veyra.test/admin/impersonation/stop'];
+            }
+        });
+        $impersonation = ['operator' => 'operator@example.com', 'stopUrl' => 'https://veyra.test/admin/impersonation/stop'];
+
+        $this->actingAs($this->owner)
+            ->get(route('organizations.dashboard', $this->organization))
+            ->assertInertia(fn (Assert $page) => $page->where('auth.impersonation', $impersonation));
+
+        $this->actingAs($this->owner)
+            ->get(route('profile.edit'))
+            ->assertInertia(fn (Assert $page) => $page->where('auth.impersonation', $impersonation));
     });
 });
 

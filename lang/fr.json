@@ -745,5 +745,8 @@
     "Latency threshold": "Seuil de latence",
     "None": "Aucun",
     "Optional. Slower responses mark the monitor degraded after 3 in a row; they never make it down.": "Facultatif. Au-delà, 3 réponses lentes d’affilée rendent le moniteur dégradé ; elles ne le mettent jamais en panne.",
-    "Slow": "Lent"
+    "Slow": "Lent",
+    "You are acting as :name.": "Vous agissez en tant que :name.",
+    "Started by :operator; every change is recorded.": "Session ouverte par :operator ; chaque modification est enregistrée.",
+    "Stop impersonating": "Arrêter l’impersonation"
 }

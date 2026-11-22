@@ -6,6 +6,7 @@ use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Extensions\OrganizationNavigation;
 use App\Domain\Extensions\PublicNavigation;
 use App\Domain\Extensions\UserNavigation;
+use App\Domain\Identity\Contracts\Impersonation;
 use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationMember;
@@ -47,6 +48,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user?->only(['id', 'name', 'email', 'email_verified_at']),
                 // User menu entries contributed by optional extensions: empty on the Community edition (ADR-030).
                 'navigation' => fn (): array => $user === null ? [] : app(UserNavigation::class)->for($user),
+                // Operator acting as this user, from an optional extension: always null on the Community edition (ADR-038).
+                'impersonation' => fn (): ?array => $user === null ? null : app(Impersonation::class)->current($request),
             ],
             'organizations' => fn (): array => $user === null ? [] : $user->organizations()
                 ->orderBy('name')
