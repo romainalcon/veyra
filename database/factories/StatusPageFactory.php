@@ -29,6 +29,11 @@ class StatusPageFactory extends Factory
         ];
     }
 
+    public function withSubscriptions(): static
+    {
+        return $this->state(fn (): array => ['subscriptions_enabled' => true]);
+    }
+
     public function unpublished(): static
     {
         return $this->state(fn (): array => ['is_published' => false]);

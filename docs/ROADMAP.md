@@ -114,11 +114,11 @@
 Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's plan and ADR. The open Sprint 6 item (Caddy on a real host) is closed whenever a real host is available, before the next release at the latest.
 
 ## Sprint 14 — Status page audience (1.4)
-- [ ] Branding per status page: logo, accent colour, favicon (uploaded images validated and size-limited, served without cookies); contrast checked against the accent colour.
-- [ ] Visitor subscriptions by e-mail (double opt-in, one-click unsubscribe, rate-limited, addresses never shown) and RSS/Atom feeds for incidents and maintenance, in the organization language.
-- [ ] SVG badges (status, uptime over 24 h / 7 d / 30 d) per published component, served from the whitelisted snapshot, cacheable, no data for unpublished monitors.
-- [ ] Entitlements for subscribers and branding; Community limits nothing.
-- [ ] Tests: opt-in flow, unsubscribe tokens, no data leak for unpublished components, custom domains, translations.
+- [x] Branding per status page: logo, accent colour, favicon (uploaded images validated and size-limited, served without cookies); contrast checked against the accent colour.
+- [x] Visitor subscriptions by e-mail (double opt-in, one-click unsubscribe, rate-limited, addresses never shown) and RSS/Atom feeds for incidents and maintenance, in the organization language.
+- [x] SVG badges (status, uptime over 24 h / 7 d / 30 d) per published component, served from the whitelisted snapshot, cacheable, no data for unpublished monitors.
+- [x] Entitlements for subscribers and branding; Community limits nothing.
+- [x] Tests: opt-in flow, unsubscribe tokens, no data leak for unpublished components, custom domains, translations.
 
 ## Sprint 15 — Advanced HTTP checks (1.5)
 - [ ] Response content assertion: keyword present / absent in the body, case option, read limited to the existing response cap; result recorded as a distinct failure reason.

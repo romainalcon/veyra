@@ -3,6 +3,8 @@ import { Head, router, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { ExternalLink, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
+import StatusPageAudienceSettings from '@/components/status-pages/StatusPageAudienceSettings.vue';
+import StatusPageBrandingSettings from '@/components/status-pages/StatusPageBrandingSettings.vue';
 import StatusPageDomainSettings from '@/components/status-pages/StatusPageDomainSettings.vue';
 import StatusPageForm from '@/components/status-pages/StatusPageForm.vue';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,7 @@ import {
 } from '@/routes/organizations/status-pages';
 import type {
     CurrentOrganization,
+    StatusPageAudience,
     StatusPageDetail,
     StatusPageFormOptions,
 } from '@/types';
@@ -22,7 +25,11 @@ import { useTranslations } from '@/lib/i18n';
 const { t } = useTranslations();
 
 const props = defineProps<
-    StatusPageFormOptions & { statusPage: StatusPageDetail }
+    StatusPageFormOptions & {
+        statusPage: StatusPageDetail;
+        audience: StatusPageAudience;
+        canBrand: boolean;
+    }
 >();
 
 const page = usePage();
@@ -83,6 +90,18 @@ const remove = () => router.visit(destroy(params.value));
             :max-components="maxComponents"
             :action="update.form(params)"
             :submit-label="t('Save changes')"
+            :can-brand="canBrand"
+        />
+        <StatusPageBrandingSettings
+            :params="params"
+            :assets="audience.assets"
+            :limits="audience.limits"
+            :can-brand="canBrand"
+        />
+        <StatusPageAudienceSettings
+            :audience="audience"
+            :published="statusPage.is_published"
+            :subscriptions-enabled="statusPage.subscriptions_enabled"
         />
         <StatusPageDomainSettings
             :params="params"

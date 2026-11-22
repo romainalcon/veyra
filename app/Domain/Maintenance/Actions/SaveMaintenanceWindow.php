@@ -3,6 +3,7 @@
 namespace App\Domain\Maintenance\Actions;
 
 use App\Domain\Maintenance\DTOs\MaintenanceWindowData;
+use App\Domain\Maintenance\Events\MaintenanceWindowScheduled;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Organizations\Models\Organization;
@@ -46,6 +47,8 @@ class SaveMaintenanceWindow
                 'ends_at' => $data->endsAt,
             ];
 
+            $created = $window === null;
+
             if ($window === null) {
                 $window = $organization->maintenanceWindows()->create([...$attributes, 'created_by' => $user?->id]);
             } else {
@@ -60,6 +63,10 @@ class SaveMaintenanceWindow
                     ->pluck('id')
                     ->all(),
             );
+
+            if ($created) {
+                MaintenanceWindowScheduled::dispatch($window->id);
+            }
 
             return $window;
         });

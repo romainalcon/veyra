@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $description
  * @property bool $is_published
  * @property bool $show_uptime
+ * @property string|null $accent_color
+ * @property bool $subscriptions_enabled
  * @property string|null $custom_domain
  * @property string|null $domain_verification_token
  * @property CarbonImmutable|null $domain_verified_at
@@ -37,8 +39,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $updated_at
  * @property-read Organization $organization
  * @property-read Collection<int, StatusPageComponent> $components
+ * @property-read Collection<int, StatusPageAsset> $assets
+ * @property-read Collection<int, StatusPageSubscriber> $subscribers
  */
-#[Fillable(['organization_id', 'slug', 'title', 'description', 'is_published', 'show_uptime', 'custom_domain', 'domain_verification_token', 'domain_verified_at', 'domain_checked_at', 'domain_failures'])]
+#[Fillable(['organization_id', 'slug', 'title', 'description', 'is_published', 'show_uptime', 'accent_color', 'subscriptions_enabled', 'custom_domain', 'domain_verification_token', 'domain_verified_at', 'domain_checked_at', 'domain_failures'])]
 #[Hidden(['domain_verification_token'])]
 #[UseFactory(StatusPageFactory::class)]
 #[UsePolicy(StatusPagePolicy::class)]
@@ -60,6 +64,7 @@ class StatusPage extends Model
         return [
             'is_published' => 'boolean',
             'show_uptime' => 'boolean',
+            'subscriptions_enabled' => 'boolean',
             'domain_verified_at' => 'datetime',
             'domain_checked_at' => 'datetime',
             'domain_failures' => 'integer',
@@ -80,6 +85,22 @@ class StatusPage extends Model
     public function components(): HasMany
     {
         return $this->hasMany(StatusPageComponent::class)->orderBy('position')->orderBy('display_name');
+    }
+
+    /**
+     * @return HasMany<StatusPageAsset, $this>
+     */
+    public function assets(): HasMany
+    {
+        return $this->hasMany(StatusPageAsset::class);
+    }
+
+    /**
+     * @return HasMany<StatusPageSubscriber, $this>
+     */
+    public function subscribers(): HasMany
+    {
+        return $this->hasMany(StatusPageSubscriber::class);
     }
 
     public function hasVerifiedDomain(): bool

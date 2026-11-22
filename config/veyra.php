@@ -157,6 +157,22 @@ return [
     ],
 
     /*
+    | Status page audience (ADR-036): branding image sizes and visitor
+    | subscription limits. Subscriptions per IP and per page are hourly.
+    */
+
+    'status_pages' => [
+        'logo_max_kb' => 256,
+        'favicon_max_kb' => 64,
+        'subscriptions_per_ip_per_hour' => 5,
+        'subscriptions_per_page_per_hour' => 100,
+        'confirmation_resend_minutes' => 10,
+        'confirmation_valid_hours' => 48,
+        'unconfirmed_retention_days' => 7,
+        'announcement_retention_days' => 30,
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Instance Administrators
     |--------------------------------------------------------------------------

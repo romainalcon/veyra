@@ -10,6 +10,8 @@ use App\Domain\Extensions\UserNavigation;
 use App\Domain\Incidents\Events\IncidentAcknowledged;
 use App\Domain\Incidents\Events\IncidentOpened;
 use App\Domain\Incidents\Events\IncidentResolved;
+use App\Domain\Incidents\Events\PublicIncidentUpdatePosted;
+use App\Domain\Maintenance\Events\MaintenanceWindowScheduled;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Probes\Contracts\DnsResolver;
 use App\Domain\Monitoring\Probes\Contracts\TcpConnector;
@@ -20,6 +22,7 @@ use App\Domain\Monitoring\Probes\SystemDnsResolver;
 use App\Domain\Notifications\Listeners\QueueNotificationsOnIncidentEvent;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\StatusPages\Contracts\TxtResolver;
+use App\Domain\StatusPages\Listeners\QueueAnnouncementsOnPublicEvent;
 use App\Domain\StatusPages\Support\SystemTxtResolver;
 use App\Domain\System\Benchmark\SimulatedProbe;
 use App\Models\User;
@@ -66,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureTrustedProxies();
 
         Event::listen([IncidentOpened::class, IncidentResolved::class, IncidentAcknowledged::class], QueueNotificationsOnIncidentEvent::class);
+        Event::listen([IncidentOpened::class, IncidentResolved::class, PublicIncidentUpdatePosted::class, MaintenanceWindowScheduled::class], QueueAnnouncementsOnPublicEvent::class);
 
         // Instance administrators (VEYRA_ADMIN_EMAILS): Horizon and extension operator pages.
         Gate::define('administerInstance', fn (User $user): bool => $user->isInstanceAdministrator());
@@ -136,6 +140,10 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('status-pages', fn (Request $request): Limit => Limit::perMinute(120)->by('status-pages:'.$request->ip()));
+
+        RateLimiter::for('status-page-subscribe', fn (Request $request): Limit => Limit::perHour((int) config('veyra.status_pages.subscriptions_per_ip_per_hour', 5))
+            ->by('status-page-subscribe:'.$request->ip())
+            ->response(fn () => response()->json(['message' => __('Too many subscription requests. Please try again later.')], 429)));
 
         RateLimiter::for('status-pages-create', function (Request $request): Limit {
             $user = $request->user();

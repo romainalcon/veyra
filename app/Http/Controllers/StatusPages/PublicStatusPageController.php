@@ -27,26 +27,43 @@ class PublicStatusPageController extends Controller
 
     public function __invoke(Request $request, string $slug): Response
     {
-        $statusPage = StatusPage::query()
-            ->where('slug', $slug)
-            ->where('is_published', true)
-            ->firstOrFail();
-
-        return $this->render($request, $statusPage);
+        return $this->render($request, self::published($slug));
     }
 
-    public function render(Request $request, StatusPage $statusPage): Response
+    public function render(Request $request, StatusPage $statusPage, string $basePath = ''): Response
     {
         abort_unless($statusPage->is_published, 404);
 
-        $statusPage->loadMissing('organization:id,locale');
-        app()->setLocale(SupportedLocales::resolve($statusPage->organization->locale));
+        self::useOrganizationLocale($statusPage);
 
-        $response = Inertia::render('status/Show', ['snapshot' => $this->snapshot->for($statusPage)])
-            ->toResponse($request);
+        $basePath = $basePath === '' && $request->route()?->getName() === 'status-pages.public'
+            ? '/status/'.$statusPage->slug
+            : $basePath;
+
+        $response = Inertia::render('status/Show', [
+            'snapshot' => $this->snapshot->for($statusPage),
+            'basePath' => $basePath,
+        ])->toResponse($request);
 
         $response->headers->set('Cache-Control', self::CACHE_CONTROL);
 
         return $response;
+    }
+
+    /**
+     * A published page by slug, or 404.
+     */
+    public static function published(string $slug): StatusPage
+    {
+        return StatusPage::query()
+            ->where('slug', $slug)
+            ->where('is_published', true)
+            ->firstOrFail();
+    }
+
+    public static function useOrganizationLocale(StatusPage $statusPage): void
+    {
+        $statusPage->loadMissing('organization:id,locale');
+        app()->setLocale(SupportedLocales::resolve($statusPage->organization->locale));
     }
 }

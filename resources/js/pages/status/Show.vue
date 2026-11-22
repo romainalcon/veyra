@@ -1,15 +1,29 @@
 <script setup lang="ts">
 import { Head, usePoll } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Rss } from '@lucide/vue';
+import { computed, onBeforeUnmount, watch } from 'vue';
 import UptimeBars from '@/components/charts/UptimeBars.vue';
 import PublicStatusLabel from '@/components/status-pages/PublicStatusLabel.vue';
+import SubscribeForm from '@/components/status-pages/SubscribeForm.vue';
 import { formatUptime } from '@/lib/analytics';
 import { useTranslations } from '@/lib/i18n';
 import { formatDateTime } from '@/lib/monitoring';
 import { publicStatusStyle } from '@/lib/statusPage';
+import {
+    accentButtonStyle,
+    assetUrl,
+    brandingStyle,
+} from '@/lib/statusPageBranding';
 import type { StatusPageSnapshot } from '@/types';
 
-const props = defineProps<{ snapshot: StatusPageSnapshot }>();
+const props = withDefaults(
+    defineProps<{
+        snapshot: StatusPageSnapshot;
+        /** `/status/{slug}`, or '' on a verified custom domain. */
+        basePath?: string;
+    }>(),
+    { basePath: '' },
+);
 
 const { t } = useTranslations();
 
@@ -36,6 +50,42 @@ const pastIncidents = computed(() =>
     ),
 );
 
+const branding = computed(() => props.snapshot.page.branding);
+const rootStyle = computed(() => brandingStyle(branding.value));
+const buttonStyle = computed(() => accentButtonStyle(branding.value));
+const logoUrl = computed(() =>
+    branding.value.logo
+        ? assetUrl(props.basePath, branding.value.logo.file)
+        : null,
+);
+const feedUrl = (format: 'atom' | 'rss') => `${props.basePath}/feed.${format}`;
+
+/*
+ * The page favicon replaces the instance icons while the page is shown.
+ */
+const originalIcons = new Map<HTMLLinkElement, string>();
+
+const applyFavicon = (file: string | null) => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    document
+        .querySelectorAll<HTMLLinkElement>('link[rel~="icon"]')
+        .forEach((link) => {
+            if (!originalIcons.has(link)) {
+                originalIcons.set(link, link.href);
+            }
+
+            link.href = file
+                ? assetUrl(props.basePath, file)
+                : (originalIcons.get(link) ?? link.href);
+        });
+};
+
+watch(() => branding.value.favicon, applyFavicon, { immediate: true });
+onBeforeUnmount(() => applyFavicon(null));
+
 const updateLabel = {
     investigating: 'Investigating',
     update: 'Update',
@@ -44,10 +94,38 @@ const updateLabel = {
 </script>
 
 <template>
-    <Head :title="snapshot.page.title" />
+    <Head :title="snapshot.page.title">
+        <link
+            rel="alternate"
+            type="application/atom+xml"
+            :title="snapshot.page.title"
+            :href="feedUrl('atom')"
+        />
+        <link
+            rel="alternate"
+            type="application/rss+xml"
+            :title="snapshot.page.title"
+            :href="feedUrl('rss')"
+        />
+    </Head>
 
-    <div class="space-y-8">
+    <div class="space-y-8" :style="rootStyle" data-test="status-page">
+        <div
+            v-if="branding.accent"
+            class="h-1 rounded-full"
+            :style="{ backgroundColor: branding.accent }"
+            aria-hidden="true"
+        />
         <header class="space-y-2">
+            <img
+                v-if="logoUrl && branding.logo"
+                :src="logoUrl"
+                :alt="snapshot.page.title"
+                :width="branding.logo.width"
+                :height="branding.logo.height"
+                class="mb-4 h-10 w-auto max-w-[240px] object-contain object-left"
+                data-test="page-logo"
+            />
             <h1 class="text-2xl font-semibold tracking-tight">
                 {{ snapshot.page.title }}
             </h1>
@@ -225,6 +303,28 @@ const updateLabel = {
                 </li>
             </ul>
         </section>
+
+        <SubscribeForm
+            v-if="snapshot.page.subscriptions_enabled"
+            :action="`${basePath}/subscribe`"
+            :button-style="buttonStyle"
+        />
+
+        <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <Rss class="size-4 text-muted-foreground" aria-hidden="true" />
+            <a
+                :href="feedUrl('atom')"
+                class="text-accent-text underline-offset-4 hover:underline"
+                data-test="feed-atom"
+                >{{ t('Atom feed') }}</a
+            >
+            <a
+                :href="feedUrl('rss')"
+                class="text-accent-text underline-offset-4 hover:underline"
+                data-test="feed-rss"
+                >{{ t('RSS feed') }}</a
+            >
+        </p>
 
         <p class="text-xs text-muted-foreground">
             {{

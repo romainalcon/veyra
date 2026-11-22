@@ -14,5 +14,7 @@ final readonly class StatusPageData
         public bool $isPublished,
         public bool $showUptime,
         public array $components,
+        public ?string $accentColor = null,
+        public bool $subscriptionsEnabled = false,
     ) {}
 }

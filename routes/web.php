@@ -15,9 +15,14 @@ use App\Http\Controllers\Notifications\WebhookSecretController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
+use App\Http\Controllers\StatusPages\PublicStatusPageAssetController;
 use App\Http\Controllers\StatusPages\PublicStatusPageController;
+use App\Http\Controllers\StatusPages\StatusPageAssetController;
+use App\Http\Controllers\StatusPages\StatusPageBadgeController;
 use App\Http\Controllers\StatusPages\StatusPageController;
 use App\Http\Controllers\StatusPages\StatusPageDomainController;
+use App\Http\Controllers\StatusPages\StatusPageFeedController;
+use App\Http\Controllers\StatusPages\StatusPageSubscriptionController;
 use App\Http\Controllers\StatusPages\TlsCheckController;
 use App\Http\Controllers\System\HealthController;
 use App\Http\Middleware\HandleAppearance;
@@ -41,6 +46,42 @@ Route::get('status/{slug}', PublicStatusPageController::class)
     ->withoutMiddleware(['web'])
     ->middleware(['throttle:status-pages', HandleAppearance::class, HandlePublicInertiaRequests::class])
     ->name('status-pages.public');
+
+/*
+ * Status page audience (ADR-036): feeds, badges, branding images and visitor
+ * subscriptions, as sessionless as the page itself. Verified custom domains
+ * reach the same controllers through ServeStatusPageForCustomDomain.
+ */
+Route::withoutMiddleware(['web'])->middleware('throttle:status-pages')->group(function () {
+    Route::get('status/{slug}/feed.{format}', StatusPageFeedController::class)
+        ->where(['slug' => '[a-z0-9-]{3,60}', 'format' => 'atom|rss'])
+        ->name('status-pages.feed');
+
+    Route::get('status/{slug}/badges/{component}/{badge}.svg', StatusPageBadgeController::class)
+        ->where(['slug' => '[a-z0-9-]{3,60}', 'component' => '[0-9a-f-]{36}', 'badge' => implode('|', StatusPageBadgeController::BADGES)])
+        ->name('status-pages.badge');
+
+    Route::get('status/{slug}/assets/{file}', PublicStatusPageAssetController::class)
+        ->where(['slug' => '[a-z0-9-]{3,60}', 'file' => PublicStatusPageAssetController::FILE_PATTERN])
+        ->name('status-pages.asset');
+});
+
+Route::post('status/{slug}/subscribe', [StatusPageSubscriptionController::class, 'subscribe'])
+    ->where('slug', '[a-z0-9-]{3,60}')
+    ->withoutMiddleware(['web'])
+    ->middleware('throttle:status-page-subscribe')
+    ->name('status-pages.subscribe');
+
+Route::withoutMiddleware(['web'])
+    ->middleware(['throttle:status-pages', HandleAppearance::class, HandlePublicInertiaRequests::class])
+    ->prefix('status-subscriptions/{subscriber}')
+    ->where(['subscriber' => '[0-9a-f-]{36}'])
+    ->group(function () {
+        Route::get('confirm', [StatusPageSubscriptionController::class, 'showConfirm'])->name('status-pages.subscriptions.confirm');
+        Route::post('confirm', [StatusPageSubscriptionController::class, 'confirm']);
+        Route::get('unsubscribe', [StatusPageSubscriptionController::class, 'showUnsubscribe'])->name('status-pages.subscriptions.unsubscribe');
+        Route::post('unsubscribe', [StatusPageSubscriptionController::class, 'unsubscribe']);
+    });
 
 /*
  * Heartbeat pings: no session, no cookies, no CSRF (cron jobs and scripts).
@@ -168,6 +209,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('status-pages/{statusPage}/domain/verify', [StatusPageDomainController::class, 'verify'])
                 ->middleware('throttle:10,1')
                 ->name('status-pages.domain.verify');
+            Route::get('status-pages/{statusPage}/assets/{kind}', [StatusPageAssetController::class, 'show'])
+                ->where('kind', 'logo|favicon')
+                ->name('status-pages.assets.show');
+            Route::post('status-pages/{statusPage}/assets/{kind}', [StatusPageAssetController::class, 'store'])
+                ->where('kind', 'logo|favicon')
+                ->middleware('throttle:20,1')
+                ->name('status-pages.assets.store');
+            Route::delete('status-pages/{statusPage}/assets/{kind}', [StatusPageAssetController::class, 'destroy'])
+                ->where('kind', 'logo|favicon')
+                ->name('status-pages.assets.destroy');
 
             Route::get('notification-channels', [NotificationChannelController::class, 'index'])->name('notification-channels.index');
             Route::post('notification-channels', [NotificationChannelController::class, 'store'])

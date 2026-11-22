@@ -30,6 +30,7 @@ test('every tenant route is unreachable for non-members', function () {
         'notificationChannel' => NotificationChannel::factory()->create(['organization_id' => $victim->id])->id,
         'maintenanceWindow' => MaintenanceWindow::factory()->create(['organization_id' => $victim->id])->id,
         'statusPage' => StatusPage::factory()->create(['organization_id' => $victim->id])->id,
+        'kind' => 'logo',
     ];
 
     $routes = collect(Route::getRoutes()->getRoutes())

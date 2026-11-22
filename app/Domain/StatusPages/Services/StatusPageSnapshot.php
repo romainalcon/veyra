@@ -13,17 +13,20 @@ use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Stats\MonitorSeries;
 use App\Domain\Monitoring\Stats\StatsRange;
 use App\Domain\Monitoring\Stats\UptimeCalculator;
+use App\Domain\StatusPages\Enums\AssetKind;
 use App\Domain\StatusPages\Enums\PublicComponentStatus;
 use App\Domain\StatusPages\Models\StatusPage;
+use App\Domain\StatusPages\Models\StatusPageAsset;
 use App\Domain\StatusPages\Models\StatusPageComponent;
+use App\Domain\StatusPages\Support\AccentColor;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * Builds the public representation of a status page from an explicit
- * whitelist: public display names, public statuses, uptime and public
- * incident updates only. Monitor identifiers, URLs, causes, error codes,
+ * whitelist: public display names, public statuses, uptime, public
+ * incident updates and branding only. Monitor identifiers, URLs, causes, error codes,
  * internal names and internal notes never leave this class.
  */
 class StatusPageSnapshot
@@ -35,6 +38,11 @@ class StatusPageSnapshot
     public const INCIDENT_DAYS = 14;
 
     public const MAINTENANCE_LOOKAHEAD_DAYS = 7;
+
+    /**
+     * Uptime ranges published for badges (ADR-036).
+     */
+    public const BADGE_RANGES = [StatsRange::Day, StatsRange::Week, StatsRange::Month];
 
     public function __construct(
         private readonly UptimeCalculator $uptimeCalculator,
@@ -88,8 +96,16 @@ class StatusPageSnapshot
         $monitors = $components->map(fn (StatusPageComponent $component): ?Monitor => $component->monitor)->filter()->values();
         $namesByMonitor = $components->mapWithKeys(fn (StatusPageComponent $component): array => [$component->monitor_id => $component->display_name]);
         $uptime = $statusPage->show_uptime ? $this->uptimeCalculator->forMonitors($monitors, StatsRange::Quarter, $now) : [];
+        /** @var array<string, array<string, mixed>> $badgeUptime */
+        $badgeUptime = [];
 
-        $publicComponents = $components->map(function (StatusPageComponent $component) use ($statusPage, $uptime, $now): array {
+        if ($statusPage->show_uptime) {
+            foreach (self::BADGE_RANGES as $range) {
+                $badgeUptime[$range->value] = $this->uptimeCalculator->forMonitors($monitors, $range, $now);
+            }
+        }
+
+        $publicComponents = $components->map(function (StatusPageComponent $component) use ($statusPage, $uptime, $badgeUptime, $now): array {
             /** @var Monitor $monitor */
             $monitor = $component->monitor;
             $status = PublicComponentStatus::fromMonitorStatus($monitor->enabled ? ($monitor->state->status ?? MonitorStatus::Unknown) : MonitorStatus::Unknown);
@@ -100,6 +116,9 @@ class StatusPageSnapshot
                 'group' => $component->group_name,
                 'status' => $status->value,
                 'uptime_90d' => isset($uptime[$monitor->id]) ? $uptime[$monitor->id]->uptime() : null,
+                'uptime' => $statusPage->show_uptime
+                    ? array_map(fn (array $byMonitor): ?float => isset($byMonitor[$monitor->id]) ? $byMonitor[$monitor->id]->uptime() : null, $badgeUptime)
+                    : [],
                 'days' => $statusPage->show_uptime
                     ? array_map(
                         fn (array $day): array => ['day' => $day['day'], 'uptime' => $day['uptime'], 'coverage' => $day['coverage']],
@@ -114,6 +133,8 @@ class StatusPageSnapshot
                 'title' => $statusPage->title,
                 'description' => $statusPage->description,
                 'show_uptime' => $statusPage->show_uptime,
+                'subscriptions_enabled' => $statusPage->subscriptions_enabled,
+                'branding' => $this->branding($statusPage),
             ],
             'status' => PublicComponentStatus::overall(array_values(
                 $publicComponents->map(fn (array $component): PublicComponentStatus => PublicComponentStatus::from($component['status']))->all(),
@@ -129,6 +150,27 @@ class StatusPageSnapshot
             'incidents' => $this->incidents($statusPage, $namesByMonitor, $now),
             'maintenance' => $this->maintenance($statusPage, $namesByMonitor, $now),
             'generated_at' => $now->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Accent colour decisions and branding file names (relative to the page's
+     * base path, which differs between /status/{slug} and a custom domain).
+     *
+     * @return array{accent: string|null, accent_foreground: string|null, text_light: bool, text_dark: bool, logo: array{file: string, width: int, height: int}|null, favicon: string|null}
+     */
+    private function branding(StatusPage $statusPage): array
+    {
+        $assets = $statusPage->assets()->get(['id', 'status_page_id', 'kind', 'mime', 'sha256', 'width', 'height'])->keyBy(fn (StatusPageAsset $asset): string => $asset->kind->value);
+        $accent = $statusPage->accent_color !== null && AccentColor::isValid($statusPage->accent_color)
+            ? AccentColor::fromHex($statusPage->accent_color)->toArray()
+            : ['accent' => null, 'accent_foreground' => null, 'text_light' => false, 'text_dark' => false];
+        $logo = $assets->get(AssetKind::Logo->value);
+
+        return [
+            ...$accent,
+            'logo' => $logo === null ? null : ['file' => $logo->fileName(), 'width' => $logo->width, 'height' => $logo->height],
+            'favicon' => $assets->get(AssetKind::Favicon->value)?->fileName(),
         ];
     }
 

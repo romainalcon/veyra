@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\StatusPages;
 
+use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\StatusPages\Actions\SaveStatusPage;
@@ -55,7 +56,7 @@ class StatusPageController extends Controller
         return to_route('organizations.status-pages.edit', [$organization, $statusPage]);
     }
 
-    public function edit(Organization $organization, StatusPage $statusPage): Response
+    public function edit(Organization $organization, StatusPage $statusPage, Quota $quota): Response
     {
         Gate::authorize('update', [$statusPage, $organization]);
 
@@ -64,6 +65,8 @@ class StatusPageController extends Controller
         return Inertia::render('status-pages/Edit', [
             ...$this->formOptions($organization),
             'statusPage' => StatusPagePresenter::detail($statusPage),
+            'audience' => StatusPagePresenter::audience($organization, $statusPage),
+            'canBrand' => $quota->allowsBranding($organization),
         ]);
     }
 
