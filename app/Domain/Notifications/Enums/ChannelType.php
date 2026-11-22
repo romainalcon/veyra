@@ -8,6 +8,8 @@ enum ChannelType: string
     case Discord = 'discord';
     /** Signed JSON POST to any allowed HTTPS endpoint (ADR-033). */
     case Webhook = 'webhook';
+    /** Slack incoming webhook, host allow-listed like Discord (ADR-034). */
+    case Slack = 'slack';
 
     public function label(): string
     {
@@ -15,6 +17,7 @@ enum ChannelType: string
             self::Email => 'E-mail',
             self::Discord => 'Discord',
             self::Webhook => 'Webhook',
+            self::Slack => 'Slack',
         });
     }
 }

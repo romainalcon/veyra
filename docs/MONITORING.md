@@ -63,7 +63,7 @@
 - Real time: `OrganizationUpdate` broadcasts `monitor.checked`, `monitor.state-changed` and `incident.updated` on `private-organizations.{id}` with identifiers only; the UI reloads props over HTTP (debounced), resyncs after reconnecting and polls every 30 s whenever the socket is unavailable.
 
 ## Notifications, analytics and retention (Sprint 4)
-- **Channels**: e-mail (≤ 10 recipients), Discord webhooks and signed outgoing webhooks (ADR-033), defined per organization and selected per monitor (`is_default` channels are pre-selected for new monitors).
+- **Channels**: e-mail (≤ 10 recipients), Discord webhooks, Slack incoming webhooks (ADR-034) and signed outgoing webhooks (ADR-033), defined per organization and selected per monitor (`is_default` channels are pre-selected for new monitors).
 - **Events**: incident opened, resolved, acknowledged, plus one reminder when an incident is still open and unacknowledged after `VEYRA_REMINDER_AFTER_MINUTES` (default 30, `veyra:incidents:remind` every 5 min).
 - **Delivery**: `QueueIncidentNotifications` inserts one `notification_deliveries` row per (incident, channel, event) — unique, so replays never send twice — and `SendNotificationDelivery` (queue `notifications`, unique per delivery) sends it. Transient failures (5xx, timeouts, 429 with `Retry-After`) are retried up to 5 times (30 s, 2 min, 10 min, 30 min, 1 h); permanent failures (other 4xx, invalid config) are marked `failed` immediately. History is shown per channel and per incident.
 - **Outgoing webhooks** (ADR-033): a JSON `POST` per delivery, signed with Standard Webhooks headers (`webhook-id` = delivery id, stable across retries; `webhook-timestamp`; `webhook-signature: v1,<base64 HMAC-SHA256(id.timestamp.body)>`). Payload `version: 1`:

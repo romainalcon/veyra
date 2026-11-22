@@ -6,6 +6,7 @@ use App\Domain\Monitoring\Probes\UrlPolicy;
 use App\Domain\Notifications\Enums\ChannelType;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Notifications\Rules\DiscordWebhookUrl;
+use App\Domain\Notifications\Rules\SlackWebhookUrl;
 use App\Domain\Notifications\Rules\WebhookUrl;
 use App\Domain\Organizations\Models\Organization;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -67,6 +68,7 @@ class SaveNotificationChannelRequest extends FormRequest
             'recipients.*' => ['email:rfc', 'max:255', 'distinct'],
             'webhook_url' => match ($type) {
                 ChannelType::Discord => [$this->channel() ? 'nullable' : 'required', 'string', new DiscordWebhookUrl],
+                ChannelType::Slack => [$this->channel() ? 'nullable' : 'required', 'string', new SlackWebhookUrl],
                 ChannelType::Webhook => [$this->channel() ? 'nullable' : 'required', 'string', 'max:'.UrlPolicy::MAX_LENGTH, app(WebhookUrl::class)],
                 default => ['nullable', 'prohibited'],
             },

@@ -45,7 +45,7 @@ enum NotificationEvent: string
     }
 
     /**
-     * Discord embed colour.
+     * Discord embed and Slack attachment colour.
      */
     public function color(): int
     {

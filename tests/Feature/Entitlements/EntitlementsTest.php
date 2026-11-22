@@ -300,6 +300,19 @@ describe('status pages, domains and channels', function () {
 
         expect($this->organization->notificationChannels()->count())->toBe(1);
     });
+
+    test('Slack channels count towards the notification channel limit', function () {
+        $this->entitlements->set(Feature::NotificationChannels, 1);
+        NotificationChannel::factory()->slack()->for($this->organization)->create();
+
+        $this->actingAs($this->owner)
+            ->post(route('organizations.notification-channels.store', $this->organization), [
+                'type' => 'slack', 'name' => 'Slack', 'webhook_url' => 'https://hooks.slack.com/services/T0123ABCD/B0456EFGH/abcdEFGHijklMNOPqrstUVwx',
+            ])
+            ->assertSessionHasErrors('limit');
+
+        expect($this->organization->notificationChannels()->count())->toBe(1);
+    });
 });
 
 describe('retention', function () {

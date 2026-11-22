@@ -1,4 +1,4 @@
-export type ChannelType = 'email' | 'discord' | 'webhook';
+export type ChannelType = 'email' | 'discord' | 'webhook' | 'slack';
 
 export type NotificationChannelSummary = {
     id: string;
