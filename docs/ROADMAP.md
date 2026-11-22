@@ -141,12 +141,12 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Tests: rule expansion (DST, month ends), idempotent generation, tenant isolation, translations.
 
 ## Sprint 18 — DNS monitors and domain expiry (1.6)
-- [ ] `dns` `MonitorType` with its own config table: record name, type (A, AAAA, CNAME, MX, TXT, NS), optional expected values (contains / exact), timeout ≤ 30 s (ADR-024 dispatch by type).
-- [ ] Resolver choice restricted to the system resolver or an allow-listed set of public resolvers; no arbitrary resolver IP (SSRF), answers bounded in size.
-- [ ] Per-type confirmation thresholds; resolution failures vs. mismatched answers distinguished in check results.
-- [ ] Domain expiry for HTTP and DNS monitors through RDAP (bootstrap registry, fixed endpoints, daily at most), warnings at the same thresholds and once per expiry date, like certificates (ADR-026).
-- [ ] UI: type picker entry, form, detail page with last answers and domain expiry; status pages and analytics unchanged.
-- [ ] Tests: answer matching, timeouts, resolver restrictions, RDAP parsing and failures, tenant isolation, translations; docs MONITORING/SECURITY/DECISIONS.
+- [x] `dns` `MonitorType` with its own config table: record name, type (A, AAAA, CNAME, MX, TXT, NS), optional expected values (contains / exact), timeout ≤ 30 s (ADR-024 dispatch by type).
+- [x] Resolver choice restricted to the system resolver or an allow-listed set of public resolvers; no arbitrary resolver IP (SSRF), answers bounded in size.
+- [x] Per-type confirmation thresholds; resolution failures vs. mismatched answers distinguished in check results.
+- [x] Domain expiry for HTTP and DNS monitors through RDAP (bootstrap registry, fixed endpoints, daily at most), warnings at the same thresholds and once per expiry date, like certificates (ADR-026).
+- [x] UI: type picker entry, form, detail page with last answers and domain expiry; status pages and analytics unchanged.
+- [x] Tests: answer matching, timeouts, resolver restrictions, RDAP parsing and failures, tenant isolation, translations; docs MONITORING/SECURITY/DECISIONS.
 
 ## Sprint 19 — Public API (1.7)
 - [ ] Versioned REST API (`/api/v1`) with Eloquent API Resources: monitors (CRUD, pause/resume), checks (read), incidents (read, acknowledge), maintenance windows.

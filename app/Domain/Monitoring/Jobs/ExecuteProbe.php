@@ -7,7 +7,9 @@ use App\Domain\Monitoring\Certificates\RecordTlsCertificate;
 use App\Domain\Monitoring\Enums\DispatchStatus;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
+use App\Domain\Monitoring\Models\MonitorDnsConfig;
 use App\Domain\Monitoring\Probes\ProbeRegistry;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -68,6 +70,24 @@ class ExecuteProbe implements ShouldQueue
         if ($result->certificate !== null) {
             $recordTlsCertificate->handle($monitor->id, $result->certificate);
         }
+
+        if ($result->dnsAnswers !== null) {
+            $this->recordDnsAnswers($monitor->id, $result->dnsAnswers, $dispatch->scheduled_for);
+        }
+    }
+
+    /**
+     * Keeps the answers of the newest slot only: a late result for an older
+     * slot never overwrites them.
+     *
+     * @param  list<string>  $answers
+     */
+    private function recordDnsAnswers(string $monitorId, array $answers, CarbonImmutable $scheduledFor): void
+    {
+        MonitorDnsConfig::query()
+            ->where('monitor_id', $monitorId)
+            ->where(fn ($query) => $query->whereNull('last_resolved_at')->orWhere('last_resolved_at', '<=', $scheduledFor))
+            ->update(['last_answers' => json_encode($answers), 'last_resolved_at' => $scheduledFor]);
     }
 
     /**

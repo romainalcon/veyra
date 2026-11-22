@@ -19,6 +19,9 @@ enum ProbeErrorCode: string
     case UnexpectedError = 'unexpected_error';
     case HeartbeatFailed = 'heartbeat_failed';
     case HeartbeatMissed = 'heartbeat_missed';
+    case DnsNxDomain = 'dns_nxdomain';
+    case DnsNoAnswer = 'dns_no_answer';
+    case DnsMismatch = 'dns_mismatch';
 
     /**
      * Translates a stored incident cause ("Timed out", "Unexpected status
@@ -56,6 +59,9 @@ enum ProbeErrorCode: string
             self::UnexpectedError => 'Unexpected error',
             self::HeartbeatFailed => 'Failure reported by the job',
             self::HeartbeatMissed => 'No ping received in time',
+            self::DnsNxDomain => 'Domain name does not exist',
+            self::DnsNoAnswer => 'No DNS record of this type',
+            self::DnsMismatch => 'Unexpected DNS answer',
         };
     }
 }

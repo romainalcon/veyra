@@ -4,6 +4,9 @@ namespace App\Http\Presenters;
 
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Certificates\CheckCertificateExpiry;
+use App\Domain\Monitoring\Enums\DnsMatchMode;
+use App\Domain\Monitoring\Enums\DnsRecordType;
+use App\Domain\Monitoring\Enums\DnsResolverChoice;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\KeywordMode;
@@ -83,6 +86,17 @@ final class MonitorPresenter
                 // The token is never stored in plain text: only the URL shape is shown.
                 'ping_url_prefix' => url('ping').'/',
             ],
+            'dns' => $monitor->dnsConfig === null ? null : [
+                'record_name' => $monitor->dnsConfig->record_name,
+                'record_type' => $monitor->dnsConfig->record_type->value,
+                'resolver' => $monitor->dnsConfig->resolver->value,
+                'resolver_label' => $monitor->dnsConfig->resolver->label(),
+                'expected_values' => $monitor->dnsConfig->expected_values ?? [],
+                'match_mode' => $monitor->dnsConfig->match_mode->value,
+                'last_answers' => $monitor->dnsConfig->last_answers,
+                'last_resolved_at' => $monitor->dnsConfig->last_resolved_at?->toIso8601String(),
+            ],
+            'domain' => self::domain($monitor),
             'certificate' => $monitor->type === MonitorType::Http && $monitor->tlsCertificate !== null
                 ? self::certificate($monitor->tlsCertificate)
                 : null,
@@ -111,6 +125,43 @@ final class MonitorPresenter
             'checked_at' => $certificate->checked_at->toIso8601String(),
             'days_left' => (int) floor($now->diffInDays($certificate->not_after, false)),
             'status' => match (true) {
+                $threshold === 0 => 'expired',
+                $threshold !== null => 'expiring',
+                default => 'valid',
+            },
+        ];
+    }
+
+    /**
+     * Domain registration of an HTTP or DNS monitor (ADR-043); null for
+     * other types and IP targets. A row computed for a previous host is
+     * shown as not checked yet.
+     *
+     * @return array{host: string, domain: string|null, expires_at: string|null, registrar: string|null, checked_at: string|null, error: string|null, days_left: int|null, status: 'unknown'|'valid'|'expiring'|'expired'}|null
+     */
+    public static function domain(Monitor $monitor, ?CarbonImmutable $now = null): ?array
+    {
+        $host = $monitor->domainHost();
+
+        if ($host === null) {
+            return null;
+        }
+
+        $now ??= CarbonImmutable::now();
+        $row = $monitor->domain !== null && $monitor->domain->host === $host ? $monitor->domain : null;
+        $expiresAt = $row?->expires_at;
+        $threshold = $expiresAt === null ? null : CheckCertificateExpiry::thresholdFor($expiresAt, $now, CheckCertificateExpiry::thresholds());
+
+        return [
+            'host' => $host,
+            'domain' => $row?->domain,
+            'expires_at' => $expiresAt?->toIso8601String(),
+            'registrar' => $row?->registrar,
+            'checked_at' => $row?->checked_at?->toIso8601String(),
+            'error' => $row?->last_error === null ? null : (string) __($row->last_error),
+            'days_left' => $expiresAt === null ? null : (int) floor($now->diffInDays($expiresAt, false)),
+            'status' => match (true) {
+                $expiresAt === null => 'unknown',
                 $threshold === 0 => 'expired',
                 $threshold !== null => 'expiring',
                 default => 'valid',
@@ -173,6 +224,13 @@ final class MonitorPresenter
             ], SaveMonitorRequest::CREATABLE_TYPES),
             'tcpPorts' => app(ProbeSettings::class)->tcpAllowedPorts,
             'heartbeatPeriods' => HeartbeatPeriod::options(),
+            'dnsRecordTypes' => array_map(fn (DnsRecordType $type): string => $type->value, DnsRecordType::cases()),
+            'dnsResolvers' => array_map(fn (DnsResolverChoice $resolver): array => [
+                'value' => $resolver->value,
+                'label' => $resolver->label(),
+            ], DnsResolverChoice::allowed()),
+            'dnsMatchModes' => array_map(fn (DnsMatchMode $mode): string => $mode->value, DnsMatchMode::cases()),
+            'maxDnsExpectedValues' => SaveMonitorRequest::MAX_DNS_EXPECTED_VALUES,
             'maxGraceMinutes' => SaveMonitorRequest::MAX_GRACE_MINUTES,
         ];
     }

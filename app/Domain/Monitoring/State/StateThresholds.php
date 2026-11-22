@@ -31,6 +31,11 @@ final readonly class StateThresholds
     {
         return match ($type) {
             MonitorType::Http, MonitorType::Tcp => self::fromConfig(),
+            // DNS answers are cached and propagate gradually: its own thresholds (ADR-042).
+            MonitorType::Dns => new self(
+                downAfter: max(1, (int) config('veyra.monitoring.dns_down_after_failures', 3)),
+                upAfter: max(1, (int) config('veyra.monitoring.dns_up_after_successes', 2)),
+            ),
             MonitorType::Heartbeat => new self(
                 downAfter: max(1, (int) config('veyra.monitoring.heartbeat_down_after_misses', 1)),
                 upAfter: max(1, (int) config('veyra.monitoring.heartbeat_up_after_pings', 1)),

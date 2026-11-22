@@ -46,7 +46,7 @@ class SendNotificationDelivery implements ShouldBeUnique, ShouldQueue
 
     public function handle(SenderRegistry $senders): void
     {
-        $delivery = NotificationDelivery::query()->with(['channel', 'incident', 'certificateAlert'])->find($this->deliveryId);
+        $delivery = NotificationDelivery::query()->with(['channel', 'incident', 'certificateAlert', 'domainAlert'])->find($this->deliveryId);
 
         if ($delivery === null || $delivery->status !== DeliveryStatus::Pending) {
             return;
@@ -61,6 +61,7 @@ class SendNotificationDelivery implements ShouldBeUnique, ShouldQueue
         $message = match (true) {
             $delivery->incident !== null => MessageFactory::forIncident($delivery->incident, $delivery->event_type, $delivery->id),
             $delivery->certificateAlert !== null => MessageFactory::forCertificateAlert($delivery->certificateAlert, $delivery->id),
+            $delivery->domainAlert !== null => MessageFactory::forDomainAlert($delivery->domainAlert, $delivery->id),
             default => null,
         };
 

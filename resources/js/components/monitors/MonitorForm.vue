@@ -29,6 +29,7 @@ const monitorType = ref<MonitorType>(props.monitor?.type ?? 'http');
 const isHttp = computed(() => monitorType.value === 'http');
 const isTcp = computed(() => monitorType.value === 'tcp');
 const isHeartbeat = computed(() => monitorType.value === 'heartbeat');
+const isDns = computed(() => monitorType.value === 'dns');
 const replaceHeaders = ref(!isEdit.value);
 
 const httpMethod = ref<string>(props.monitor?.method ?? 'GET');
@@ -75,6 +76,59 @@ const currentTypeLabel = computed(
     () =>
         props.types.find((option) => option.value === monitorType.value)
             ?.label ?? monitorType.value,
+);
+
+const dnsRecordType = ref<string>(props.monitor?.dns?.record_type ?? 'A');
+const dnsResolver = ref<string>(
+    props.monitor?.dns?.resolver ?? props.dnsResolvers[0]?.value ?? '',
+);
+const dnsMatchMode = ref<string>(props.monitor?.dns?.match_mode ?? 'contains');
+const dnsExpectedValues = (props.monitor?.dns?.expected_values ?? []).join(
+    '\n',
+);
+
+const dnsRecordTypeOptions = computed(() =>
+    props.dnsRecordTypes.map((value) => ({ value, label: value })),
+);
+
+const dnsResolverOptions = computed(() => {
+    const options = [...props.dnsResolvers];
+    const current = props.monitor?.dns;
+
+    // A resolver disabled by the operator stays visible on the monitor using it.
+    if (
+        current &&
+        !options.some((option) => option.value === current.resolver)
+    ) {
+        options.push({
+            value: current.resolver,
+            label: current.resolver_label,
+        });
+    }
+
+    return options;
+});
+
+const dnsMatchModeOptions = computed(() =>
+    props.dnsMatchModes.map((value) => ({
+        value,
+        label:
+            value === 'exact'
+                ? t('Answers are exactly these values')
+                : t('Answers include these values'),
+    })),
+);
+
+const dnsExpectedPlaceholder = computed(
+    () =>
+        ({
+            A: '93.184.215.14',
+            AAAA: '2606:2800:21f:cb07:6820:80da:af6b:8b2c',
+            CNAME: 'example.netlify.app',
+            MX: '10 mail.example.com',
+            TXT: 'v=spf1 include:_spf.example.com',
+            NS: 'ns1.example.net',
+        })[dnsRecordType.value] ?? '',
 );
 
 const methodOptions = computed(() =>
@@ -185,6 +239,83 @@ const methodOptions = computed(() =>
                     )
                 }}
             </p>
+        </div>
+
+        <div v-if="isDns" class="space-y-4" data-test="dns-fields">
+            <div class="grid gap-2 sm:grid-cols-[1fr_8rem]">
+                <div class="grid gap-2">
+                    <Label for="record_name">{{ t('Domain name') }}</Label>
+                    <Input
+                        id="record_name"
+                        name="record_name"
+                        required
+                        maxlength="253"
+                        placeholder="example.com"
+                        autocomplete="off"
+                        :default-value="monitor?.dns?.record_name ?? ''"
+                    />
+                    <InputError :message="errors.record_name" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="record_type">{{ t('Record type') }}</Label>
+                    <NativeSelect
+                        id="record_type"
+                        name="record_type"
+                        v-model="dnsRecordType"
+                        :options="dnsRecordTypeOptions"
+                    />
+                    <InputError :message="errors.record_type" />
+                </div>
+            </div>
+            <div class="grid gap-2">
+                <Label for="resolver">{{ t('Resolver') }}</Label>
+                <NativeSelect
+                    id="resolver"
+                    name="resolver"
+                    v-model="dnsResolver"
+                    :options="dnsResolverOptions"
+                />
+                <p class="text-xs text-muted-foreground">
+                    {{
+                        t(
+                            'Public resolvers show what visitors see; the system resolver is the one of the Veyra workers.',
+                        )
+                    }}
+                </p>
+                <InputError :message="errors.resolver" />
+            </div>
+            <div class="grid gap-2">
+                <Label for="expected_values">{{
+                    t('Expected values (optional)')
+                }}</Label>
+                <textarea
+                    id="expected_values"
+                    name="expected_values"
+                    rows="3"
+                    class="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                    :placeholder="dnsExpectedPlaceholder"
+                    :value="dnsExpectedValues"
+                />
+                <p class="text-xs text-muted-foreground">
+                    {{
+                        t(
+                            'One value per line, at most :count. Without values, any answer counts as up.',
+                            { count: maxDnsExpectedValues },
+                        )
+                    }}
+                </p>
+                <InputError :message="errors.expected_values" />
+            </div>
+            <div class="grid gap-2">
+                <Label for="match_mode">{{ t('Comparison') }}</Label>
+                <NativeSelect
+                    id="match_mode"
+                    name="match_mode"
+                    v-model="dnsMatchMode"
+                    :options="dnsMatchModeOptions"
+                />
+                <InputError :message="errors.match_mode" />
+            </div>
         </div>
 
         <div v-if="isHttp" class="grid gap-2 sm:grid-cols-[8rem_1fr]">

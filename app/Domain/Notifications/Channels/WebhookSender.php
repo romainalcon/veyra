@@ -135,6 +135,10 @@ class WebhookSender implements ChannelSender
                 'expires_at' => self::iso($message->certificateExpiresAt),
                 'issuer' => $message->certificateIssuer,
             ],
+            'domain' => $message->domainExpiresAt === null ? null : [
+                'name' => $message->domainName,
+                'expires_at' => self::iso($message->domainExpiresAt),
+            ],
             'title' => $message->title(),
             'summary' => $message->summary(),
             'url' => $message->url,

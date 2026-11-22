@@ -3,6 +3,7 @@
 namespace App\Domain\Notifications\Models;
 
 use App\Domain\Incidents\Models\Incident;
+use App\Domain\Monitoring\Models\DomainExpiryAlert;
 use App\Domain\Monitoring\Models\TlsCertificateAlert;
 use App\Domain\Notifications\Enums\DeliveryStatus;
 use App\Domain\Notifications\Enums\NotificationEvent;
@@ -16,7 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $organization_id
  * @property string|null $incident_id set for incident events
- * @property string|null $certificate_alert_id set for certificate warnings (exactly one of both)
+ * @property string|null $certificate_alert_id set for certificate warnings
+ * @property string|null $domain_alert_id set for domain warnings (exactly one subject is set)
  * @property string $channel_id
  * @property NotificationEvent $event_type
  * @property DeliveryStatus $status
@@ -27,9 +29,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $updated_at
  * @property-read Incident|null $incident
  * @property-read TlsCertificateAlert|null $certificateAlert
+ * @property-read DomainExpiryAlert|null $domainAlert
  * @property-read NotificationChannel $channel
  */
-#[Fillable(['organization_id', 'incident_id', 'certificate_alert_id', 'channel_id', 'event_type', 'status', 'attempts', 'last_error', 'sent_at'])]
+#[Fillable(['organization_id', 'incident_id', 'certificate_alert_id', 'domain_alert_id', 'channel_id', 'event_type', 'status', 'attempts', 'last_error', 'sent_at'])]
 class NotificationDelivery extends Model
 {
     use HasUuids;
@@ -64,11 +67,19 @@ class NotificationDelivery extends Model
     }
 
     /**
+     * @return BelongsTo<DomainExpiryAlert, $this>
+     */
+    public function domainAlert(): BelongsTo
+    {
+        return $this->belongsTo(DomainExpiryAlert::class, 'domain_alert_id');
+    }
+
+    /**
      * Name of the monitor the delivery is about, for delivery history.
      */
     public function monitorName(): string
     {
-        return ($this->incident !== null ? $this->incident->monitor?->name : $this->certificateAlert?->monitor?->name) ?? 'Deleted monitor';
+        return ($this->incident->monitor ?? $this->certificateAlert->monitor ?? $this->domainAlert->monitor ?? null)->name ?? 'Deleted monitor';
     }
 
     /**

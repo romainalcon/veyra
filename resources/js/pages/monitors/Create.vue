@@ -32,7 +32,7 @@ setLayoutProps({
             :title="t('New monitor')"
             :description="
                 t(
-                    'Veyra checks HTTP endpoints and TCP ports from its own workers, or waits for pings from your scheduled jobs.',
+                    'Veyra checks HTTP endpoints, TCP ports and DNS records from its own workers, or waits for pings from your scheduled jobs.',
                 )
             "
         />
@@ -47,6 +47,10 @@ setLayoutProps({
             :tcp-ports="tcpPorts"
             :heartbeat-periods="heartbeatPeriods"
             :max-grace-minutes="maxGraceMinutes"
+            :dns-record-types="dnsRecordTypes"
+            :dns-resolvers="dnsResolvers"
+            :dns-match-modes="dnsMatchModes"
+            :max-dns-expected-values="maxDnsExpectedValues"
             :action="store.form(organization.slug)"
             :submit-label="t('Create monitor')"
         />

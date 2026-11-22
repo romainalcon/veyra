@@ -5,6 +5,8 @@ import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
 import CertificatePanel from '@/components/monitors/CertificatePanel.vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
+import DnsPanel from '@/components/monitors/DnsPanel.vue';
+import DomainPanel from '@/components/monitors/DomainPanel.vue';
 import HeartbeatPanel from '@/components/monitors/HeartbeatPanel.vue';
 import MonitorStatsPanel from '@/components/monitors/MonitorStatsPanel.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
@@ -312,10 +314,14 @@ const remove = () => router.visit(destroy(params.value));
             :can-update="can.update"
         />
 
+        <DnsPanel v-if="monitor.dns" :dns="monitor.dns" />
+
         <CertificatePanel
             v-if="showCertificate"
             :certificate="monitor.certificate"
         />
+
+        <DomainPanel v-if="monitor.domain" :domain="monitor.domain" />
 
         <Deferred data="stats">
             <template #fallback>

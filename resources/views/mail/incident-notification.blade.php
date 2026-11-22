@@ -23,6 +23,12 @@
 @if ($notification->certificateIssuer)
 | {{ __('Issuer') }} | {{ $notification->certificateIssuer }} |
 @endif
+@if ($notification->domainName)
+| {{ __('Domain') }} | {{ $notification->domainName }} |
+@endif
+@if ($notification->domainExpiresAt)
+| {{ __('Domain expires') }} | {{ $notification->domainExpiresAt }} UTC |
+@endif
 </x-mail::table>
 
 <x-mail::button :url="$notification->url">

@@ -3,6 +3,9 @@
 namespace Database\Factories;
 
 use App\Domain\Monitoring\DTOs\ExpectedStatuses;
+use App\Domain\Monitoring\Enums\DnsMatchMode;
+use App\Domain\Monitoring\Enums\DnsRecordType;
+use App\Domain\Monitoring\Enums\DnsResolverChoice;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
@@ -45,6 +48,18 @@ class MonitorFactory extends Factory
                 return;
             }
 
+            if ($monitor->type === MonitorType::Dns) {
+                $monitor->dnsConfig()->create([
+                    'record_name' => 'example.com',
+                    'record_type' => DnsRecordType::A,
+                    'resolver' => DnsResolverChoice::Cloudflare,
+                    'expected_values' => null,
+                    'match_mode' => DnsMatchMode::Contains,
+                ]);
+
+                return;
+            }
+
             if ($monitor->type !== MonitorType::Http) {
                 return;
             }
@@ -82,6 +97,20 @@ class MonitorFactory extends Factory
     {
         return $this->ofType(MonitorType::Tcp)->afterCreating(function (Monitor $monitor) use ($host, $port): void {
             $monitor->tcpConfig()->update(array_filter(['host' => $host, 'port' => $port], fn (mixed $value): bool => $value !== null));
+        });
+    }
+
+    /**
+     * A DNS monitor; the default query is the A record of example.com via Cloudflare.
+     *
+     * @param  array<string, mixed>  $attributes  monitor_dns_configs columns
+     */
+    public function dns(array $attributes = []): static
+    {
+        return $this->ofType(MonitorType::Dns)->afterCreating(function (Monitor $monitor) use ($attributes): void {
+            if ($attributes !== []) {
+                $monitor->dnsConfig()->sole()->update($attributes);
+            }
         });
     }
 

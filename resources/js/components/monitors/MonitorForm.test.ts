@@ -20,11 +20,26 @@ const props = {
     types: [
         { value: 'http' as const, label: 'HTTP(S)' },
         { value: 'tcp' as const, label: 'TCP port' },
+        { value: 'dns' as const, label: 'DNS record' },
         { value: 'heartbeat' as const, label: 'Heartbeat' },
     ],
     tcpPorts: [22, 443],
     heartbeatPeriods: [{ value: 3600, label: '1 hour' }],
     maxGraceMinutes: 1440,
+    dnsRecordTypes: [
+        'A' as const,
+        'AAAA' as const,
+        'CNAME' as const,
+        'MX' as const,
+        'TXT' as const,
+        'NS' as const,
+    ],
+    dnsResolvers: [
+        { value: 'system', label: 'System resolver' },
+        { value: 'cloudflare', label: 'Cloudflare (1.1.1.1)' },
+    ],
+    dnsMatchModes: ['contains' as const, 'exact' as const],
+    maxDnsExpectedValues: 20,
     submitLabel: 'Create monitor',
 };
 
@@ -56,6 +71,8 @@ const tcpMonitor: MonitorDetail = {
     host: 'db.example.com',
     port: 22,
     heartbeat: null,
+    dns: null,
+    domain: null,
     certificate: null,
     notification_channel_ids: [],
     next_check_at: null,
@@ -95,6 +112,68 @@ describe('MonitorForm', () => {
                     .element as HTMLSelectElement
             ).value,
         ).toBe('3600');
+    });
+
+    it('asks DNS monitors for a record, a resolver and expected values', async () => {
+        const wrapper = mount(MonitorForm, { props });
+
+        await wrapper.get('[data-test="type-dns"]').setValue(true);
+
+        expect(wrapper.find('input[name="url"]').exists()).toBe(false);
+        expect(wrapper.find('input[name="host"]').exists()).toBe(false);
+        expect(wrapper.find('input[name="record_name"]').exists()).toBe(true);
+        expect(wrapper.find('input[name="timeout"]').exists()).toBe(true);
+        expect(
+            wrapper
+                .findAll('select[name="resolver"] option')
+                .map((option) => option.attributes('value')),
+        ).toEqual(['system', 'cloudflare']);
+
+        await wrapper.get('select[name="record_type"]').setValue('MX');
+
+        expect(
+            wrapper
+                .get('textarea[name="expected_values"]')
+                .attributes('placeholder'),
+        ).toBe('10 mail.example.com');
+    });
+
+    it('keeps a resolver disabled by the operator on the edited DNS monitor', () => {
+        const wrapper = mount(MonitorForm, {
+            props: {
+                ...props,
+                submitLabel: 'Save',
+                monitor: {
+                    ...tcpMonitor,
+                    type: 'dns',
+                    host: null,
+                    port: null,
+                    dns: {
+                        record_name: 'example.com',
+                        record_type: 'TXT',
+                        resolver: 'quad9',
+                        resolver_label: 'Quad9 (9.9.9.9)',
+                        expected_values: ['v=spf1 -all', 'google-site'],
+                        match_mode: 'exact',
+                        last_answers: null,
+                        last_resolved_at: null,
+                    },
+                },
+            },
+        });
+
+        expect(
+            (
+                wrapper.get('select[name="resolver"]')
+                    .element as HTMLSelectElement
+            ).value,
+        ).toBe('quad9');
+        expect(
+            (
+                wrapper.get('textarea[name="expected_values"]')
+                    .element as HTMLTextAreaElement
+            ).value,
+        ).toBe('v=spf1 -all\ngoogle-site');
     });
 
     it('keeps the type fixed when editing', () => {

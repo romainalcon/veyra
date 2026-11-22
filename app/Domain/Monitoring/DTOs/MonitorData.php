@@ -22,6 +22,7 @@ final readonly class MonitorData
         public ?HttpTargetData $http = null,
         public ?TcpTargetData $tcp = null,
         public ?HeartbeatTargetData $heartbeat = null,
+        public ?DnsTargetData $dns = null,
         public ?array $notificationChannelIds = null,
     ) {}
 }

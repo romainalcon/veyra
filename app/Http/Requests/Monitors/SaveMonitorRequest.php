@@ -3,12 +3,18 @@
 namespace App\Http\Requests\Monitors;
 
 use App\Domain\Entitlements\Services\Quota;
+use App\Domain\Monitoring\Dns\DnsAnswerMatcher;
+use App\Domain\Monitoring\Dns\DnsRecordName;
+use App\Domain\Monitoring\DTOs\DnsTargetData;
 use App\Domain\Monitoring\DTOs\ExpectedStatuses;
 use App\Domain\Monitoring\DTOs\HeartbeatTargetData;
 use App\Domain\Monitoring\DTOs\HttpTargetData;
 use App\Domain\Monitoring\DTOs\InvalidExpectedStatuses;
 use App\Domain\Monitoring\DTOs\MonitorData;
 use App\Domain\Monitoring\DTOs\TcpTargetData;
+use App\Domain\Monitoring\Enums\DnsMatchMode;
+use App\Domain\Monitoring\Enums\DnsRecordType;
+use App\Domain\Monitoring\Enums\DnsResolverChoice;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\HttpMethod;
 use App\Domain\Monitoring\Enums\KeywordMode;
@@ -59,7 +65,9 @@ class SaveMonitorRequest extends FormRequest
     /**
      * @var list<MonitorType>
      */
-    public const CREATABLE_TYPES = [MonitorType::Http, MonitorType::Tcp, MonitorType::Heartbeat];
+    public const CREATABLE_TYPES = [MonitorType::Http, MonitorType::Tcp, MonitorType::Dns, MonitorType::Heartbeat];
+
+    public const MAX_DNS_EXPECTED_VALUES = 20;
 
     public const MAX_GRACE_MINUTES = 1440;
 
@@ -85,6 +93,7 @@ class SaveMonitorRequest extends FormRequest
             'type' => $monitor instanceof Monitor ? $monitor->type->value : ($this->input('type') ?? MonitorType::Http->value),
             'host' => is_string($this->input('host')) ? trim($this->input('host')) : $this->input('host'),
             'url' => is_string($this->input('url')) ? trim($this->input('url')) : $this->input('url'),
+            'record_name' => is_string($this->input('record_name')) ? trim($this->input('record_name')) : $this->input('record_name'),
             'follow_redirects' => $this->boolean('follow_redirects'),
             'keyword_case_sensitive' => $this->boolean('keyword_case_sensitive'),
             'headers' => array_values(array_filter(
@@ -128,6 +137,15 @@ class SaveMonitorRequest extends FormRequest
                 'host' => ['required', 'string', 'max:255'],
                 'port' => ['required', 'integer', Rule::in(app(ProbeSettings::class)->tcpAllowedPorts)],
             ],
+            MonitorType::Dns => [
+                ...$common,
+                ...$probed,
+                'record_name' => ['required', 'string', 'max:253'],
+                'record_type' => ['required', Rule::enum(DnsRecordType::class)],
+                'resolver' => ['required', Rule::enum(DnsResolverChoice::class)->only(DnsResolverChoice::allowed())],
+                'expected_values' => ['nullable', 'string', 'max:'.(self::MAX_DNS_EXPECTED_VALUES * 1100)],
+                'match_mode' => ['required', Rule::enum(DnsMatchMode::class)],
+            ],
             MonitorType::Http => [
                 ...$common,
                 ...$probed,
@@ -170,6 +188,7 @@ class SaveMonitorRequest extends FormRequest
 
                 match ($this->monitorType()) {
                     MonitorType::Tcp => $this->validateTcpEndpoint($validator),
+                    MonitorType::Dns => $this->validateDnsQuery($validator),
                     MonitorType::Http => $this->validateHttpTarget($validator),
                     MonitorType::Heartbeat => null,
                 };
@@ -213,6 +232,72 @@ class SaveMonitorRequest extends FormRequest
         } catch (DestinationRejected $exception) {
             $validator->errors()->add('host', $exception->translatedMessage());
         }
+    }
+
+    /**
+     * The name follows the DNS record name policy; each expected value (one
+     * per line) must be valid for the record type.
+     */
+    private function validateDnsQuery(Validator $validator): void
+    {
+        if (! $validator->errors()->has('record_name')) {
+            try {
+                DnsRecordName::fromSettings(app(ProbeSettings::class))->normalize((string) $this->input('record_name'));
+            } catch (DestinationRejected $exception) {
+                $validator->errors()->add('record_name', $exception->translatedMessage());
+            }
+        }
+
+        $type = DnsRecordType::tryFrom((string) $this->input('record_type'));
+
+        if ($type === null || $validator->errors()->has('expected_values')) {
+            return;
+        }
+
+        $values = self::expectedLines($this->input('expected_values'));
+
+        if (count($values) > self::MAX_DNS_EXPECTED_VALUES) {
+            $validator->errors()->add('expected_values', __('Enter at most :count expected values.', ['count' => self::MAX_DNS_EXPECTED_VALUES]));
+
+            return;
+        }
+
+        foreach ($values as $value) {
+            if (DnsAnswerMatcher::normalize($type, $value) === null) {
+                $validator->errors()->add('expected_values', __('":value" is not a valid :type value.', ['value' => mb_substr($value, 0, 80), 'type' => $type->value]));
+
+                return;
+            }
+        }
+    }
+
+    /**
+     * @return list<string> non-empty, trimmed lines
+     */
+    private static function expectedLines(mixed $input): array
+    {
+        if (! is_string($input)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', preg_split('/\R/', $input) ?: []), fn (string $line): bool => $line !== ''));
+    }
+
+    private function dnsTarget(): DnsTargetData
+    {
+        $type = DnsRecordType::from((string) $this->validated('record_type'));
+        $expected = array_map(
+            fn (string $value): string => (string) DnsAnswerMatcher::normalize($type, $value),
+            self::expectedLines($this->validated('expected_values')),
+        );
+
+        return new DnsTargetData(
+            recordName: DnsRecordName::fromSettings(app(ProbeSettings::class))->normalize((string) $this->validated('record_name')),
+            recordType: $type,
+            resolver: DnsResolverChoice::from((string) $this->validated('resolver')),
+            expectedValues: array_values(array_unique($expected)),
+            matchMode: DnsMatchMode::from((string) $this->validated('match_mode')),
+        );
     }
 
     private function validateHttpTarget(Validator $validator): void
@@ -330,6 +415,7 @@ class SaveMonitorRequest extends FormRequest
             http: $type === MonitorType::Http ? $this->httpTarget() : null,
             tcp: $type === MonitorType::Tcp ? new TcpTargetData((string) $this->validated('host'), (int) $this->validated('port')) : null,
             heartbeat: $type === MonitorType::Heartbeat ? new HeartbeatTargetData((int) $this->validated('grace_minutes') * 60) : null,
+            dns: $type === MonitorType::Dns ? $this->dnsTarget() : null,
             notificationChannelIds: $this->boolean('notification_channels_submitted')
                 ? array_values(array_map('strval', (array) $this->validated('notification_channel_ids', [])))
                 : null,

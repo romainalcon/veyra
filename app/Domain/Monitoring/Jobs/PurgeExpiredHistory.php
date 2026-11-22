@@ -87,6 +87,9 @@ class PurgeExpiredHistory implements ShouldBeUnique, ShouldQueue
         $this->purgeInBatches(fn () => DB::table('tls_certificate_alerts')
             ->where('created_at', '<', $now->subDays(self::DELIVERY_RETENTION_DAYS)), $startedAt);
 
+        $this->purgeInBatches(fn () => DB::table('domain_expiry_alerts')
+            ->where('created_at', '<', $now->subDays(self::DELIVERY_RETENTION_DAYS)), $startedAt);
+
         // Status page audience (ADR-036): unconfirmed subscriptions and old announcements.
         $this->purgeInBatches(fn () => DB::table('status_page_subscribers')
             ->whereNull('confirmed_at')

@@ -16,7 +16,7 @@ use Throwable;
  * alert through a stable dedup key: opening triggers it, acknowledgement
  * acknowledges it and recovery resolves it, so retries and replays never
  * create duplicates. Reminders are never queued for PagerDuty, which runs
- * its own escalations. Certificate warnings trigger an alert of their own;
+ * its own escalations. Certificate and domain warnings trigger an alert of their own;
  * a test triggers then resolves a throwaway alert.
  */
 class PagerDutySender implements ChannelSender
@@ -92,8 +92,8 @@ class PagerDutySender implements ChannelSender
                 'source' => mb_substr($message->monitorName, 0, 255),
                 'severity' => match ($message->event) {
                     NotificationEvent::Opened => 'critical',
-                    NotificationEvent::CertificateExpired => 'error',
-                    NotificationEvent::CertificateExpiring => 'warning',
+                    NotificationEvent::CertificateExpired, NotificationEvent::DomainExpired => 'error',
+                    NotificationEvent::CertificateExpiring, NotificationEvent::DomainExpiring => 'warning',
                     default => 'info',
                 },
                 'timestamp' => CarbonImmutable::parse($message->occurredAt ?? 'now', 'UTC')->toIso8601ZuluString(),

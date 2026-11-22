@@ -4,7 +4,13 @@ export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH';
 
 export type KeywordMode = 'contains' | 'not_contains';
 
-export type MonitorType = 'http' | 'tcp' | 'heartbeat';
+export type MonitorType = 'http' | 'tcp' | 'dns' | 'heartbeat';
+
+export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'NS';
+
+export type DnsMatchMode = 'contains' | 'exact';
+
+export type DnsResolverOption = { value: string; label: string };
 
 export type MonitorTypeOption = { value: MonitorType; label: string };
 
@@ -57,6 +63,33 @@ export type MonitorCertificate = {
     status: CertificateStatus;
 };
 
+/** Query of a DNS monitor and the last answers received (bounded). */
+export type MonitorDns = {
+    record_name: string;
+    record_type: DnsRecordType;
+    resolver: string;
+    resolver_label: string;
+    expected_values: string[];
+    match_mode: DnsMatchMode;
+    /** Null until a name server answered; non-public addresses are redacted. */
+    last_answers: string[] | null;
+    last_resolved_at: string | null;
+};
+
+export type DomainStatus = 'unknown' | 'valid' | 'expiring' | 'expired';
+
+/** Registration expiry of the monitored domain, read through RDAP. */
+export type MonitorDomain = {
+    host: string;
+    domain: string | null;
+    expires_at: string | null;
+    registrar: string | null;
+    checked_at: string | null;
+    error: string | null;
+    days_left: number | null;
+    status: DomainStatus;
+};
+
 export type MonitorDetail = MonitorSummary & {
     timeout_seconds: number;
     expected_statuses: string | null;
@@ -77,6 +110,8 @@ export type MonitorDetail = MonitorSummary & {
         last_ping_failed: boolean;
         ping_url_prefix: string;
     } | null;
+    dns: MonitorDns | null;
+    domain: MonitorDomain | null;
     certificate: MonitorCertificate | null;
     notification_channel_ids: string[];
     next_check_at: string | null;
@@ -96,6 +131,10 @@ export type MonitorFormOptions = {
     tcpPorts: number[];
     heartbeatPeriods: IntervalOption[];
     maxGraceMinutes: number;
+    dnsRecordTypes: DnsRecordType[];
+    dnsResolvers: DnsResolverOption[];
+    dnsMatchModes: DnsMatchMode[];
+    maxDnsExpectedValues: number;
 };
 
 export type PaginationLink = {
