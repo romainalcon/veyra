@@ -31,8 +31,13 @@ The exact open-source license, commercial license boundaries and trademark/domai
 ## Added in 1.3 (Sprints 8–12)
 - Organization language (English or French) for the interface, public status pages, notifications and invitations; optional landing page.
 - Outgoing signed webhooks (Standard Webhooks) and Slack notification channels.
-- ntfy, Gotify, Telegram, Microsoft Teams and PagerDuty notification channels; two-factor authentication, which Owners can require for their organization.
 - Groundwork for hosted plans and optional extensions (entitlements, extension points); the Community edition limits nothing.
+
+## Added in 1.5 (Sprints 13–16)
+- Visual identity (light and dark themes, accessible status colours); public status pages stay neutral.
+- Status page branding, e-mail subscriptions, Atom/RSS feeds and SVG badges.
+- Advanced HTTP checks: POST/PUT/PATCH with a body and basic auth, keyword assertions, latency threshold (degraded).
+- ntfy, Gotify, Telegram, Microsoft Teams and PagerDuty notification channels; two-factor authentication, which Owners can require for their organization.
 
 ## Not in V1
 Recurring maintenance windows, DNS probes, agent-based server metrics, multi-region checks, public API, billing, SSO, enterprise SLAs.

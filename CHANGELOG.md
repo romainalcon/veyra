@@ -4,6 +4,10 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-11-22
+
+1.4 was not released on its own: this release includes the planned 1.4 work (visual identity, status page audience) and the 1.5 work (advanced HTTP checks, more channels, two-factor authentication).
+
 ### Added
 - **ntfy and Gotify** — push notifications to ntfy.sh or your own ntfy or Gotify server, with an optional access token. Server addresses follow the same network safety rules as monitored URLs (ADR-039).
 - **Telegram** — a bot posts incidents, certificate warnings and tests to a chat, group or channel.
@@ -109,7 +113,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/romainalcon/veyra/compare/v1.3.0...v1.5.0
 [1.3.0]: https://github.com/romainalcon/veyra/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/romainalcon/veyra/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/romainalcon/veyra/compare/v1.0.2...v1.1.0
