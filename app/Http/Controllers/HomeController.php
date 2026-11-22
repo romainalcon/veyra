@@ -29,6 +29,26 @@ class HomeController extends Controller
         return Inertia::render('Welcome', [
             'canRegister' => $registration->isPublic(),
             'sourceUrl' => config('veyra.source_url'),
-        ]);
+        ])->withViewData(['meta' => $this->meta()]);
+    }
+
+    /**
+     * Server-rendered metadata for search engines and link previews (Open
+     * Graph, X/Twitter cards): crawlers do not run the Vue application.
+     *
+     * @return array{title: string, description: string, url: string, image: string, image_alt: string, locale: string}
+     */
+    private function meta(): array
+    {
+        $locale = app()->getLocale() === 'fr' ? 'fr' : 'en';
+
+        return [
+            'title' => __('Uptime monitoring you can host yourself').' - Veyra',
+            'description' => __('Veyra watches your websites, APIs, servers and scheduled jobs, confirms real outages, alerts your team and keeps your users informed with public status pages.'),
+            'url' => url('/'),
+            'image' => asset("images/og-image-{$locale}.png"),
+            'image_alt' => __('Veyra: know your services are down before your users do.'),
+            'locale' => $locale === 'fr' ? 'fr_FR' : 'en_US',
+        ];
     }
 }

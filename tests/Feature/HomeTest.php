@@ -46,3 +46,37 @@ test('signed-in users are sent to their dashboard', function (bool $landingPage)
     'landing page enabled' => [true],
     'landing page disabled' => [false],
 ]);
+
+test('the landing page carries link preview metadata in the server-rendered HTML', function () {
+    config(['veyra.landing_page' => true]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('<title>Uptime monitoring you can host yourself - Veyra</title>', false)
+        ->assertSee('<meta property="og:title" content="Uptime monitoring you can host yourself - Veyra">', false)
+        ->assertSee('<meta property="og:url" content="'.url('/').'">', false)
+        ->assertSee('<meta property="og:image" content="'.asset('images/og-image-en.png').'">', false)
+        ->assertSee('<meta property="og:locale" content="en_US">', false)
+        ->assertSee('<meta name="twitter:card" content="summary_large_image">', false)
+        ->assertSee('<link rel="canonical" href="'.url('/').'">', false);
+
+    expect(public_path('images/og-image-en.png'))->toBeFile()
+        ->and(public_path('images/og-image-fr.png'))->toBeFile();
+});
+
+test('link preview metadata follows the browser language', function () {
+    config(['veyra.landing_page' => true]);
+
+    $this->withHeader('Accept-Language', 'fr-FR,fr;q=0.9')
+        ->get('/')
+        ->assertSee('<meta property="og:locale" content="fr_FR">', false)
+        ->assertSee('<meta property="og:image" content="'.asset('images/og-image-fr.png').'">', false)
+        ->assertSee('La surveillance de disponibilité que vous hébergez vous-même - Veyra', false);
+});
+
+test('other pages do not carry the landing page metadata', function () {
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertDontSee('og:title', false)
+        ->assertDontSee('twitter:card', false);
+});
