@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property string $id
@@ -86,5 +87,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function roleIn(Organization $organization): ?OrganizationRole
     {
         return $this->membershipIn($organization)?->role;
+    }
+
+    /**
+     * Instance administrators are the verified users listed in
+     * VEYRA_ADMIN_EMAILS (case-insensitive). They are never an organization
+     * role: the `administerInstance` ability is the only way to check it.
+     */
+    public function isInstanceAdministrator(): bool
+    {
+        return $this->hasVerifiedEmail()
+            && in_array(Str::lower($this->email), array_map(Str::lower(...), (array) config('veyra.admin_emails')), true);
     }
 }

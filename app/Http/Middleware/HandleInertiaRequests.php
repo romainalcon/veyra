@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Extensions\OrganizationNavigation;
+use App\Domain\Extensions\UserNavigation;
 use App\Domain\Incidents\Enums\IncidentStatus;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationMember;
@@ -43,6 +44,8 @@ class HandleInertiaRequests extends Middleware
             'locale' => fn (): string => app()->getLocale(),
             'auth' => [
                 'user' => $user?->only(['id', 'name', 'email', 'email_verified_at']),
+                // User menu entries contributed by optional extensions: empty on the Community edition (ADR-030).
+                'navigation' => fn (): array => $user === null ? [] : app(UserNavigation::class)->for($user),
             ],
             'organizations' => fn (): array => $user === null ? [] : $user->organizations()
                 ->orderBy('name')

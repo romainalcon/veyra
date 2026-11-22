@@ -24,7 +24,7 @@ export type ExtensionNavItem = {
     id: string;
     title: string;
     href: string;
-    icon: 'credit-card' | 'receipt' | 'chart' | 'puzzle';
+    icon: 'credit-card' | 'receipt' | 'chart' | 'puzzle' | 'shield';
 };
 
 export type CurrentOrganization = OrganizationSummary & {

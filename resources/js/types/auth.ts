@@ -1,3 +1,5 @@
+import type { ExtensionNavItem } from './organization';
+
 export type User = {
     id: string;
     name: string;
@@ -8,4 +10,6 @@ export type User = {
 
 export type Auth = {
     user: User | null;
+    /** User menu entries contributed by optional extensions; empty on the Community edition. */
+    navigation: ExtensionNavItem[];
 };

@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Extensions\OrganizationNavigation;
+use App\Domain\Extensions\UserNavigation;
 use App\Domain\Monitoring\Actions\RaiseMonitorIntervals;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Jobs\PurgeMonitorHistory;
@@ -55,6 +56,60 @@ describe('organization navigation', function () {
 
     test('refuses icons the interface cannot render', function () {
         expect(fn () => app(OrganizationNavigation::class)->add('x', 'X', 'extension-test.show', icon: 'rocket'))
+            ->toThrow(InvalidArgumentException::class);
+    });
+});
+
+describe('user navigation', function () {
+    beforeEach(function () {
+        Route::middleware('web')->get('extension-admin-test', fn () => 'ok')->name('extension-admin-test.index');
+        Route::getRoutes()->refreshNameLookups();
+        config(['veyra.admin_emails' => ['Operator@Example.com']]);
+        $this->operator = User::factory()->create(['email' => 'operator@example.com']);
+    });
+
+    test('is empty on the Community edition, even for instance administrators', function () {
+        $this->actingAs($this->operator)
+            ->get(route('profile.edit'))
+            ->assertInertia(fn (Assert $page) => $page->where('auth.navigation', []));
+    });
+
+    test('shows registered entries, translated, to users allowed to see them on every page', function () {
+        app(UserNavigation::class)->add('admin', 'Settings', 'extension-admin-test.index', 'administerInstance', 'shield');
+        $entry = [
+            'id' => 'admin',
+            'title' => 'Réglages',
+            'href' => route('extension-admin-test.index'),
+            'icon' => 'shield',
+        ];
+
+        $this->actingAs($this->operator)
+            ->withHeader('Accept-Language', 'fr')
+            ->get(route('profile.edit'))
+            ->assertInertia(fn (Assert $page) => $page->where('auth.navigation', [$entry]));
+
+        $this->organization->members()->create(['user_id' => $this->operator->id, 'role' => OrganizationRole::Viewer, 'joined_at' => now()]);
+        $this->organization->update(['locale' => 'fr']);
+
+        $this->actingAs($this->operator)
+            ->get(route('organizations.dashboard', $this->organization))
+            ->assertInertia(fn (Assert $page) => $page->where('auth.navigation', [$entry]));
+
+        $this->actingAs($this->owner)
+            ->get(route('organizations.dashboard', $this->organization))
+            ->assertInertia(fn (Assert $page) => $page->where('auth.navigation', []));
+    });
+
+    test('entries without an ability are shown to every signed-in user', function () {
+        app(UserNavigation::class)->add('help', 'Settings', 'extension-admin-test.index');
+
+        $this->actingAs($this->owner)
+            ->get(route('profile.edit'))
+            ->assertInertia(fn (Assert $page) => $page->where('auth.navigation.0.id', 'help'));
+    });
+
+    test('refuses icons the interface cannot render', function () {
+        expect(fn () => app(UserNavigation::class)->add('x', 'X', 'extension-admin-test.index', icon: 'rocket'))
             ->toThrow(InvalidArgumentException::class);
     });
 });

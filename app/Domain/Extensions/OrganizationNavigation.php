@@ -14,9 +14,10 @@ use InvalidArgumentException;
 class OrganizationNavigation
 {
     /**
-     * Icons the interface can render (lucide names mapped in AppSidebar.vue).
+     * Icons the interface can render (lucide names mapped in
+     * resources/js/lib/extension-icons.ts), shared with UserNavigation.
      */
-    public const ICONS = ['credit-card', 'receipt', 'chart', 'puzzle'];
+    public const ICONS = ['credit-card', 'receipt', 'chart', 'puzzle', 'shield'];
 
     /**
      * @var array<string, array{title: string, route: string, ability: string|null, icon: string}>

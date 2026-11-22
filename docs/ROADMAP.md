@@ -73,6 +73,12 @@
 - [x] CSP extra origins for `script-src`, `frame-src` and `img-src` (empty by default).
 - [x] Tests: Community unchanged without extensions, navigation abilities and translation, deletion event and abort, account deletion purge, interval raising, page registry and dictionary merging.
 
+## Sprint 10c — User menu extension point (core)
+- [x] `UserNavigation` registry shared as `auth.navigation` on every authenticated page and rendered in the user menu (ADR-030).
+- [x] `administerInstance` ability for instance administrators (`VEYRA_ADMIN_EMAILS`, verified, case-insensitive); `viewHorizon` defined from it.
+- [x] Shared extension icon list with `shield`; sidebar and user menu use the same mapping.
+- [x] Tests: empty on Community, ability and translation inside and outside an organization, entries without ability, unknown icons, administrator rule.
+
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
 

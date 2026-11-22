@@ -43,6 +43,26 @@ test('the horizon dashboard is restricted to configured administrators', functio
         ->and(Gate::forUser(null)->allows('viewHorizon'))->toBeFalse();
 });
 
+test('instance administrators are verified users listed in VEYRA_ADMIN_EMAILS, case-insensitively', function () {
+    config(['veyra.admin_emails' => ['Admin@Example.com', 'pending@example.com']]);
+
+    $admin = User::factory()->create(['email' => 'admin@example.com']);
+    $unverified = User::factory()->unverified()->create(['email' => 'pending@example.com']);
+    $user = User::factory()->create();
+
+    expect(Gate::forUser($admin)->allows('administerInstance'))->toBeTrue()
+        ->and(Gate::forUser($unverified)->allows('administerInstance'))->toBeFalse()
+        ->and(Gate::forUser($unverified)->allows('viewHorizon'))->toBeFalse()
+        ->and(Gate::forUser($user)->allows('administerInstance'))->toBeFalse()
+        ->and(Gate::forUser(null)->allows('administerInstance'))->toBeFalse();
+});
+
+test('nobody administers the instance when VEYRA_ADMIN_EMAILS is empty', function () {
+    config(['veyra.admin_emails' => []]);
+
+    expect(Gate::forUser(User::factory()->create())->allows('administerInstance'))->toBeFalse();
+});
+
 test('reverb does not accept client events by default', function () {
     expect(config('reverb.apps.apps.0.accept_client_events_from'))->toBe('none');
 });

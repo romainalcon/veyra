@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Domain\Entitlements\CommunityEntitlements;
 use App\Domain\Entitlements\Contracts\Entitlements;
 use App\Domain\Extensions\OrganizationNavigation;
+use App\Domain\Extensions\UserNavigation;
 use App\Domain\Incidents\Events\IncidentAcknowledged;
 use App\Domain\Incidents\Events\IncidentOpened;
 use App\Domain\Incidents\Events\IncidentResolved;
@@ -28,6 +29,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -41,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(Entitlements::class, CommunityEntitlements::class);
         $this->app->singleton(OrganizationNavigation::class);
+        $this->app->singleton(UserNavigation::class);
         $this->app->bind(DnsResolver::class, SystemDnsResolver::class);
         $this->app->bind(TcpConnector::class, StreamTcpConnector::class);
         $this->app->bind(TxtResolver::class, SystemTxtResolver::class);
@@ -61,6 +64,9 @@ class AppServiceProvider extends ServiceProvider
         $this->configureTrustedProxies();
 
         Event::listen([IncidentOpened::class, IncidentResolved::class, IncidentAcknowledged::class], QueueNotificationsOnIncidentEvent::class);
+
+        // Instance administrators (VEYRA_ADMIN_EMAILS): Horizon and extension operator pages.
+        Gate::define('administerInstance', fn (User $user): bool => $user->isInstanceAdministrator());
 
         $this->configureDefaults();
         $this->configureRateLimiting();
