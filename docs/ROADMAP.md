@@ -97,8 +97,81 @@
 - [x] UI: type picker entry, Slack URL field, French translations.
 - [x] Tests: URL rule, payload and escaping, language, response classification, retries, tampered URL, authorization, tenant isolation, quota.
 
+## Cloud extension (private repository)
+- [x] Plans and Paddle billing, billing page, plan enforcement on downgrade (`Entitlements`, `RaiseMonitorIntervals`).
+- [x] Operator console for instance administrators with audit log (ADR-031).
+- [x] Pricing and legal public pages through `PublicNavigation`.
+- Details live in `extensions/cloud/README.md`, never in this repository.
+
+## Next — planned, not started
+Order of work: 13 → 22. Criteria are a starting point, refined in the sprint's plan and ADR. The open Sprint 6 item (Caddy on a real host) is closed whenever a real host is available, before the next release at the latest.
+
+## Sprint 13 — Visual identity (1.4)
+- [ ] Visual direction: palette, typography, logo/wordmark, iconography and tone; written down as design tokens (Tailwind 4 theme, light and dark).
+- [ ] App shell, dashboard, monitor list/detail, incidents and charts restyled with the new tokens; status colours (UP/DOWN/DEGRADED/UNKNOWN/MAINTENANCE) distinct and accessible (WCAG AA contrast, not colour alone).
+- [ ] Landing page, authentication pages, e-mails and public status pages aligned with the identity; status pages stay neutral enough for customers' own branding.
+- [ ] Empty states, loading skeletons and microcopy reviewed (en/fr).
+- [ ] No behaviour change: existing feature tests pass; Vitest/visual checks on key components; screenshots in the PR.
+
+## Sprint 14 — Status page audience (1.4)
+- [ ] Branding per status page: logo, accent colour, favicon (uploaded images validated and size-limited, served without cookies); contrast checked against the accent colour.
+- [ ] Visitor subscriptions by e-mail (double opt-in, one-click unsubscribe, rate-limited, addresses never shown) and RSS/Atom feeds for incidents and maintenance, in the organization language.
+- [ ] SVG badges (status, uptime over 24 h / 7 d / 30 d) per published component, served from the whitelisted snapshot, cacheable, no data for unpublished monitors.
+- [ ] Entitlements for subscribers and branding; Community limits nothing.
+- [ ] Tests: opt-in flow, unsubscribe tokens, no data leak for unpublished components, custom domains, translations.
+
+## Sprint 15 — Advanced HTTP checks (1.5)
+- [ ] Response content assertion: keyword present / absent in the body, case option, read limited to the existing response cap; result recorded as a distinct failure reason.
+- [ ] Latency threshold per monitor: above it the check is DEGRADED, with the usual confirmation thresholds; no effect on DOWN logic.
+- [ ] POST/PUT/PATCH with a request body (size-limited, content type) and authentication headers / basic auth stored encrypted, redacted in logs, UI and webhook payloads.
+- [ ] SSRF rules unchanged for every method; rate limits on manual checks still apply.
+- [ ] Tests: assertions, DEGRADED transitions, encryption and redaction, validation, translations.
+
+## Sprint 16 — More channels and account security (1.5)
+- [ ] Notification channels: ntfy and Gotify (self-hosted friendly, server URL under the probe SSRF policy), Telegram bot, Microsoft Teams (workflow webhook), PagerDuty Events v2 (trigger / resolve with a stable dedup key).
+- [ ] Same delivery guarantees as existing channels: credentials encrypted, retry-safe, response classification, organization language, untrusted values escaped.
+- [ ] Two-factor authentication (Fortify TOTP + recovery codes) for every user; Owners can require it for their organization (members without it are asked to enable it before access).
+- [ ] Tests: payloads per channel, retries, SSRF, 2FA enforcement and recovery, tenant isolation, translations.
+
+## Sprint 17 — Recurring maintenance (1.6)
+- [ ] Recurring windows (daily/weekly/monthly rule, organization time zone, duration ≤ `VEYRA_MAINTENANCE_MAX_HOURS`), occurrences materialized ahead of time into the existing one-off windows (ADR-021 semantics unchanged).
+- [ ] DST-safe occurrence generation, idempotent and concurrency-safe; editing or deleting a series never alters past or running occurrences.
+- [ ] UI: create/edit series, skip one occurrence, upcoming occurrences list; status pages show the next occurrence.
+- [ ] Tests: rule expansion (DST, month ends), idempotent generation, tenant isolation, translations.
+
+## Sprint 18 — DNS monitors and domain expiry (1.6)
+- [ ] `dns` `MonitorType` with its own config table: record name, type (A, AAAA, CNAME, MX, TXT, NS), optional expected values (contains / exact), timeout ≤ 30 s (ADR-024 dispatch by type).
+- [ ] Resolver choice restricted to the system resolver or an allow-listed set of public resolvers; no arbitrary resolver IP (SSRF), answers bounded in size.
+- [ ] Per-type confirmation thresholds; resolution failures vs. mismatched answers distinguished in check results.
+- [ ] Domain expiry for HTTP and DNS monitors through RDAP (bootstrap registry, fixed endpoints, daily at most), warnings at the same thresholds and once per expiry date, like certificates (ADR-026).
+- [ ] UI: type picker entry, form, detail page with last answers and domain expiry; status pages and analytics unchanged.
+- [ ] Tests: answer matching, timeouts, resolver restrictions, RDAP parsing and failures, tenant isolation, translations; docs MONITORING/SECURITY/DECISIONS.
+
+## Sprint 19 — Public API (1.7)
+- [ ] Versioned REST API (`/api/v1`) with Eloquent API Resources: monitors (CRUD, pause/resume), checks (read), incidents (read, acknowledge), maintenance windows.
+- [ ] Organization-scoped API tokens with abilities (read / write), hashed at rest, shown once, revocable, last-used timestamp; Owners/Admins manage them.
+- [ ] Same Policies, Form Requests, quotas (`Entitlements`) and SSRF rules as the UI; rate limits per token; cursor pagination.
+- [ ] Reference documentation (OpenAPI) and examples.
+- [ ] Tests: authentication, abilities, tenant isolation, quotas, rate limits, validation parity with the UI.
+
+## Sprint 20 — Escalation and reports (1.8)
+- [ ] Escalation policies: ordered steps (channel set + delay) per monitor or organization default; a step fires only while the incident is open and unacknowledged; acknowledgement or recovery stops the chain; idempotent under retries and concurrent workers.
+- [ ] Weekly report e-mail per organization (opt-in per member): uptime, incidents, slowest monitors, in the organization language and time zone.
+- [ ] Tests: escalation timing, stop conditions, idempotency, report content, tenant isolation, translations.
+
+## Sprint 21 — Organization tools (1.8)
+- [ ] Audit log of member actions (monitors, channels, status pages, members, settings, API tokens): actor, action, target, before/after without secrets; append-only, retention configurable, Owners/Admins only.
+- [ ] Monitor tags with filters on lists, dashboard and API.
+- [ ] Monitor import/export (versioned JSON, secrets excluded), import validated like the UI with quotas and SSRF rules, dry-run preview.
+- [ ] Tests: audit coverage of every action, redaction, tag filters, import validation and quotas, tenant isolation.
+
+## Sprint 22 — Operations (1.9)
+- [ ] Prometheus `/metrics` endpoint for the instance: queue sizes, outbox backlog and age, scheduler beat lag, probe durations, delivery failures; disabled by default, token or IP allow-list, no tenant data or labels with organization names.
+- [ ] Grafana dashboard example and alerting rules in `docs/operations/`.
+- [ ] Tests: access control, metric names stable, no tenant leak.
+
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
 
 ## Explicitly deferred
-Recurring maintenance windows, DNS probes, agents, multi-region checks, billing, public API and SSO.
+Agents, multi-region checks, billing in the core (Cloud extension only) and SSO.
