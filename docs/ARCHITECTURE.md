@@ -35,6 +35,9 @@ extensions/<name>/   # optional extensions cloned from their own repositories, g
 - Inertia shares only whitelisted props: `auth.user` (id, name, email, verification), `organizations` (id, name, slug), `currentOrganization` (with `can.*` flags).
 - Broadcasting: private channel `organizations.{organizationId}` authorized for members only (`routes/channels.php`). The client reloads props over HTTP after reconnecting.
 
+## Public API (Sprint 19, ADR-044)
+- `/api/v1/…` (`routes/api.php`): stateless, JSON, `auth:api` (organization API tokens, `ApiTokenAuthenticator`), `ResolveApiOrganization` (the token's organization becomes the `{organization}` route parameter before bindings, with scoped bindings), `throttle:api`. Controllers in `app/Http/Controllers/Api/V1`, resources in `app/Http/Resources/Api/V1`; they reuse the interface's Form Requests, Policies (`OrganizationActor`) and Actions. Reference: `docs/api/openapi.yaml`.
+
 ## Public surface (Sprint 6)
 - `/status/{slug}` and verified custom domains (`ServeStatusPageForCustomDomain`, global middleware) render public status pages without session, from a cached whitelisted snapshot; they poll over HTTP and never subscribe to Reverb.
 

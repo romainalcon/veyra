@@ -2,6 +2,7 @@
 
 namespace App\Policies\Concerns;
 
+use App\Domain\Organizations\Contracts\OrganizationActor;
 use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationMember;
@@ -11,18 +12,19 @@ trait ResolvesOrganizationRole
 {
     /**
      * Reuse the membership resolved by the ResolveOrganization middleware when
-     * available, to avoid one query per authorization check.
+     * available, to avoid one query per authorization check. API tokens
+     * carry their role themselves (ADR-044).
      */
-    protected function roleOf(User $user, Organization $organization): ?OrganizationRole
+    protected function roleOf(OrganizationActor $actor, Organization $organization): ?OrganizationRole
     {
-        if ($organization->relationLoaded('viewerMembership')) {
+        if ($actor instanceof User && $organization->relationLoaded('viewerMembership')) {
             $membership = $organization->getRelation('viewerMembership');
 
-            if ($membership instanceof OrganizationMember && $membership->user_id === $user->id) {
+            if ($membership instanceof OrganizationMember && $membership->user_id === $actor->id) {
                 return $membership->role;
             }
         }
 
-        return $user->roleIn($organization);
+        return $actor->roleIn($organization);
     }
 }

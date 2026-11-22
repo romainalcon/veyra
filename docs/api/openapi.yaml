@@ -1,0 +1,955 @@
+openapi: 3.1.0
+info:
+  title: Veyra API
+  version: '1'
+  summary: Monitors, checks, incidents and maintenance windows of one organization.
+  description: |
+    Every request carries an organization API token created by an Owner or
+    Admin under **Organization → API tokens**:
+    `Authorization: Bearer veyra_…`. The organization is always the token's;
+    identifiers of other organizations answer `404`.
+
+    `read` tokens may call every `GET` endpoint; `write` tokens may also
+    create, change and delete (they act as an organization Member).
+
+    Requests and responses are JSON (`Accept: application/json`). Timestamps
+    are ISO 8601 in UTC. Lists use cursor pagination: pass `meta.next_cursor`
+    back as `cursor`. Validation follows the web interface exactly; errors
+    are `422` with an `errors` object, and organization limits are reported
+    under `errors.limit`. Messages use the organization language.
+
+    Rate limits: 120 requests per minute per token and 600 per IP by default
+    (`429` with `Retry-After`), plus the interface limits on monitor creation
+    (per hour), maintenance writes and acknowledgements (30 per minute).
+  license:
+    name: AGPL-3.0-only
+servers:
+  - url: https://veyra.example.com/api/v1
+    description: Replace with your instance URL.
+security:
+  - token: []
+tags:
+  - name: Monitors
+  - name: Checks
+  - name: Incidents
+  - name: Maintenance windows
+paths:
+  /monitors:
+    get:
+      tags: [Monitors]
+      operationId: listMonitors
+      summary: List monitors
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Monitors, oldest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CursorPage'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Monitor'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    post:
+      tags: [Monitors]
+      operationId: createMonitor
+      summary: Create a monitor
+      description: |
+        The destination is validated like in the interface (allowed ports,
+        every DNS answer outside private and reserved ranges, no credentials
+        in URLs). A heartbeat's ping URL is returned once, in `meta.ping_url`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitorInput'
+            examples:
+              http:
+                value:
+                  type: http
+                  name: Website
+                  url: https://example.com/health
+                  method: GET
+                  interval: 60
+                  timeout: 10
+                  expected_statuses: 200-299
+                  follow_redirects: true
+              heartbeat:
+                value:
+                  type: heartbeat
+                  name: Nightly backup
+                  interval: 86400
+                  grace_minutes: 30
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Monitor'
+                  meta:
+                    type: object
+                    description: Heartbeats only.
+                    properties:
+                      ping_url:
+                        type: string
+                        format: uri
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /monitors/{monitor}:
+    parameters:
+      - $ref: '#/components/parameters/MonitorId'
+    get:
+      tags: [Monitors]
+      operationId: getMonitor
+      summary: Get a monitor
+      responses:
+        '200':
+          $ref: '#/components/responses/MonitorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Monitors]
+      operationId: replaceMonitor
+      summary: Replace a monitor
+      description: |
+        Send every field of the monitor's type (the type cannot change).
+        Secrets are never returned, so HTTP monitors keep their stored headers,
+        body and basic auth unless `headers_mode`, `body_mode` or `auth_mode`
+        is `replace` (`headers_mode` is required). Notification channels are
+        replaced only when `notification_channel_ids` is sent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonitorInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/MonitorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+    delete:
+      tags: [Monitors]
+      operationId: deleteMonitor
+      summary: Delete a monitor
+      description: The monitor is soft deleted; its history is kept until retention.
+      responses:
+        '204':
+          description: Deleted.
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /monitors/{monitor}/pause:
+    parameters:
+      - $ref: '#/components/parameters/MonitorId'
+    post:
+      tags: [Monitors]
+      operationId: pauseMonitor
+      summary: Pause a monitor
+      description: Idempotent. The state becomes `unknown`; an open incident stays open.
+      responses:
+        '200':
+          $ref: '#/components/responses/MonitorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /monitors/{monitor}/resume:
+    parameters:
+      - $ref: '#/components/parameters/MonitorId'
+    post:
+      tags: [Monitors]
+      operationId: resumeMonitor
+      summary: Resume a monitor
+      description: Idempotent. Counts against the active monitor limit (`422` with `errors.limit`).
+      responses:
+        '200':
+          $ref: '#/components/responses/MonitorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+  /monitors/{monitor}/checks:
+    parameters:
+      - $ref: '#/components/parameters/MonitorId'
+    get:
+      tags: [Checks]
+      operationId: listChecks
+      summary: List raw check results
+      description: |
+        Newest first. A check is one probe result; the confirmed state is the
+        monitor's `status`. Checks older than the organization's retention are
+        purged.
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Checks.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CursorPage'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Check'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /incidents:
+    get:
+      tags: [Incidents]
+      operationId: listIncidents
+      summary: List incidents
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PerPage'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, resolved]
+        - name: monitor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Incidents, newest first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CursorPage'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Incident'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+  /incidents/{incident}:
+    parameters:
+      - $ref: '#/components/parameters/IncidentId'
+    get:
+      tags: [Incidents]
+      operationId: getIncident
+      summary: Get an incident with its timeline
+      responses:
+        '200':
+          $ref: '#/components/responses/IncidentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /incidents/{incident}/acknowledge:
+    parameters:
+      - $ref: '#/components/parameters/IncidentId'
+    post:
+      tags: [Incidents]
+      operationId: acknowledgeIncident
+      summary: Acknowledge an incident
+      description: Idempotent. Stops reminders and notifies the channels once; the timeline names the token.
+      responses:
+        '200':
+          $ref: '#/components/responses/IncidentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /maintenance-windows:
+    get:
+      tags: [Maintenance windows]
+      operationId: listMaintenanceWindows
+      summary: List maintenance windows
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/PerPage'
+        - name: upcoming
+          in: query
+          description: Only windows that have not ended and were not cancelled.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Windows, latest start first.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CursorPage'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MaintenanceWindow'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+    post:
+      tags: [Maintenance windows]
+      operationId: createMaintenanceWindow
+      summary: Schedule a maintenance window
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceWindowInput'
+      responses:
+        '201':
+          description: Scheduled.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MaintenanceWindow'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+  /maintenance-windows/{maintenanceWindow}:
+    parameters:
+      - $ref: '#/components/parameters/MaintenanceWindowId'
+    get:
+      tags: [Maintenance windows]
+      operationId: getMaintenanceWindow
+      summary: Get a maintenance window
+      responses:
+        '200':
+          $ref: '#/components/responses/MaintenanceWindowResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Maintenance windows]
+      operationId: replaceMaintenanceWindow
+      summary: Replace a maintenance window
+      description: |
+        Windows that are over cannot change; a running window keeps its start.
+        Occurrences of a recurring series (`series_id`) are edited through the
+        series in the interface (`422`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceWindowInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/MaintenanceWindowResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+  /maintenance-windows/{maintenanceWindow}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/MaintenanceWindowId'
+    post:
+      tags: [Maintenance windows]
+      operationId: cancelMaintenanceWindow
+      summary: Cancel a window that has not started (skips an occurrence)
+      responses:
+        '200':
+          $ref: '#/components/responses/MaintenanceWindowResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+  /maintenance-windows/{maintenanceWindow}/end:
+    parameters:
+      - $ref: '#/components/parameters/MaintenanceWindowId'
+    post:
+      tags: [Maintenance windows]
+      operationId: endMaintenanceWindow
+      summary: End a running window now
+      responses:
+        '200':
+          $ref: '#/components/responses/MaintenanceWindowResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+components:
+  securitySchemes:
+    token:
+      type: http
+      scheme: bearer
+      description: Organization API token (`veyra_` followed by 40 characters).
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque cursor from `meta.next_cursor` or `meta.prev_cursor`.
+      schema:
+        type: string
+    PerPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    MonitorId:
+      name: monitor
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IncidentId:
+      name: incident
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MaintenanceWindowId:
+      name: maintenanceWindow
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    MonitorResponse:
+      description: The monitor.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/Monitor'
+    IncidentResponse:
+      description: The incident.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/Incident'
+    MaintenanceWindowResponse:
+      description: The maintenance window.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/MaintenanceWindow'
+    Unauthenticated:
+      description: Missing, malformed, unknown, revoked or expired token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: The token's ability does not allow this action.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Unknown identifier, or one of another organization.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationFailed:
+      description: Invalid input, or an organization limit (`errors.limit`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    TooManyRequests:
+      description: Rate limit reached; retry after `Retry-After` seconds.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    NullableString:
+      type: [string, 'null']
+    NullableDateTime:
+      type: [string, 'null']
+      format: date-time
+    NullableInteger:
+      type: [integer, 'null']
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    ValidationError:
+      type: object
+      required: [message, errors]
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    CursorPage:
+      type: object
+      properties:
+        links:
+          type: object
+          properties:
+            first:
+              $ref: '#/components/schemas/NullableString'
+            last:
+              $ref: '#/components/schemas/NullableString'
+            prev:
+              $ref: '#/components/schemas/NullableString'
+            next:
+              $ref: '#/components/schemas/NullableString'
+        meta:
+          type: object
+          properties:
+            path:
+              type: string
+            per_page:
+              type: integer
+            next_cursor:
+              $ref: '#/components/schemas/NullableString'
+            prev_cursor:
+              $ref: '#/components/schemas/NullableString'
+    MonitorInput:
+      type: object
+      description: |
+        Fields depend on `type` (immutable after creation). Probed types
+        (`http`, `tcp`, `dns`) need `interval` (60, 120, 300, 600, 900, 1800
+        or 3600 seconds, at least the organization minimum) and `timeout`
+        (1–30 seconds, shorter than the interval). Heartbeats use `interval`
+        as their period (60, 300, 600, 900, 1800, 3600, 7200, 21600, 43200,
+        86400 or 604800 seconds) and `grace_minutes`.
+      required: [name]
+      properties:
+        type:
+          type: string
+          enum: [http, tcp, dns, heartbeat]
+          default: http
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        interval:
+          type: integer
+        timeout:
+          type: integer
+          minimum: 1
+          maximum: 30
+        notification_channel_ids:
+          type: array
+          maxItems: 50
+          description: Channels of the organization. Omitted on update, the current ones are kept.
+          items:
+            type: string
+            format: uuid
+        url:
+          type: string
+          description: 'http: an http(s) URL on an allowed port with a public destination.'
+        method:
+          type: string
+          enum: [GET, HEAD, POST, PUT, PATCH]
+        expected_statuses:
+          type: string
+          example: '200-299, 301'
+        follow_redirects:
+          type: boolean
+          default: false
+        headers_mode:
+          type: string
+          enum: [keep, replace]
+          description: Required on update.
+        headers:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            required: [name, value]
+            properties:
+              name:
+                type: string
+                maxLength: 100
+              value:
+                type: string
+                maxLength: 1024
+        body_mode:
+          type: string
+          enum: [keep, replace]
+        body:
+          $ref: '#/components/schemas/NullableString'
+          description: POST, PUT and PATCH only; at most 16 KiB.
+        body_content_type:
+          type: string
+          enum: [application/json, application/x-www-form-urlencoded, application/xml, text/plain]
+        auth_mode:
+          type: string
+          enum: [keep, replace]
+        basic_auth_username:
+          $ref: '#/components/schemas/NullableString'
+        basic_auth_password:
+          $ref: '#/components/schemas/NullableString'
+        keyword:
+          $ref: '#/components/schemas/NullableString'
+        keyword_mode:
+          type: string
+          enum: [contains, not_contains]
+        keyword_case_sensitive:
+          type: boolean
+          default: false
+        latency_threshold_ms:
+          type: [integer, 'null']
+          minimum: 100
+          maximum: 30000
+        host:
+          type: string
+          description: 'tcp: a public host name or address.'
+        port:
+          type: integer
+          description: 'tcp: one of the TCP ports allowed by the instance.'
+        record_name:
+          type: string
+          description: 'dns: the name to resolve.'
+        record_type:
+          type: string
+          enum: [A, AAAA, CNAME, MX, TXT, NS]
+        resolver:
+          type: string
+          enum: [system, cloudflare, google, quad9]
+          description: The instance may disable some resolvers.
+        expected_values:
+          $ref: '#/components/schemas/NullableString'
+          description: 'dns: one expected value per line.'
+        match_mode:
+          type: string
+          enum: [contains, exact]
+        grace_minutes:
+          type: integer
+          minimum: 1
+          maximum: 1440
+    Monitor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [http, tcp, dns, heartbeat]
+        enabled:
+          type: boolean
+        interval_seconds:
+          type: integer
+        timeout_seconds:
+          $ref: '#/components/schemas/NullableInteger'
+        status:
+          type: string
+          enum: [unknown, up, degraded, down, maintenance]
+          description: The confirmed state, not the last probe result.
+        status_changed_at:
+          $ref: '#/components/schemas/NullableDateTime'
+        active_incident_id:
+          $ref: '#/components/schemas/NullableString'
+        last_checked_at:
+          $ref: '#/components/schemas/NullableDateTime'
+        next_check_at:
+          $ref: '#/components/schemas/NullableDateTime'
+        http:
+          type: [object, 'null']
+          properties:
+            url:
+              type: string
+            method:
+              type: string
+            expected_statuses:
+              type: string
+            follow_redirects:
+              type: boolean
+            header_names:
+              type: array
+              description: Header values are never returned.
+              items:
+                type: string
+            body:
+              type: [object, 'null']
+              properties:
+                content_type:
+                  type: string
+                bytes:
+                  type: integer
+            basic_auth_username:
+              $ref: '#/components/schemas/NullableString'
+            keyword:
+              $ref: '#/components/schemas/NullableString'
+            keyword_mode:
+              $ref: '#/components/schemas/NullableString'
+            keyword_case_sensitive:
+              type: boolean
+            latency_threshold_ms:
+              $ref: '#/components/schemas/NullableInteger'
+        tcp:
+          type: [object, 'null']
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+        dns:
+          type: [object, 'null']
+          properties:
+            record_name:
+              type: string
+            record_type:
+              type: string
+            resolver:
+              type: string
+            expected_values:
+              type: array
+              items:
+                type: string
+            match_mode:
+              type: string
+        heartbeat:
+          type: [object, 'null']
+          properties:
+            grace_seconds:
+              type: integer
+            last_ping_at:
+              $ref: '#/components/schemas/NullableDateTime'
+        certificate:
+          type: [object, 'null']
+          properties:
+            subject:
+              $ref: '#/components/schemas/NullableString'
+            issuer:
+              $ref: '#/components/schemas/NullableString'
+            not_before:
+              type: string
+              format: date-time
+            not_after:
+              type: string
+              format: date-time
+            checked_at:
+              type: string
+              format: date-time
+            days_left:
+              type: integer
+            status:
+              type: string
+              enum: [valid, expiring, expired]
+        notification_channel_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Check:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        scheduled_for:
+          type: string
+          format: date-time
+        checked_at:
+          type: string
+          format: date-time
+        success:
+          type: boolean
+        slow:
+          type: boolean
+        in_maintenance:
+          type: boolean
+        duration_ms:
+          $ref: '#/components/schemas/NullableInteger'
+        status_code:
+          $ref: '#/components/schemas/NullableInteger'
+        error_code:
+          $ref: '#/components/schemas/NullableString'
+        redirects:
+          type: integer
+    Incident:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        monitor_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [open, resolved]
+        cause:
+          $ref: '#/components/schemas/NullableString'
+          description: The English cause recorded when the incident opened.
+        started_at:
+          type: string
+          format: date-time
+        acknowledged_at:
+          $ref: '#/components/schemas/NullableDateTime'
+        resolved_at:
+          $ref: '#/components/schemas/NullableDateTime'
+        duration_seconds:
+          type: integer
+        events:
+          type: array
+          description: The timeline, in single-incident and acknowledgement responses only.
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              type:
+                type: string
+                example: acknowledged
+              actor:
+                type: string
+                enum: [system, member, api_token]
+              created_at:
+                type: string
+                format: date-time
+    MaintenanceWindowInput:
+      type: object
+      required: [title, starts_at, ends_at, monitor_ids]
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 120
+        description:
+          $ref: '#/components/schemas/NullableString'
+        starts_at:
+          type: string
+          format: date-time
+          description: New windows cannot start in the past (5 minutes of tolerance).
+        ends_at:
+          type: string
+          format: date-time
+          description: After the start; the instance caps the duration (168 hours by default).
+        monitor_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            format: uuid
+    MaintenanceWindow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        series_id:
+          $ref: '#/components/schemas/NullableString'
+        title:
+          type: string
+        description:
+          $ref: '#/components/schemas/NullableString'
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        cancelled_at:
+          $ref: '#/components/schemas/NullableDateTime'
+        status:
+          type: string
+          enum: [scheduled, active, completed, cancelled]
+        monitor_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        created_at:
+          type: string
+          format: date-time

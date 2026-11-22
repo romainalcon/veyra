@@ -31,4 +31,17 @@ abstract class TestCase extends BaseTestCase
         $this->dnsQueries = new FakeDnsQueryClient;
         $this->app->instance(DnsQueryClient::class, $this->dnsQueries);
     }
+
+    /**
+     * Send the next request with an organization API token (ADR-044). Guards
+     * live as long as the application, which a test shares between requests:
+     * forgetting them makes every request authenticate on its own, as in
+     * production.
+     */
+    public function withApiToken(string $plain): static
+    {
+        $this->app['auth']->forgetGuards();
+
+        return $this->withToken($plain);
+    }
 }

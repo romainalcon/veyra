@@ -96,6 +96,7 @@ class HandleInertiaRequests extends Middleware
                 'update' => $user->can('update', $organization),
                 'delete' => $user->can('delete', $organization),
                 'manageMembers' => $user->can('manageMembers', $organization),
+                'manageApiTokens' => $user->can('manageApiTokens', $organization),
             ],
             // Only limited features are listed: empty on the Community edition (ADR-029).
             'limits' => app(Quota::class)->usage($organization),

@@ -44,8 +44,11 @@ The exact open-source license, commercial license boundaries and trademark/domai
 - DNS monitors (A, AAAA, CNAME, MX, TXT, NS) with expected values, restricted to the system resolver or fixed public resolvers.
 - Domain registration expiry warnings (RDAP) for HTTP and DNS monitors.
 
+## Added in 1.7 (Sprint 19)
+- Public REST API (`/api/v1`) for monitors, checks, incidents and maintenance windows, with organization API tokens (read or read/write, optional expiry, revocable) managed by Owners and Admins.
+
 ## Not in V1
-Agent-based server metrics, multi-region checks, public API, billing, SSO, enterprise SLAs.
+Agent-based server metrics, multi-region checks, billing, SSO, enterprise SLAs.
 
 ## Acceptance definition
 A fresh installation can create an organization and monitor, execute scheduled checks, detect confirmed downtime, send an alert, recover automatically and display history without manual intervention.

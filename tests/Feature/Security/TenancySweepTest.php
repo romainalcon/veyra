@@ -5,6 +5,7 @@ use App\Domain\Maintenance\Models\MaintenanceSeries;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Notifications\Models\NotificationChannel;
+use App\Domain\Organizations\Models\ApiToken;
 use App\Domain\Organizations\Models\OrganizationInvitation;
 use App\Domain\StatusPages\Models\StatusPage;
 use App\Models\User;
@@ -34,6 +35,7 @@ test('every tenant route is unreachable for non-members', function () {
         'maintenanceSeries' => MaintenanceSeries::factory()->create(['organization_id' => $victim->id])->id,
         'statusPage' => StatusPage::factory()->create(['organization_id' => $victim->id])->id,
         'kind' => 'logo',
+        'apiToken' => ApiToken::factory()->create(['organization_id' => $victim->id])->id,
     ];
 
     $routes = collect(Route::getRoutes()->getRoutes())

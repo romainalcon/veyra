@@ -150,6 +150,15 @@ return [
     ],
 
     /*
+    | Public API (ADR-044): requests per minute per token and per IP.
+    */
+
+    'api' => [
+        'requests_per_minute' => max(1, (int) env('VEYRA_API_REQUESTS_PER_MINUTE', 120)),
+        'requests_per_minute_per_ip' => max(1, (int) env('VEYRA_API_REQUESTS_PER_MINUTE_PER_IP', 600)),
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Confirmed State
     |--------------------------------------------------------------------------

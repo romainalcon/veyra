@@ -6,7 +6,9 @@ use App\Domain\Monitoring\Enums\MonitorStatus;
 use App\Domain\Monitoring\Enums\ProbeErrorCode;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
+use App\Domain\Organizations\Enums\ApiTokenAbility;
 use App\Domain\Organizations\Enums\OrganizationRole;
+use App\Domain\Organizations\Models\ApiToken;
 use App\Domain\Organizations\Models\Organization;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -70,4 +72,20 @@ function recordCheck(Monitor $monitor, bool $success, string $scheduledFor, ?int
     ]);
 
     return app(ApplyMonitorState::class)->handle($monitor->id);
+}
+
+/**
+ * Issue an organization API token (ADR-044) and return its plain value.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function apiTokenFor(Organization $organization, ApiTokenAbility $ability = ApiTokenAbility::Write, array $attributes = []): string
+{
+    [, $plain] = ApiToken::factory()->issue([
+        'organization_id' => $organization->id,
+        'ability' => $ability,
+        ...$attributes,
+    ]);
+
+    return $plain;
 }

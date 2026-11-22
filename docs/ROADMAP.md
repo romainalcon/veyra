@@ -149,11 +149,11 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Tests: answer matching, timeouts, resolver restrictions, RDAP parsing and failures, tenant isolation, translations; docs MONITORING/SECURITY/DECISIONS.
 
 ## Sprint 19 — Public API (1.7)
-- [ ] Versioned REST API (`/api/v1`) with Eloquent API Resources: monitors (CRUD, pause/resume), checks (read), incidents (read, acknowledge), maintenance windows.
-- [ ] Organization-scoped API tokens with abilities (read / write), hashed at rest, shown once, revocable, last-used timestamp; Owners/Admins manage them.
-- [ ] Same Policies, Form Requests, quotas (`Entitlements`) and SSRF rules as the UI; rate limits per token; cursor pagination.
-- [ ] Reference documentation (OpenAPI) and examples.
-- [ ] Tests: authentication, abilities, tenant isolation, quotas, rate limits, validation parity with the UI.
+- [x] Versioned REST API (`/api/v1`) with Eloquent API Resources: monitors (CRUD, pause/resume), checks (read), incidents (read, acknowledge), maintenance windows.
+- [x] Organization-scoped API tokens with abilities (read / write), hashed at rest, shown once, revocable, last-used timestamp; Owners/Admins manage them.
+- [x] Same Policies, Form Requests, quotas (`Entitlements`) and SSRF rules as the UI; rate limits per token; cursor pagination.
+- [x] Reference documentation (OpenAPI) and examples.
+- [x] Tests: authentication, abilities, tenant isolation, quotas, rate limits, validation parity with the UI.
 
 ## Sprint 20 — Escalation and reports (1.8)
 - [ ] Escalation policies: ordered steps (channel set + delay) per monitor or organization default; a step fires only while the incident is open and unacknowledged; acknowledgement or recovery stops the chain; idempotent under retries and concurrent workers.

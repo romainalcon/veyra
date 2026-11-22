@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Organizations\Contracts\OrganizationActor;
 use App\Domain\Organizations\Enums\OrganizationRole;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\Organizations\Models\OrganizationMember;
@@ -37,7 +38,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, OrganizationActor
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
