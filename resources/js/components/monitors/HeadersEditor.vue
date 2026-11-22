@@ -47,7 +47,7 @@ const remove = (index: number) => {
                 />
                 <p
                     v-if="errors?.[`headers.${index}.name`]"
-                    class="mt-1 text-sm text-red-600 dark:text-red-500"
+                    class="mt-1 text-sm text-destructive-foreground"
                 >
                     {{ errors[`headers.${index}.name`] }}
                 </p>
@@ -65,7 +65,7 @@ const remove = (index: number) => {
                 />
                 <p
                     v-if="errors?.[`headers.${index}.value`]"
-                    class="mt-1 text-sm text-red-600 dark:text-red-500"
+                    class="mt-1 text-sm text-destructive-foreground"
                 >
                     {{ errors[`headers.${index}.value`] }}
                 </p>

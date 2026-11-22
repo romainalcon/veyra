@@ -43,8 +43,16 @@ describe('CertificatePanel', () => {
     });
 
     it.each<[Partial<MonitorCertificate>, string, string]>([
-        [{ status: 'expiring', days_left: 1 }, 'Expires in 1 day', 'amber'],
-        [{ status: 'expiring', days_left: 0 }, 'Expires today', 'amber'],
+        [
+            { status: 'expiring', days_left: 1 },
+            'Expires in 1 day',
+            'status-degraded',
+        ],
+        [
+            { status: 'expiring', days_left: 0 },
+            'Expires today',
+            'status-degraded',
+        ],
         [{ status: 'expired', days_left: -3 }, 'Expired', 'destructive'],
     ])('flags %o as "%s"', (overrides, label, color) => {
         const wrapper = mount(CertificatePanel, {

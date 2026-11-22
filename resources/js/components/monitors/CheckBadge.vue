@@ -12,11 +12,11 @@ defineProps<{ check: MonitorCheck | null }>();
     <Badge v-if="!check" variant="outline">{{ t('No check yet') }}</Badge>
     <Badge
         v-else-if="check.success"
-        class="bg-emerald-600 text-white hover:bg-emerald-600 dark:bg-emerald-500"
+        class="bg-status-up text-status-up-foreground"
     >
         OK{{ check.status_code ? ` · ${check.status_code}` : '' }}
     </Badge>
-    <Badge v-else variant="destructive">
+    <Badge v-else class="bg-status-down text-status-down-foreground">
         {{
             check.status_code
                 ? t('Failed · :code', { code: check.status_code })

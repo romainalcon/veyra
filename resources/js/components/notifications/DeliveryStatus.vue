@@ -14,7 +14,7 @@ defineProps<{
     <span class="inline-flex flex-wrap items-center gap-2">
         <Badge
             v-if="delivery.status === 'sent'"
-            class="bg-emerald-600 text-white hover:bg-emerald-600"
+            class="bg-status-up text-status-up-foreground"
             >{{ t('Sent') }}</Badge
         >
         <Badge v-else-if="delivery.status === 'failed'" variant="destructive">{{

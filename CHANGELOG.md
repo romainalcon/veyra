@@ -4,6 +4,11 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Changed
+- **Visual identity** — Veyra has its own look: an indigo accent on cool slate neutrals, Inter and JetBrains Mono, a new pulse mark and favicon, in light and dark themes. The application, landing page, sign-in pages and e-mails use it; public status pages stay neutral so they suit your own brand (ADR-035).
+- Statuses (up, degraded, down, maintenance, unknown) have their own accessible colours, each paired with an icon and a label so they never rely on colour alone; every text colour meets WCAG AA contrast.
+- Empty states and loading placeholders are consistent across pages.
+
 ## [1.3.0] — 2026-11-22
 
 ### Added

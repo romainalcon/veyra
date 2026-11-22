@@ -37,7 +37,7 @@ const { t } = useTranslations();
                 </SidebarMenuButton>
                 <SidebarMenuBadge
                     v-if="item.badge"
-                    class="bg-red-600 text-white"
+                    class="bg-status-down text-status-down-foreground"
                     :data-test="`nav-badge-${item.id ?? item.title.toLowerCase()}`"
                     >{{ item.badge }}</SidebarMenuBadge
                 >

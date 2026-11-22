@@ -97,6 +97,13 @@
 - [x] UI: type picker entry, Slack URL field, French translations.
 - [x] Tests: URL rule, payload and escaping, language, response classification, retries, tampered URL, authorization, tenant isolation, quota.
 
+## Sprint 13 — Visual identity (1.4)
+- [x] Visual direction: palette, typography, logo/wordmark, iconography and tone; written down as design tokens (Tailwind 4 theme, light and dark).
+- [x] App shell, dashboard, monitor list/detail, incidents and charts restyled with the new tokens; status colours (UP/DOWN/DEGRADED/UNKNOWN/MAINTENANCE) distinct and accessible (WCAG AA contrast, not colour alone).
+- [x] Landing page, authentication pages, e-mails and public status pages aligned with the identity; status pages stay neutral enough for customers' own branding.
+- [x] Empty states, loading skeletons and microcopy reviewed (en/fr).
+- [x] No behaviour change: existing feature tests pass; Vitest/visual checks on key components; screenshots in the PR.
+
 ## Cloud extension (private repository)
 - [x] Plans and Paddle billing, billing page, plan enforcement on downgrade (`Entitlements`, `RaiseMonitorIntervals`).
 - [x] Operator console for instance administrators with audit log (ADR-031).
@@ -104,14 +111,7 @@
 - Details live in `extensions/cloud/README.md`, never in this repository.
 
 ## Next — planned, not started
-Order of work: 13 → 22. Criteria are a starting point, refined in the sprint's plan and ADR. The open Sprint 6 item (Caddy on a real host) is closed whenever a real host is available, before the next release at the latest.
-
-## Sprint 13 — Visual identity (1.4)
-- [ ] Visual direction: palette, typography, logo/wordmark, iconography and tone; written down as design tokens (Tailwind 4 theme, light and dark).
-- [ ] App shell, dashboard, monitor list/detail, incidents and charts restyled with the new tokens; status colours (UP/DOWN/DEGRADED/UNKNOWN/MAINTENANCE) distinct and accessible (WCAG AA contrast, not colour alone).
-- [ ] Landing page, authentication pages, e-mails and public status pages aligned with the identity; status pages stay neutral enough for customers' own branding.
-- [ ] Empty states, loading skeletons and microcopy reviewed (en/fr).
-- [ ] No behaviour change: existing feature tests pass; Vitest/visual checks on key components; screenshots in the PR.
+Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's plan and ADR. The open Sprint 6 item (Caddy on a real host) is closed whenever a real host is available, before the next release at the latest.
 
 ## Sprint 14 — Status page audience (1.4)
 - [ ] Branding per status page: logo, accent colour, favicon (uploaded images validated and size-limited, served without cookies); contrast checked against the accent colour.

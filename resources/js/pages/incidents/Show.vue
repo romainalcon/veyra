@@ -228,7 +228,7 @@ const acknowledgeIncident = () =>
 
         <section
             v-if="can.postPublicUpdate"
-            class="space-y-3 rounded-lg border border-sky-200 p-4 dark:border-sky-900/50"
+            class="space-y-3 rounded-lg border border-status-maintenance/40 p-4"
             data-test="public-update-section"
         >
             <Form

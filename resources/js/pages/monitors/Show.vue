@@ -115,7 +115,7 @@ const remove = () => router.visit(destroy(params.value));
                         t('Paused')
                     }}</Badge>
                 </h1>
-                <p class="truncate text-sm text-muted-foreground">
+                <p class="truncate font-mono text-xs text-muted-foreground">
                     {{ monitor.target }}
                 </p>
             </div>
@@ -167,7 +167,7 @@ const remove = () => router.visit(destroy(params.value));
         <Link
             v-if="activeIncident"
             :href="showIncident([organization.slug, activeIncident.id])"
-            class="block rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+            class="block rounded-lg border border-status-down/30 bg-status-down-soft p-4 text-sm text-status-down-soft-foreground hover:bg-status-down-soft/80"
             data-test="active-incident-banner"
         >
             <span class="font-medium">{{ t('Ongoing incident') }}</span>
@@ -183,7 +183,7 @@ const remove = () => router.visit(destroy(params.value));
 
         <div
             v-if="maintenance"
-            class="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-300"
+            class="rounded-lg border border-status-maintenance/30 bg-status-maintenance-soft p-4 text-sm text-status-maintenance-soft-foreground"
             data-test="maintenance-banner"
         >
             <span class="font-medium">{{
@@ -279,10 +279,21 @@ const remove = () => router.visit(destroy(params.value));
 
         <Deferred data="stats">
             <template #fallback>
-                <div class="grid gap-4 sm:grid-cols-3">
-                    <Skeleton v-for="n in 3" :key="n" class="h-24 rounded-lg" />
+                <div
+                    class="space-y-4"
+                    role="status"
+                    :aria-label="t('Loading statistics')"
+                    data-test="monitor-stats-loading"
+                >
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <Skeleton
+                            v-for="n in 3"
+                            :key="n"
+                            class="h-24 rounded-lg"
+                        />
+                    </div>
+                    <Skeleton class="h-64 rounded-lg" />
                 </div>
-                <Skeleton class="h-64 rounded-lg" />
             </template>
             <MonitorStatsPanel
                 v-if="stats"

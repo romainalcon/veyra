@@ -13,7 +13,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import AppearanceToggle from '@/components/AppearanceToggle.vue';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import AppLogoMark from '@/components/AppLogoMark.vue';
 import UptimeBars from '@/components/charts/UptimeBars.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
@@ -150,12 +150,11 @@ const copyCommands = async () => {
                 class="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6"
                 :aria-label="t('Main navigation')"
             >
-                <Link href="/" class="flex items-center gap-2 font-semibold">
-                    <span
-                        class="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"
-                    >
-                        <AppLogoIcon class="size-5" />
-                    </span>
+                <Link
+                    href="/"
+                    class="flex items-center gap-2 font-semibold tracking-tight"
+                >
+                    <AppLogoMark class="size-8" />
                     Veyra
                 </Link>
 
@@ -209,7 +208,7 @@ const copyCommands = async () => {
                         class="inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground"
                     >
                         <span
-                            class="size-1.5 rounded-full bg-emerald-500"
+                            class="size-1.5 rounded-full bg-primary"
                             aria-hidden="true"
                         />
                         {{ t('Open source · AGPL-3.0') }}
@@ -254,7 +253,7 @@ const copyCommands = async () => {
                     :aria-label="t('Example of a Veyra dashboard')"
                 >
                     <div
-                        class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300"
+                        class="mb-4 rounded-lg border border-status-up/30 bg-status-up-soft p-3 text-sm font-medium text-status-up-soft-foreground"
                     >
                         {{ t('All systems operational') }}
                     </div>
@@ -344,7 +343,7 @@ const copyCommands = async () => {
                                 :key="point"
                                 class="flex items-center gap-2"
                             >
-                                <Check class="size-4 text-emerald-600" />
+                                <Check class="size-4 text-primary" />
                                 {{ point }}
                             </li>
                         </ul>
@@ -363,15 +362,15 @@ const copyCommands = async () => {
                     </div>
 
                     <div
-                        class="overflow-hidden rounded-xl border bg-neutral-950 text-neutral-100 shadow-sm"
+                        class="overflow-hidden rounded-xl border bg-sidebar text-sidebar-foreground shadow-sm dark:bg-black/30"
                     >
                         <div
-                            class="flex items-center justify-between border-b border-neutral-800 px-4 py-2 text-xs text-neutral-400"
+                            class="flex items-center justify-between border-b px-4 py-2 text-xs text-muted-foreground"
                         >
                             <span>{{ t('Quick start') }}</span>
                             <button
                                 type="button"
-                                class="flex items-center gap-1 rounded px-2 py-1 hover:bg-neutral-800 hover:text-neutral-100"
+                                class="flex items-center gap-1 rounded px-2 py-1 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                 data-test="copy-install-commands"
                                 @click="copyCommands"
                             >

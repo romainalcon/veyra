@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { Pencil, Plus, Square, Wrench, X } from '@lucide/vue';
 import { computed } from 'vue';
@@ -94,20 +95,12 @@ const paginationLabel = (label: string) =>
             <h2 class="text-base font-medium">
                 {{ t('Upcoming and in progress') }}
             </h2>
-            <div
+            <EmptyState
                 v-if="upcoming.length === 0"
-                class="flex flex-col items-center justify-center rounded-xl border border-dashed p-10 text-center"
+                :icon="Wrench"
+                :description="t('No maintenance planned.')"
                 data-test="maintenance-empty-state"
-            >
-                <div
-                    class="mb-4 flex size-12 items-center justify-center rounded-full bg-muted"
-                >
-                    <Wrench class="size-6 text-muted-foreground" />
-                </div>
-                <p class="text-sm text-muted-foreground">
-                    {{ t('No maintenance planned.') }}
-                </p>
-            </div>
+            />
             <ul
                 v-else
                 class="divide-y rounded-lg border"

@@ -47,7 +47,7 @@ const label = computed(() => {
                 />
                 <ShieldAlert
                     v-else-if="certificate?.status === 'expiring'"
-                    class="size-4 text-amber-600 dark:text-amber-400"
+                    class="size-4 text-warning"
                 />
                 <ShieldCheck v-else class="size-4 text-muted-foreground" />
                 {{ t('TLS certificate') }}
@@ -61,7 +61,7 @@ const label = computed(() => {
                 >
                 <Badge
                     v-else-if="certificate.status === 'expiring'"
-                    class="bg-amber-500 text-white hover:bg-amber-500 dark:bg-amber-600"
+                    class="bg-status-degraded text-status-degraded-foreground"
                     data-test="certificate-status"
                     >{{ label }}</Badge
                 >

@@ -81,7 +81,7 @@ const user = computed(() => page.props.auth.user as User);
                     <Link
                         :href="send()"
                         as="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                        class="text-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-muted-foreground/60"
                     >
                         {{ t('Click here to re-send the verification email.') }}
                     </Link>
@@ -89,7 +89,7 @@ const user = computed(() => page.props.auth.user as User);
 
                 <div
                     v-if="page.props.status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600"
+                    class="mt-2 text-sm font-medium text-success"
                 >
                     {{
                         t(

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { ExternalLink, Globe, Plus } from '@lucide/vue';
 import { computed } from 'vue';
@@ -63,27 +64,17 @@ setLayoutProps({
             :hint="t('Delete a status page before creating another.')"
         />
 
-        <div
+        <EmptyState
             v-if="statusPages.length === 0"
-            class="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed p-10 text-center"
+            :icon="Globe"
+            :title="t('No status pages yet')"
+            :description="
+                t(
+                    'Share the state of your services without exposing internal details.',
+                )
+            "
             data-test="status-pages-empty-state"
-        >
-            <div
-                class="mb-4 flex size-12 items-center justify-center rounded-full bg-muted"
-            >
-                <Globe class="size-6 text-muted-foreground" />
-            </div>
-            <h2 class="text-lg font-semibold">
-                {{ t('No status pages yet') }}
-            </h2>
-            <p class="mt-1 max-w-sm text-sm text-muted-foreground">
-                {{
-                    t(
-                        'Share the state of your services without exposing internal details.',
-                    )
-                }}
-            </p>
-        </div>
+        />
 
         <ul v-else class="divide-y rounded-lg border" data-test="status-pages">
             <li
