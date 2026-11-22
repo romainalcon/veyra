@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, Plus, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
+import AccentColorField from '@/components/status-pages/AccentColorField.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +24,8 @@ const props = defineProps<
         action: RouteFormDefinition<'post'>;
         statusPage?: StatusPageDetail;
         submitLabel: string;
+        /** False when the organization may not add branding (ADR-029). */
+        canBrand?: boolean;
     }
 >();
 
@@ -31,6 +34,14 @@ const slug = ref(props.statusPage?.slug ?? '');
 const slugEdited = ref(props.statusPage !== undefined);
 const isPublished = ref(props.statusPage?.is_published ?? false);
 const showUptime = ref(props.statusPage?.show_uptime ?? true);
+const subscriptionsEnabled = ref(
+    props.statusPage?.subscriptions_enabled ?? false,
+);
+const accentColor = ref(props.statusPage?.accent_color ?? '');
+// An existing accent is kept even when branding is no longer included.
+const accentLocked = computed(
+    () => props.canBrand === false && !props.statusPage?.accent_color,
+);
 type EditableComponent = Omit<StatusPageComponentInput, 'group_name'> & {
     group_name: string;
 };
@@ -179,7 +190,25 @@ const remove = (index: number) => components.value.splice(index, 1);
                 />
                 <span>{{ t('Show 90-day uptime') }}</span>
             </label>
+            <label class="flex items-center gap-3 text-sm">
+                <input type="hidden" name="subscriptions_enabled" value="0" />
+                <input
+                    v-model="subscriptionsEnabled"
+                    type="checkbox"
+                    name="subscriptions_enabled"
+                    value="1"
+                    class="size-4 accent-primary"
+                    data-test="subscriptions-checkbox"
+                />
+                <span>{{ t('Let visitors subscribe by e-mail') }}</span>
+            </label>
         </div>
+
+        <AccentColorField
+            v-model="accentColor"
+            :disabled="accentLocked"
+            :error="errors.accent_color ?? errors.limit"
+        />
 
         <fieldset class="space-y-3">
             <legend class="text-sm font-medium">{{ t('Components') }}</legend>

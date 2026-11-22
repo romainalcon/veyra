@@ -6,6 +6,7 @@ use App\Domain\Entitlements\Contracts\Entitlements;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\LimitReached;
 use App\Domain\Organizations\Models\Organization;
+use App\Domain\StatusPages\Models\StatusPageSubscriber;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -65,7 +66,8 @@ class Quota
             Feature::StatusPages => $organization->statusPages()->count(),
             Feature::CustomDomains => $organization->statusPages()->whereNotNull('custom_domain')->count(),
             Feature::NotificationChannels => $organization->notificationChannels()->count(),
-            Feature::MinIntervalSeconds, Feature::CheckRetentionDays => throw new LogicException("{$feature->value} is not a counted feature."),
+            Feature::StatusPageSubscribers => StatusPageSubscriber::query()->where('organization_id', $organization->id)->count(),
+            Feature::MinIntervalSeconds, Feature::CheckRetentionDays, Feature::StatusPageBranding => throw new LogicException("{$feature->value} is not a counted feature."),
         };
     }
 
@@ -75,6 +77,14 @@ class Quota
     public function minIntervalSeconds(Organization $organization): ?int
     {
         return $this->limit($organization, Feature::MinIntervalSeconds);
+    }
+
+    /**
+     * Whether status pages may carry a logo, favicon and accent colour.
+     */
+    public function allowsBranding(Organization $organization): bool
+    {
+        return $this->limit($organization, Feature::StatusPageBranding) !== 0;
     }
 
     /**

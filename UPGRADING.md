@@ -15,6 +15,9 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### Unreleased (1.4)
+One migration runs automatically: `create_status_page_audience_tables` adds two columns to `status_pages` (subscriptions are off by default) and creates the branding, subscriber and announcement tables. Nothing changes on existing pages until a manager enables subscriptions or adds branding. Subscription e-mails use the existing mail configuration (`MAIL_*`); configure it before enabling subscriptions. Changing `APP_KEY` invalidates subscriber lookups and links, as it already does for encrypted channel credentials.
+
 ### 1.3.0
 One migration runs automatically: `add_locale_to_organizations_table` adds `organizations.locale` (default `en`, so existing organizations stay in English). The table is small; take a backup first as usual.
 - Organization language: Owners and Admins can switch an organization to French in its settings. Nothing changes until they do.

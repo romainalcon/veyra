@@ -6,7 +6,7 @@ namespace App\Domain\Entitlements\Enums;
  * Organization capabilities that an edition may limit (ADR-029).
  *
  * Counted features cap a number of resources; the others carry a value
- * (a minimum interval, a retention period).
+ * (a minimum interval, a retention period, or 0 to switch an option off).
  */
 enum Feature: string
 {
@@ -15,13 +15,15 @@ enum Feature: string
     case StatusPages = 'status_pages';
     case CustomDomains = 'custom_domains';
     case NotificationChannels = 'notification_channels';
+    case StatusPageSubscribers = 'status_page_subscribers';
+    case StatusPageBranding = 'status_page_branding';
     case MinIntervalSeconds = 'min_interval_seconds';
     case CheckRetentionDays = 'check_retention_days';
 
     public function isCounted(): bool
     {
         return match ($this) {
-            self::MinIntervalSeconds, self::CheckRetentionDays => false,
+            self::MinIntervalSeconds, self::CheckRetentionDays, self::StatusPageBranding => false,
             default => true,
         };
     }
@@ -45,6 +47,8 @@ enum Feature: string
             self::StatusPages => 'This organization is limited to :limit status pages.',
             self::CustomDomains => 'This organization is limited to :limit custom domains.',
             self::NotificationChannels => 'This organization is limited to :limit notification channels.',
+            self::StatusPageSubscribers => 'This organization is limited to :limit status page subscribers.',
+            self::StatusPageBranding => 'Status page branding is not available for this organization.',
             self::MinIntervalSeconds, self::CheckRetentionDays => 'This organization has reached a limit.',
         };
     }

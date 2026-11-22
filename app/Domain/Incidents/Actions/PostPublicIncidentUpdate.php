@@ -3,6 +3,7 @@
 namespace App\Domain\Incidents\Actions;
 
 use App\Domain\Incidents\Enums\IncidentEventType;
+use App\Domain\Incidents\Events\PublicIncidentUpdatePosted;
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Incidents\Models\IncidentEvent;
 use App\Models\User;
@@ -19,6 +20,10 @@ class PostPublicIncidentUpdate
 
     public function handle(Incident $incident, User $user, string $message): IncidentEvent
     {
-        return $this->recordIncidentEvent->handle($incident, IncidentEventType::PublicUpdate, userId: $user->id, message: trim($message));
+        $event = $this->recordIncidentEvent->handle($incident, IncidentEventType::PublicUpdate, userId: $user->id, message: trim($message));
+
+        PublicIncidentUpdatePosted::dispatch($event->id);
+
+        return $event;
     }
 }

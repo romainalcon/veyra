@@ -12,7 +12,8 @@ export type LimitFeature =
     | 'members'
     | 'status_pages'
     | 'custom_domains'
-    | 'notification_channels';
+    | 'notification_channels'
+    | 'status_page_subscribers';
 
 export type LimitUsage = {
     used: number;

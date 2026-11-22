@@ -3,6 +3,7 @@
 namespace App\Domain\StatusPages\Actions;
 
 use App\Domain\Entitlements\Enums\Feature;
+use App\Domain\Entitlements\LimitReached;
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\StatusPages\DTOs\StatusPageData;
@@ -26,7 +27,14 @@ class SaveStatusPage
                 'description' => $data->description,
                 'is_published' => $data->isPublished,
                 'show_uptime' => $data->showUptime,
+                'accent_color' => $data->accentColor === null ? null : strtolower($data->accentColor),
+                'subscriptions_enabled' => $data->subscriptionsEnabled,
             ];
+
+            // Branding entitlement (ADR-029 "growth only"): an existing accent is kept, a new one needs the feature.
+            if ($attributes['accent_color'] !== null && $attributes['accent_color'] !== $statusPage?->accent_color && ! $this->quota->allowsBranding($organization)) {
+                throw new LimitReached(Feature::StatusPageBranding, 0);
+            }
 
             if ($statusPage === null) {
                 $this->quota->ensureCanAdd($organization, Feature::StatusPages);

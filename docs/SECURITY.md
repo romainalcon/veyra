@@ -50,5 +50,13 @@ Broadcasts on `private-organizations.{id}` carry identifiers and enum values onl
 ## Custom domains (Sprint 6)
 - Ownership is proven by a TXT record with a random 40-character token, renewed when the domain changes; verified domains are re-checked daily and revoked after 3 consecutive failures.
 - Refused: IP literals, single-label names, `localhost`, `.local`, `.internal`, `.lan`, `home.arpa`, `.invalid`, `.onion`, ports or paths, and the `APP_URL` host and its subdomains.
-- On a verified domain only `GET|HEAD /` reaches the public page; every other path or method is 404 before any session starts, so login forms and session cookies are never served on a customer-controlled host. Other hosts are not affected.
+- On a verified domain only `GET|HEAD /`, the feeds, badges and branding images, and `POST /subscribe` reach the public page (ADR-036); every other path or method is 404 before any session starts, so login forms and session cookies are never served on a customer-controlled host. Other hosts are not affected.
 - `/status-domains/tls-check` approves certificates only for verified domains of published pages (on-demand TLS "ask"), rate limited to 60/min.
+
+## Status page audience (Sprint 14, ADR-036)
+- Branding images are identified from their bytes (signature, structure, `getimagesizefromstring()`), never from the client's name or type; SVG is refused. They are size- and dimension-limited, stored in the database and served cookie-free with `nosniff` and `Content-Security-Policy: default-src 'none'; sandbox`. Responses may set their own stricter CSP; `SecurityHeaders` no longer overrides it.
+- Accent colours are validated as `#rrggbb` before use in styles; text contrast is checked server-side (`AccentColor`).
+- Subscriber addresses are encrypted (`encrypted` cast) and looked up by HMAC; they never appear in the interface, Inertia props, queue payloads or logs (delivery errors keep the exception class only). The subscription POST gives the same answer for every address, has a honeypot and is rate-limited per IP and per page; the organization limit is not disclosed to visitors.
+- Confirmation and unsubscribe links are signed (`URL::temporarySignedRoute` 48 h / `URL::signedRoute`). Their GET pages only show a button, are `no-store` and send no referrer; tampered or expired signatures show an "invalid link" page and change nothing.
+- Announcement e-mails, feeds and badges are built from whitelisted public fields only (public names, public updates, maintenance title/description); tests assert that monitor names, causes, notes and ids are absent.
+

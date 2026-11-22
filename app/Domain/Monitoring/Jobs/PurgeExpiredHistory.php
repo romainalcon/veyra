@@ -87,6 +87,19 @@ class PurgeExpiredHistory implements ShouldBeUnique, ShouldQueue
         $this->purgeInBatches(fn () => DB::table('tls_certificate_alerts')
             ->where('created_at', '<', $now->subDays(self::DELIVERY_RETENTION_DAYS)), $startedAt);
 
+        // Status page audience (ADR-036): unconfirmed subscriptions and old announcements.
+        $this->purgeInBatches(fn () => DB::table('status_page_subscribers')
+            ->whereNull('confirmed_at')
+            ->where('created_at', '<', $now->subDays((int) config('veyra.status_pages.unconfirmed_retention_days', 7))), $startedAt);
+
+        $announcementCutoff = $now->subDays((int) config('veyra.status_pages.announcement_retention_days', 30));
+
+        $this->purgeInBatches(fn () => DB::table('status_page_subscriber_deliveries')
+            ->where('created_at', '<', $announcementCutoff), $startedAt);
+
+        $this->purgeInBatches(fn () => DB::table('status_page_announcements')
+            ->where('created_at', '<', $announcementCutoff), $startedAt);
+
         do {
             $deleted = SchedulerBeatLog::purge($now, self::BATCH_SIZE);
         } while ($deleted === self::BATCH_SIZE && ! $this->outOfTime($startedAt));

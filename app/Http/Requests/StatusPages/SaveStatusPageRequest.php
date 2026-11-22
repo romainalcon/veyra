@@ -42,6 +42,8 @@ class SaveStatusPageRequest extends FormRequest
             'description' => is_string($this->input('description')) && trim($this->input('description')) !== '' ? trim($this->input('description')) : null,
             'is_published' => $this->boolean('is_published'),
             'show_uptime' => $this->boolean('show_uptime', true),
+            'accent_color' => is_string($this->input('accent_color')) && trim($this->input('accent_color')) !== '' ? Str::lower(trim($this->input('accent_color'))) : null,
+            'subscriptions_enabled' => $this->boolean('subscriptions_enabled'),
             'components' => array_map(fn ($component): mixed => is_array($component) ? [
                 'monitor_id' => $component['monitor_id'] ?? null,
                 'display_name' => is_string($component['display_name'] ?? null) ? trim($component['display_name']) : null,
@@ -69,6 +71,8 @@ class SaveStatusPageRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:2000'],
             'is_published' => ['boolean'],
             'show_uptime' => ['boolean'],
+            'accent_color' => ['nullable', 'string', 'regex:/^#[0-9a-f]{6}$/'],
+            'subscriptions_enabled' => ['boolean'],
             'components' => ['array', 'max:'.StatusPageSnapshot::MAX_COMPONENTS],
             'components.*' => ['array:monitor_id,display_name,group_name'],
             'components.*.monitor_id' => [
@@ -93,6 +97,7 @@ class SaveStatusPageRequest extends FormRequest
         return [
             'slug.regex' => __('Use lowercase letters, digits and dashes.'),
             'slug.not_in' => __('This address is reserved.'),
+            'accent_color.regex' => __('Use a colour in the #rrggbb format.'),
         ];
     }
 
@@ -112,6 +117,8 @@ class SaveStatusPageRequest extends FormRequest
             isPublished: (bool) $this->validated('is_published'),
             showUptime: (bool) $this->validated('show_uptime'),
             components: $components,
+            accentColor: $this->validated('accent_color'),
+            subscriptionsEnabled: (bool) $this->validated('subscriptions_enabled'),
         );
     }
 

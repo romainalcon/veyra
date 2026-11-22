@@ -28,6 +28,20 @@ enum PublicComponentStatus: string
     }
 
     /**
+     * English label (translation key), as shown on the public page.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::Operational => 'Operational',
+            self::Degraded => 'Degraded performance',
+            self::Outage => 'Outage',
+            self::Maintenance => 'Under maintenance',
+            self::NoData => 'No data',
+        };
+    }
+
+    /**
      * Higher is worse; used to derive the overall page status.
      */
     public function severity(): int

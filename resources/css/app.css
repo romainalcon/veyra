@@ -228,3 +228,16 @@
         @apply bg-background text-foreground;
     }
 }
+
+/*
+ * Status page branding (ADR-036). status/Show.vue sets --page-accent-text-*
+ * only when the accent reaches 4.5:1 on that theme's background (checked
+ * server-side by AccentColor); otherwise the neutral foreground is kept.
+ */
+.text-accent-text {
+    color: var(--page-accent-text-light, var(--foreground));
+}
+
+.dark .text-accent-text {
+    color: var(--page-accent-text-dark, var(--foreground));
+}

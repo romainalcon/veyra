@@ -31,8 +31,12 @@
 | monitor_daily_stats | monitor_id, day, checks_count, success_count, failure_count, latency_avg_ms |
 | maintenance_windows | id, organization_id, title, description, starts_at, ends_at, cancelled_at, created_by |
 | maintenance_window_monitors | maintenance_window_id, monitor_id |
-| status_pages | id, organization_id, slug (unique), title, description, is_published, show_uptime, custom_domain (unique), domain_verification_token, domain_verified_at, domain_checked_at, domain_failures |
+| status_pages | id, organization_id, slug (unique), title, description, is_published, show_uptime, accent_color, subscriptions_enabled, custom_domain (unique), domain_verification_token, domain_verified_at, domain_checked_at, domain_failures |
 | status_page_components | id, status_page_id, monitor_id, display_name, group_name, position |
+| status_page_assets | id, status_page_id, kind (logo/favicon), mime, sha256, width, height, size, content (MEDIUMBLOB) |
+| status_page_subscribers | id, organization_id, status_page_id, email (encrypted), email_hash, confirmed_at, confirmation_sent_at |
+| status_page_announcements | id, organization_id, status_page_id, subject_id, event, payload (json) |
+| status_page_subscriber_deliveries | id, announcement_id, subscriber_id, status, attempts, sent_at, last_error |
 | audit_logs | id, organization_id, actor_id, action, subject_type, subject_id, metadata |
 
 ## Constraints and indexes
@@ -71,6 +75,11 @@
 - `maintenance_windows` is indexed by `(organization_id, starts_at)` and `(starts_at, ends_at)`; `maintenance_window_monitors` has PK `(maintenance_window_id, monitor_id)` and an index on `monitor_id`.
 - `status_pages.slug` and `status_pages.custom_domain` are globally unique (several NULL domains are allowed). `status_page_components` is unique on `(status_page_id, monitor_id)`.
 - Pivot and component rows cascade on hard deletes only (organization deletion); soft-deleted monitors are filtered out when building public pages.
+
+## Status page audience (Sprint 14)
+- `status_page_assets` is unique on `(status_page_id, kind)`; `content` is altered to `MEDIUMBLOB` (16 MB max, the application caps it at 256 KB) because `Blueprint::binary()` creates a 64 KB `BLOB`.
+- `status_page_subscribers` is unique on `(status_page_id, email_hash)` (the HMAC of the normalized address; the address itself is encrypted text and cannot be indexed), indexed by `(status_page_id, confirmed_at)` for fan-out, `(organization_id, created_at)` for limits and `(confirmed_at, created_at)` for the purge.
+- `status_page_announcements` is unique on `(status_page_id, subject_id, event)` (`sp_announcements_page_subject_event_unique`) and `status_page_subscriber_deliveries` on `(announcement_id, subscriber_id)` (`sp_deliveries_announcement_subscriber_unique`): explicit names, the generated ones exceed MariaDB's 64-character limit. Both are indexed by `created_at` for the batched 30-day purge in `PurgeExpiredHistory`; unconfirmed subscribers are purged after 7 days.
 
 ## Monitor types (Sprint 7)
 - `monitor_tcp_configs` and `monitor_heartbeat_configs` mirror `monitor_http_configs` (PK = `monitor_id`, cascade on hard delete).

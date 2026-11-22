@@ -4,6 +4,14 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+- **Status page branding** — a logo, a favicon and an accent colour per status page. Images are checked and size-limited (no SVG). The accent colour is only used for text where it stays readable in light and dark themes (ADR-036).
+- **E-mail subscriptions** — visitors can subscribe to a status page by e-mail, once enabled in the page settings. They confirm their address first, then receive incident openings, public updates, resolutions and planned maintenance in the organization language. Every e-mail has a one-click unsubscribe link. Addresses are encrypted and never shown: page managers only see counts.
+- **Atom and RSS feeds** of public incidents and maintenance for every published page.
+- **SVG badges** — current status and 24 h / 7 d / 30 d uptime per published component, ready to embed in a README or a website.
+- Feeds, badges, branding images and the subscription form also work on verified custom domains.
+- Organization limits for status page subscribers and branding (`Entitlements`). The Community edition limits nothing.
+
 ### Changed
 - **Visual identity** — Veyra has its own look: an indigo accent on cool slate neutrals, Inter and JetBrains Mono, a new pulse mark and favicon, in light and dark themes. The application, landing page, sign-in pages and e-mails use it; public status pages stay neutral so they suit your own brand (ADR-035).
 - Statuses (up, degraded, down, maintenance, unknown) have their own accessible colours, each paired with an icon and a label so they never rely on colour alone; every text colour meets WCAG AA contrast.

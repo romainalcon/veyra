@@ -31,7 +31,10 @@ class SecurityHeaders
         $headers = $response->headers;
         $headers->set('X-Content-Type-Options', 'nosniff');
         $headers->set('X-Frame-Options', 'DENY');
-        $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        if (! $headers->has('Referrer-Policy')) {
+            $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        }
+
         $headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
         $headers->set('Cross-Origin-Opener-Policy', 'same-origin');
 
@@ -39,7 +42,8 @@ class SecurityHeaders
             $headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
-        if (! $request->is(self::CSP_EXCLUDED_PATHS) && ! Vite::isRunningHot()) {
+        // Responses may set a stricter policy of their own (images, badges).
+        if (! $headers->has('Content-Security-Policy') && ! $request->is(self::CSP_EXCLUDED_PATHS) && ! Vite::isRunningHot()) {
             $headers->set('Content-Security-Policy', $this->policy($nonce));
         }
 
