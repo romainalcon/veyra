@@ -30,11 +30,30 @@ const type = ref<ChannelType>(props.channel?.type ?? 'email');
 const recipients = ref((props.channel?.recipients ?? []).join(', '));
 const isEdit = computed(() => props.channel !== undefined);
 const isWebhook = computed(() => type.value === 'webhook');
-const webhookPlaceholder = computed(() =>
-    isWebhook.value
-        ? 'https://hooks.example.com/veyra'
-        : 'https://discord.com/api/webhooks/…',
-);
+
+/**
+ * Label and example of the URL field. Labels stay literal `t()` calls so the
+ * translation coverage test sees them.
+ */
+const urlField = computed(() => {
+    switch (type.value) {
+        case 'discord':
+            return {
+                label: t('Discord webhook URL'),
+                placeholder: 'https://discord.com/api/webhooks/…',
+            };
+        case 'slack':
+            return {
+                label: t('Slack webhook URL'),
+                placeholder: 'https://hooks.slack.com/services/…',
+            };
+        default:
+            return {
+                label: t('Endpoint URL'),
+                placeholder: 'https://hooks.example.com/veyra',
+            };
+    }
+});
 </script>
 
 <template>
@@ -95,7 +114,7 @@ const webhookPlaceholder = computed(() =>
 
         <div v-else class="grid gap-2">
             <Label :for="`webhook-${channel?.id ?? 'new'}`">{{
-                isWebhook ? t('Endpoint URL') : t('Discord webhook URL')
+                urlField.label
             }}</Label>
             <Input
                 :id="`webhook-${channel?.id ?? 'new'}`"
@@ -105,7 +124,7 @@ const webhookPlaceholder = computed(() =>
                 :placeholder="
                     isEdit
                         ? t('Leave empty to keep the current webhook')
-                        : webhookPlaceholder
+                        : urlField.placeholder
                 "
             />
             <p

@@ -10,6 +10,7 @@ const types = [
     { value: 'email' as const, label: 'E-mail' },
     { value: 'discord' as const, label: 'Discord' },
     { value: 'webhook' as const, label: 'Webhook' },
+    { value: 'slack' as const, label: 'Slack' },
 ];
 
 describe('ChannelForm', () => {
@@ -105,5 +106,21 @@ describe('ChannelForm', () => {
         expect(
             wrapper.get('input[name="webhook_url"]').attributes('placeholder'),
         ).toBe('https://hooks.example.com/veyra');
+    });
+
+    it('asks for a Slack incoming webhook when creating a Slack channel', async () => {
+        const wrapper = mount(ChannelForm, {
+            props: { action, types, maxRecipients: 10 },
+        });
+
+        await wrapper.get('select#type').setValue('slack');
+
+        const input = wrapper.get('input[name="webhook_url"]');
+        expect(wrapper.text()).toContain('Slack webhook URL');
+        expect(input.attributes('type')).toBe('password');
+        expect(input.attributes('placeholder')).toBe(
+            'https://hooks.slack.com/services/…',
+        );
+        expect(wrapper.find('[data-test="webhook-hint"]').exists()).toBe(false);
     });
 });

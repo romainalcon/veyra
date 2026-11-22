@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
-import { Mail, MessageSquare, Send, Trash2, Webhook } from '@lucide/vue';
+import { Hash, Mail, MessageSquare, Send, Trash2, Webhook } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import LimitNotice from '@/components/LimitNotice.vue';
@@ -54,7 +54,12 @@ setLayoutProps({
     ],
 });
 
-const channelIcons = { email: Mail, discord: MessageSquare, webhook: Webhook };
+const channelIcons = {
+    email: Mail,
+    discord: MessageSquare,
+    webhook: Webhook,
+    slack: Hash,
+};
 
 const sendTest = (channel: NotificationChannelSummary) =>
     router.visit(test([organization.value.slug, channel.id]), {
