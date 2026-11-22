@@ -1,9 +1,31 @@
 name: Docker
 
+# Pull requests that can change the image, the stack or what the smoke test
+# calls; release preparation PRs touch CHANGELOG.md, so every release is
+# smoke-tested before its tag. Run it by hand with workflow_dispatch.
 on:
   pull_request:
-  push:
-    branches: [main]
+    paths:
+      - '.github/workflows/docker.yml'
+      - '.dockerignore'
+      - 'compose.yaml'
+      - 'deploy/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'config/**'
+      - 'database/migrations/**'
+      - 'routes/**'
+      - 'bootstrap/**'
+      - 'app/Providers/**'
+      - 'app/Domain/System/**'
+      - 'app/Domain/Monitoring/DTOs/**'
+      - 'app/Domain/Monitoring/Actions/CreateMonitor.php'
+      - 'app/Domain/Organizations/Actions/CreateOrganization.php'
+      - 'app/Domain/Organizations/DTOs/**'
+      - 'CHANGELOG.md'
+  workflow_dispatch:
 
 permissions:
   contents: read
