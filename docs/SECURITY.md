@@ -41,6 +41,17 @@ Broadcasts on `private-organizations.{id}` carry identifiers and enum values onl
 - The UI shows only the host of a webhook URL (paths and queries often carry tokens). Payloads never contain the monitored URL or host, request headers or recipients; stored errors and logs never contain the webhook URL.
 - Notification workers now reach organization-chosen hosts: apply the probe egress filtering to the `notifications` workers as well (they run in the same Horizon service by default).
 
+## More channels (Sprint 16, ADR-039)
+- ntfy and Gotify server URLs get the same probe SSRF policy as outgoing webhooks (saved and before every send, pinned connection, no redirects, no proxy, response capped at 64 KiB). Their tokens travel in headers (`Authorization: Bearer`, `X-Gotify-Key`), never in the URL, and are restricted to `[A-Za-z0-9_.-]` so they cannot inject headers.
+- Telegram (`api.telegram.org`), Microsoft Teams (`*.logic.azure.com`, `*.api.powerplatform.com`, `/workflows/` paths) and PagerDuty (`events.pagerduty.com`) have fixed or allow-listed hosts, re-validated before each send. The Telegram bot token is part of the API path: exception messages are never stored or logged.
+- Untrusted values are entity-escaped for Telegram's HTML mode and rendered as non-Markdown `TextRun` elements in Teams cards; ntfy, Gotify and PagerDuty receive plain text.
+- Bot tokens, application tokens and routing keys are encrypted with the channel configuration and never returned to the browser (only their last four characters, the host, the topic or the chat id are shown). Provider error messages are copied into `last_error` only when they are short plain text that does not contain the secret.
+
+## Two-factor authentication (Sprint 16, ADR-040)
+- TOTP secrets and recovery codes are encrypted by Fortify and hidden from serialization; managing them requires a recent password confirmation. The QR code and setup key are only shown until the first code is confirmed; recovery codes only right after confirmation or regeneration.
+- The challenge is limited to 5 attempts per minute per pending login; recovery codes are single-use and replaced when used.
+- Owners can require a second factor for their organization (only with their own confirmed). Members without one are redirected away from every organization route except leaving it, and the organization's private Reverb channel is refused to them.
+
 ## Public status pages (Sprint 6)
 - `/status/{slug}` runs without the `web` group: no session is started and no cookie is set; the Inertia middleware for public pages shares only the instance name, version and source link. Unpublished pages are 404.
 - The payload is a whitelist (`StatusPageSnapshot`): public display names and statuses, uptime, public incident updates and maintenance title/description. Monitor IDs, names, URLs, causes, error codes, internal notes, organization slugs and user data are never published; a test asserts their absence from the rendered HTML. Public keys are per-page HMACs, not database identifiers.

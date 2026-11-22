@@ -27,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property string $slug
  * @property string $locale
  * @property array<string, mixed>|null $settings
+ * @property bool $require_two_factor
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, User> $users
@@ -36,7 +37,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, MaintenanceWindow> $maintenanceWindows
  * @property-read Collection<int, StatusPage> $statusPages
  */
-#[Fillable(['name', 'slug', 'locale', 'settings'])]
+#[Fillable(['name', 'slug', 'locale', 'settings', 'require_two_factor'])]
 #[UseFactory(OrganizationFactory::class)]
 #[UsePolicy(OrganizationPolicy::class)]
 class Organization extends Model
@@ -49,6 +50,7 @@ class Organization extends Model
      */
     protected $attributes = [
         'locale' => 'en',
+        'require_two_factor' => false,
     ];
 
     /**
@@ -58,6 +60,7 @@ class Organization extends Model
     {
         return [
             'settings' => 'array',
+            'require_two_factor' => 'boolean',
         ];
     }
 

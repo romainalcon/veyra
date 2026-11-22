@@ -64,6 +64,37 @@ final readonly class NotificationMessage
     }
 
     /**
+     * Labelled details shown by plain-text and card channels, in the
+     * notification language. Values are untrusted: each channel escapes them.
+     *
+     * @return list<array{label: string, value: string}>
+     */
+    public function facts(): array
+    {
+        $isIncident = ! in_array($this->event, [NotificationEvent::Test, NotificationEvent::CertificateExpiring, NotificationEvent::CertificateExpired], true);
+
+        return array_values(array_filter([
+            ['label' => $this->translate('Monitor'), 'value' => $this->monitorName],
+            $this->cause ? ['label' => $this->translate('Cause'), 'value' => mb_substr($this->cause, 0, 256)] : null,
+            $this->durationSeconds !== null && $isIncident
+                ? ['label' => $this->translate('Duration'), 'value' => self::humanDuration($this->durationSeconds, $this->locale)]
+                : null,
+            $this->certificateExpiresAt ? ['label' => $this->translate('Expires'), 'value' => $this->certificateExpiresAt.' UTC'] : null,
+            $this->certificateIssuer ? ['label' => $this->translate('Issuer'), 'value' => mb_substr($this->certificateIssuer, 0, 256)] : null,
+        ]));
+    }
+
+    /**
+     * Summary followed by one "Label: value" line per fact (no markup).
+     */
+    public function plainText(): string
+    {
+        $lines = array_map(fn (array $fact): string => $this->translate(':label: :value', $fact), $this->facts());
+
+        return $this->summary()."\n\n".implode("\n", $lines);
+    }
+
+    /**
      * Translates a label of the notification into its language.
      *
      * @param  array<string, string>  $replace

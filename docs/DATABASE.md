@@ -10,8 +10,8 @@
 ## Tables
 | Table | Key fields |
 |---|---|
-| users | id, name, email, password, email_verified_at |
-| organizations | id, name, slug, locale (ADR-027), settings, created_at |
+| users | id, name, email, password, two_factor_secret / two_factor_recovery_codes (encrypted, ADR-040), two_factor_confirmed_at, email_verified_at |
+| organizations | id, name, slug, locale (ADR-027), require_two_factor (ADR-040), settings, created_at |
 | organization_members | organization_id, user_id, role, joined_at |
 | organization_invitations | id, organization_id, email, role, token_hash, expires_at |
 | monitors | id, organization_id, name, type, enabled, interval_seconds, timeout_seconds, next_check_at, deleted_at |

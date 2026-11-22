@@ -2,12 +2,16 @@
 import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
 import {
+    Bell,
     BellRing,
     Hash,
     Mail,
     MessageSquare,
     Send,
+    Siren,
+    Smartphone,
     Trash2,
+    Users,
     Webhook,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
@@ -68,6 +72,11 @@ const channelIcons = {
     discord: MessageSquare,
     webhook: Webhook,
     slack: Hash,
+    ntfy: Bell,
+    gotify: Smartphone,
+    telegram: Send,
+    teams: Users,
+    pagerduty: Siren,
 };
 
 const sendTest = (channel: NotificationChannelSummary) =>

@@ -17,6 +17,9 @@ class UserFactory extends Factory
      */
     protected static ?string $password;
 
+    /** Base32 TOTP secret used by the `withTwoFactor` state (not a real secret). */
+    public const TWO_FACTOR_TEST_SECRET = 'JBSWY3DPEHPK3PXP';
+
     /**
      * Define the model's default state.
      *
@@ -40,6 +43,18 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * A confirmed second factor. The secret is a test value: `TWO_FACTOR_TEST_SECRET`.
+     */
+    public function withTwoFactor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'two_factor_secret' => encrypt(self::TWO_FACTOR_TEST_SECRET),
+            'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-one', 'recovery-code-two'])),
+            'two_factor_confirmed_at' => now(),
         ]);
     }
 }

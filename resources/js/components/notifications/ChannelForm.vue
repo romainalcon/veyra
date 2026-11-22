@@ -31,6 +31,19 @@ const recipients = ref((props.channel?.recipients ?? []).join(', '));
 const isEdit = computed(() => props.channel !== undefined);
 const isWebhook = computed(() => type.value === 'webhook');
 
+const urlTypes: ChannelType[] = [
+    'discord',
+    'slack',
+    'webhook',
+    'teams',
+    'ntfy',
+    'gotify',
+];
+const tokenTypes: ChannelType[] = ['ntfy', 'gotify', 'telegram', 'pagerduty'];
+const hasUrl = computed(() => urlTypes.includes(type.value));
+const hasToken = computed(() => tokenTypes.includes(type.value));
+const hasChat = computed(() => type.value === 'telegram');
+
 /**
  * Label and example of the URL field. Labels stay literal `t()` calls so the
  * translation coverage test sees them.
@@ -47,10 +60,53 @@ const urlField = computed(() => {
                 label: t('Slack webhook URL'),
                 placeholder: 'https://hooks.slack.com/services/…',
             };
+        case 'teams':
+            return {
+                label: t('Teams workflow URL'),
+                placeholder: 'https://….logic.azure.com/workflows/…',
+            };
+        case 'ntfy':
+            return {
+                label: t('ntfy topic URL'),
+                placeholder: 'https://ntfy.sh/my-alerts',
+            };
+        case 'gotify':
+            return {
+                label: t('Gotify server URL'),
+                placeholder: 'https://gotify.example.com',
+            };
         default:
             return {
                 label: t('Endpoint URL'),
                 placeholder: 'https://hooks.example.com/veyra',
+            };
+    }
+});
+
+/**
+ * Tokens are secrets like webhook URLs: never pre-filled when editing.
+ */
+const tokenField = computed(() => {
+    switch (type.value) {
+        case 'ntfy':
+            return {
+                label: t('Access token (optional)'),
+                placeholder: 'tk_…',
+            };
+        case 'gotify':
+            return {
+                label: t('Application token'),
+                placeholder: 'A…',
+            };
+        case 'telegram':
+            return {
+                label: t('Bot token'),
+                placeholder: '123456:ABC…',
+            };
+        default:
+            return {
+                label: t('Integration key'),
+                placeholder: t('32-character Events API v2 key'),
             };
     }
 });
@@ -112,7 +168,7 @@ const urlField = computed(() => {
             <InputError :message="errors['recipients.0']" />
         </div>
 
-        <div v-else class="grid gap-2">
+        <div v-if="hasUrl" class="grid gap-2">
             <Label :for="`webhook-${channel?.id ?? 'new'}`">{{
                 urlField.label
             }}</Label>
@@ -138,11 +194,61 @@ const urlField = computed(() => {
                     )
                 }}
             </p>
-            <p v-if="isEdit" class="text-xs text-muted-foreground">
-                {{ t('Current: :summary', { summary: channel?.summary }) }}
-            </p>
             <InputError :message="errors.webhook_url" />
         </div>
+
+        <div v-if="hasToken" class="grid gap-2">
+            <Label :for="`token-${channel?.id ?? 'new'}`">{{
+                tokenField.label
+            }}</Label>
+            <Input
+                :id="`token-${channel?.id ?? 'new'}`"
+                name="token"
+                type="password"
+                autocomplete="off"
+                :placeholder="
+                    isEdit
+                        ? t('Leave empty to keep the current token')
+                        : tokenField.placeholder
+                "
+            />
+            <p
+                v-if="type === 'telegram' && !isEdit"
+                class="text-xs text-muted-foreground"
+                data-test="telegram-hint"
+            >
+                {{
+                    t(
+                        'Create a bot with @BotFather, add it to the chat, then enter the chat id.',
+                    )
+                }}
+            </p>
+            <InputError :message="errors.token" />
+        </div>
+
+        <div v-if="hasChat" class="grid gap-2">
+            <Label :for="`chat-${channel?.id ?? 'new'}`">{{
+                t('Chat id')
+            }}</Label>
+            <Input
+                :id="`chat-${channel?.id ?? 'new'}`"
+                name="chat_id"
+                autocomplete="off"
+                :placeholder="
+                    isEdit
+                        ? t('Leave empty to keep the current chat')
+                        : '-1001234567890'
+                "
+            />
+            <InputError :message="errors.chat_id" />
+        </div>
+
+        <p
+            v-if="isEdit && type !== 'email'"
+            class="text-xs text-muted-foreground"
+        >
+            {{ t('Current: :summary', { summary: channel?.summary }) }}
+        </p>
 
         <div class="flex flex-wrap gap-6 text-sm">
             <label class="flex items-center gap-2">

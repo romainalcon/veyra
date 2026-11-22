@@ -5,6 +5,11 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 ## [Unreleased]
 
 ### Added
+- **ntfy and Gotify** — push notifications to ntfy.sh or your own ntfy or Gotify server, with an optional access token. Server addresses follow the same network safety rules as monitored URLs (ADR-039).
+- **Telegram** — a bot posts incidents, certificate warnings and tests to a chat, group or channel.
+- **Microsoft Teams** — notifications as Adaptive Cards through a Teams workflow ("When a Teams webhook request is received").
+- **PagerDuty** — incidents trigger, acknowledge and resolve a single PagerDuty alert (Events API v2); reminders are left to PagerDuty's own escalations.
+- **Two-factor authentication** — every user can protect their account with an authenticator app and recovery codes. Owners can require it for their organization: members without it are asked to enable it before they can open the organization (ADR-040).
 - **POST, PUT and PATCH checks** — HTTP monitors can send a request body (up to 16 KiB, JSON validated) and basic auth credentials. Both are encrypted and never shown again after saving; they are only sent to the monitored host, never to a redirect target on another host (ADR-037).
 - **Content checks** — a keyword the response must contain, or must not contain, with a case-sensitivity option. Failures are reported as "Expected keyword not found" or "Forbidden keyword found".
 - **Latency threshold** — responses slower than the threshold are marked "Slow"; three in a row make the monitor degraded (never down), two fast responses bring it back up.

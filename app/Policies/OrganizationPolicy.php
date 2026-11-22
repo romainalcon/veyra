@@ -28,6 +28,14 @@ class OrganizationPolicy
         return $this->roleOf($user, $organization)?->canDeleteOrganization() ?? false;
     }
 
+    /**
+     * Requiring two-factor authentication can lock members out: Owners only (ADR-040).
+     */
+    public function requireTwoFactor(User $user, Organization $organization): bool
+    {
+        return $this->roleOf($user, $organization) === OrganizationRole::Owner;
+    }
+
     public function viewMembers(User $user, Organization $organization): bool
     {
         return $this->view($user, $organization);

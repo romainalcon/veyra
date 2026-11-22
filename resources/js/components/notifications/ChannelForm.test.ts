@@ -11,6 +11,11 @@ const types = [
     { value: 'discord' as const, label: 'Discord' },
     { value: 'webhook' as const, label: 'Webhook' },
     { value: 'slack' as const, label: 'Slack' },
+    { value: 'ntfy' as const, label: 'ntfy' },
+    { value: 'gotify' as const, label: 'Gotify' },
+    { value: 'telegram' as const, label: 'Telegram' },
+    { value: 'teams' as const, label: 'Microsoft Teams' },
+    { value: 'pagerduty' as const, label: 'PagerDuty' },
 ];
 
 describe('ChannelForm', () => {
@@ -122,5 +127,61 @@ describe('ChannelForm', () => {
             'https://hooks.slack.com/services/…',
         );
         expect(wrapper.find('[data-test="webhook-hint"]').exists()).toBe(false);
+    });
+
+    it.each([
+        ['ntfy', true, true, false],
+        ['gotify', true, true, false],
+        ['teams', true, false, false],
+        ['telegram', false, true, true],
+        ['pagerduty', false, true, false],
+    ] as const)(
+        'shows the fields of a %s channel',
+        async (type, hasUrl, hasToken, hasChat) => {
+            const wrapper = mount(ChannelForm, {
+                props: { action, types, maxRecipients: 10 },
+            });
+
+            await wrapper.get('select#type').setValue(type);
+
+            expect(wrapper.find('input[name="webhook_url"]').exists()).toBe(
+                hasUrl,
+            );
+            expect(wrapper.find('input[name="token"]').exists()).toBe(hasToken);
+            expect(wrapper.find('input[name="chat_id"]').exists()).toBe(
+                hasChat,
+            );
+            expect(wrapper.find('input[name="recipients"]').exists()).toBe(
+                false,
+            );
+        },
+    );
+
+    it('never pre-fills a stored token', () => {
+        const wrapper = mount(ChannelForm, {
+            props: {
+                action,
+                types,
+                maxRecipients: 10,
+                channel: {
+                    id: '1',
+                    type: 'telegram',
+                    name: 'On-call',
+                    summary: 'Chat -100123',
+                    enabled: true,
+                    is_default: false,
+                    monitors_count: 0,
+                    recipients: [],
+                },
+            },
+        });
+
+        const token = wrapper.get('input[name="token"]');
+        expect((token.element as HTMLInputElement).value).toBe('');
+        expect(token.attributes('type')).toBe('password');
+        expect(token.attributes('placeholder')).toBe(
+            'Leave empty to keep the current token',
+        );
+        expect(wrapper.text()).toContain('Current: Chat -100123');
     });
 });

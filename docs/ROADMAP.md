@@ -129,10 +129,10 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Tests: assertions, DEGRADED transitions, encryption and redaction, validation, translations.
 
 ## Sprint 16 — More channels and account security (1.5)
-- [ ] Notification channels: ntfy and Gotify (self-hosted friendly, server URL under the probe SSRF policy), Telegram bot, Microsoft Teams (workflow webhook), PagerDuty Events v2 (trigger / resolve with a stable dedup key).
-- [ ] Same delivery guarantees as existing channels: credentials encrypted, retry-safe, response classification, organization language, untrusted values escaped.
-- [ ] Two-factor authentication (Fortify TOTP + recovery codes) for every user; Owners can require it for their organization (members without it are asked to enable it before access).
-- [ ] Tests: payloads per channel, retries, SSRF, 2FA enforcement and recovery, tenant isolation, translations.
+- [x] Notification channels: ntfy and Gotify (self-hosted friendly, server URL under the probe SSRF policy), Telegram bot, Microsoft Teams (workflow webhook), PagerDuty Events v2 (trigger / resolve with a stable dedup key).
+- [x] Same delivery guarantees as existing channels: credentials encrypted, retry-safe, response classification, organization language, untrusted values escaped.
+- [x] Two-factor authentication (Fortify TOTP + recovery codes) for every user; Owners can require it for their organization (members without it are asked to enable it before access).
+- [x] Tests: payloads per channel, retries, SSRF, 2FA enforcement and recovery, tenant isolation, translations.
 
 ## Sprint 17 — Recurring maintenance (1.6)
 - [ ] Recurring windows (daily/weekly/monthly rule, organization time zone, duration ≤ `VEYRA_MAINTENANCE_MAX_HOURS`), occurrences materialized ahead of time into the existing one-off windows (ADR-021 semantics unchanged).

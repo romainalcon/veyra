@@ -10,6 +10,16 @@ enum ChannelType: string
     case Webhook = 'webhook';
     /** Slack incoming webhook, host allow-listed like Discord (ADR-034). */
     case Slack = 'slack';
+    /** ntfy topic on any server allowed by the probe SSRF policy (ADR-039). */
+    case Ntfy = 'ntfy';
+    /** Gotify server allowed by the probe SSRF policy (ADR-039). */
+    case Gotify = 'gotify';
+    /** Telegram bot message, fixed host (ADR-039). */
+    case Telegram = 'telegram';
+    /** Microsoft Teams workflow webhook, Microsoft hosts only (ADR-039). */
+    case Teams = 'teams';
+    /** PagerDuty Events v2, fixed host, trigger / acknowledge / resolve (ADR-039). */
+    case PagerDuty = 'pagerduty';
 
     public function label(): string
     {
@@ -18,6 +28,11 @@ enum ChannelType: string
             self::Discord => 'Discord',
             self::Webhook => 'Webhook',
             self::Slack => 'Slack',
+            self::Ntfy => 'ntfy',
+            self::Gotify => 'Gotify',
+            self::Telegram => 'Telegram',
+            self::Teams => 'Microsoft Teams',
+            self::PagerDuty => 'PagerDuty',
         });
     }
 }

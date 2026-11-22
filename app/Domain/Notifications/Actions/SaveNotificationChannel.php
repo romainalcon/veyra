@@ -15,7 +15,7 @@ class SaveNotificationChannel
     public function __construct(private readonly Quota $quota) {}
 
     /**
-     * @param  array{name: string, enabled: bool, is_default: bool, recipients?: list<string>, webhook_url?: string|null}  $data
+     * @param  array{name: string, enabled: bool, is_default: bool, recipients?: list<string>, webhook_url?: string|null, token?: string|null, chat_id?: string|null}  $data
      */
     public function create(Organization $organization, ChannelType $type, array $data): NotificationChannel
     {
@@ -33,9 +33,10 @@ class SaveNotificationChannel
     }
 
     /**
-     * Secrets are only replaced when a new value is provided.
+     * Secrets (URLs, tokens) and the Telegram chat are only replaced when a
+     * new value is provided.
      *
-     * @param  array{name: string, enabled: bool, is_default: bool, recipients?: list<string>, webhook_url?: string|null}  $data
+     * @param  array{name: string, enabled: bool, is_default: bool, recipients?: list<string>, webhook_url?: string|null, token?: string|null, chat_id?: string|null}  $data
      */
     public function update(NotificationChannel $channel, array $data): NotificationChannel
     {
@@ -50,7 +51,7 @@ class SaveNotificationChannel
     }
 
     /**
-     * @param  array{recipients?: list<string>, webhook_url?: string|null}  $data
+     * @param  array{recipients?: list<string>, webhook_url?: string|null, token?: string|null, chat_id?: string|null}  $data
      * @param  array<string, mixed>  $current
      * @return array<string, mixed>
      */
@@ -64,6 +65,27 @@ class SaveNotificationChannel
                 'webhook_url' => ($data['webhook_url'] ?? null) ?: ($current['webhook_url'] ?? null),
                 'signing_secret' => $current['signing_secret'] ?? WebhookSignature::generateSecret(),
             ],
+            ChannelType::Teams => ['webhook_url' => self::keep('webhook_url', $data, $current)],
+            ChannelType::Ntfy, ChannelType::Gotify => [
+                'webhook_url' => self::keep('webhook_url', $data, $current),
+                'token' => self::keep('token', $data, $current),
+            ],
+            ChannelType::Telegram => [
+                'token' => self::keep('token', $data, $current),
+                'chat_id' => self::keep('chat_id', $data, $current),
+            ],
+            ChannelType::PagerDuty => ['token' => self::keep('token', $data, $current)],
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $current
+     */
+    private static function keep(string $key, array $data, array $current): ?string
+    {
+        $value = $data[$key] ?? null;
+
+        return is_string($value) && $value !== '' ? $value : (is_string($current[$key] ?? null) ? $current[$key] : null);
     }
 }

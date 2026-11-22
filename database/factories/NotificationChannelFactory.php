@@ -56,4 +56,49 @@ class NotificationChannelFactory extends Factory
             'config_encrypted' => ['webhook_url' => $url, 'signing_secret' => $secret ?? WebhookSignature::generateSecret()],
         ]);
     }
+
+    public function ntfy(string $url = 'https://ntfy.example.com/veyra-alerts', ?string $token = 'test-ntfy-token-not-real'): static
+    {
+        return $this->state(fn (): array => [
+            'type' => ChannelType::Ntfy,
+            'name' => 'ntfy alerts',
+            'config_encrypted' => ['webhook_url' => $url, 'token' => $token],
+        ]);
+    }
+
+    public function gotify(string $url = 'https://gotify.example.com', string $token = 'testGotifyToken'): static
+    {
+        return $this->state(fn (): array => [
+            'type' => ChannelType::Gotify,
+            'name' => 'Gotify',
+            'config_encrypted' => ['webhook_url' => $url, 'token' => $token],
+        ]);
+    }
+
+    public function telegram(string $token = '12345:test-token-not-real-telegram-bot', string $chatId = '-1001234567890'): static
+    {
+        return $this->state(fn (): array => [
+            'type' => ChannelType::Telegram,
+            'name' => 'Telegram on-call',
+            'config_encrypted' => ['token' => $token, 'chat_id' => $chatId],
+        ]);
+    }
+
+    public function teams(string $url = 'https://prod-00.westeurope.logic.azure.com:443/workflows/test-workflow/triggers/manual/paths/invoke?api-version=2016-06-01&sig=notarealsigAbcd'): static
+    {
+        return $this->state(fn (): array => [
+            'type' => ChannelType::Teams,
+            'name' => 'Teams #ops',
+            'config_encrypted' => ['webhook_url' => $url],
+        ]);
+    }
+
+    public function pagerDuty(string $routingKey = 'testroutingkeynotreal00000000000'): static
+    {
+        return $this->state(fn (): array => [
+            'type' => ChannelType::PagerDuty,
+            'name' => 'PagerDuty service',
+            'config_encrypted' => ['token' => $routingKey],
+        ]);
+    }
 }
