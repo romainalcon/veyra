@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { usePublicNavigation } from '@/composables/usePublicNavigation';
 import { useTranslations } from '@/lib/i18n';
 
 const page = usePage();
 const system = computed(() => page.props.system);
 const { t } = useTranslations();
+const footerLinks = usePublicNavigation('footer');
 </script>
 
 <template>
@@ -24,6 +26,12 @@ const { t } = useTranslations();
                 rel="noopener noreferrer"
                 >{{ t('Source code') }}</a
             >
+        </template>
+        <template v-for="link in footerLinks" :key="link.id">
+            <span aria-hidden="true">·</span>
+            <Link :href="link.href" class="hover:underline">{{
+                link.title
+            }}</Link>
         </template>
     </footer>
 </template>

@@ -17,6 +17,7 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import UptimeBars from '@/components/charts/UptimeBars.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
+import { usePublicNavigation } from '@/composables/usePublicNavigation';
 import { useTranslations } from '@/lib/i18n';
 import { login, register } from '@/routes';
 import type { MonitorStatus } from '@/types';
@@ -27,6 +28,8 @@ const props = defineProps<{
 }>();
 
 const { t } = useTranslations();
+const headerLinks = usePublicNavigation('header');
+const footerLinks = usePublicNavigation('footer');
 
 const features = computed(() => [
     {
@@ -165,6 +168,13 @@ const copyCommands = async () => {
                     <a href="#self-hosting" class="hover:text-foreground">{{
                         t('Self-hosting')
                     }}</a>
+                    <Link
+                        v-for="link in headerLinks"
+                        :key="link.id"
+                        :href="link.href"
+                        class="hover:text-foreground"
+                        >{{ link.title }}</Link
+                    >
                     <a
                         :href="repositoryUrl"
                         target="_blank"
@@ -413,6 +423,12 @@ const copyCommands = async () => {
                     class="hover:underline"
                     >{{ t('Source code') }}</a
                 >
+                <template v-for="link in footerLinks" :key="link.id">
+                    <span aria-hidden="true">·</span>
+                    <Link :href="link.href" class="hover:underline">{{
+                        link.title
+                    }}</Link>
+                </template>
             </div>
         </footer>
     </div>
