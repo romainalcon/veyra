@@ -104,6 +104,7 @@ class ApplyMonitorState
 
             if ($evaluation->status === MonitorStatus::Down && $incident === null) {
                 $incident = $this->openIncident->handle($monitor, $streakStart->checked_at, $this->cause($newest));
+                $this->attachEvidence($monitorId, $incident, $streakStart);
             }
 
             // Recovery: the confirmation streak of successes, even if they are slow (DEGRADED).
@@ -174,6 +175,32 @@ class ApplyMonitorState
         }
 
         return MonitorStatus::Maintenance;
+    }
+
+    /**
+     * Keeps the evidence of the earliest failing check of the confirming
+     * streak (the first one, unless it had no response, e.g. a timeout) and
+     * discards the evidence of failures that were never confirmed (ADR-050).
+     * Runs under the monitor_states row lock, once per opened incident.
+     */
+    private function attachEvidence(string $monitorId, Incident $incident, MonitorCheck $streakStart): void
+    {
+        $first = DB::table('check_evidence')
+            ->where('monitor_id', $monitorId)
+            ->whereNull('incident_id')
+            ->where('checked_at', '>=', $streakStart->checked_at->toDateTimeString())
+            ->orderBy('checked_at')
+            ->orderBy('id')
+            ->value('id');
+
+        if ($first !== null) {
+            DB::table('check_evidence')->where('id', $first)->update(['incident_id' => $incident->id]);
+        }
+
+        DB::table('check_evidence')
+            ->where('monitor_id', $monitorId)
+            ->whereNull('incident_id')
+            ->delete();
     }
 
     private function cause(MonitorCheck $check): string

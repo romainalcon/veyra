@@ -3,6 +3,7 @@
 namespace App\Domain\Incidents\Models;
 
 use App\Domain\Incidents\Enums\IncidentStatus;
+use App\Domain\Monitoring\Models\CheckEvidence;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Notifications\Models\NotificationDelivery;
 use App\Domain\Organizations\Models\Organization;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property string $id
@@ -108,5 +110,15 @@ class Incident extends Model
     public function events(): HasMany
     {
         return $this->hasMany(IncidentEvent::class);
+    }
+
+    /**
+     * Response of the first failing check (ADR-050), members only.
+     *
+     * @return HasOne<CheckEvidence, $this>
+     */
+    public function evidence(): HasOne
+    {
+        return $this->hasOne(CheckEvidence::class);
     }
 }

@@ -22,7 +22,11 @@ export type LatencyPoint = {
     maintenance: number;
     latency_avg: number | null;
     latency_max: number | null;
+    /** Average of each timing phase over successful checks (ADR-050). */
+    phases: Record<TimingPhase, number | null>;
 };
+
+export type TimingPhase = 'dns' | 'connect' | 'tls' | 'ttfb' | 'transfer';
 
 export type StatsRange = '24h' | '7d' | '30d' | '90d';
 

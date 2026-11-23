@@ -7,6 +7,7 @@ use App\Domain\Monitoring\Dns\DnsNameservers;
 use App\Domain\Monitoring\Dns\DnsQueryFailed;
 use App\Domain\Monitoring\Dns\DnsRecordName;
 use App\Domain\Monitoring\Dns\DnsResponse;
+use App\Domain\Monitoring\DTOs\CheckTimings;
 use App\Domain\Monitoring\DTOs\ProbeResult;
 use App\Domain\Monitoring\Enums\DnsMatchMode;
 use App\Domain\Monitoring\Enums\DnsRecordType;
@@ -132,7 +133,7 @@ final class DnsProbe implements MonitorProbe
         // A failing server's answer (SERVFAIL, REFUSED) says nothing about the records.
         $recorded = in_array($response->rcode, [DnsResponse::NOERROR, DnsResponse::NXDOMAIN], true) ? $answers : null;
 
-        return new ProbeResult($errorCode === null, $duration, null, $errorCode, $metadata, dnsAnswers: $recorded);
+        return new ProbeResult($errorCode === null, $duration, null, $errorCode, $metadata, dnsAnswers: $recorded, timings: new CheckTimings(dnsMs: $duration));
     }
 
     /**

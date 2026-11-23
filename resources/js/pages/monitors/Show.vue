@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router, setLayoutProps, usePage } from '@inertiajs/vue3';
-import { Pause, Pencil, Play, RefreshCw, Trash2 } from '@lucide/vue';
-import { computed } from 'vue';
+import {
+    ChevronDown,
+    Pause,
+    Pencil,
+    Play,
+    RefreshCw,
+    Trash2,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import CertificatePanel from '@/components/monitors/CertificatePanel.vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
@@ -10,6 +17,7 @@ import DomainPanel from '@/components/monitors/DomainPanel.vue';
 import HeartbeatPanel from '@/components/monitors/HeartbeatPanel.vue';
 import MonitorStatsPanel from '@/components/monitors/MonitorStatsPanel.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
+import TimingWaterfall from '@/components/monitors/TimingWaterfall.vue';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +48,7 @@ import type {
     StatsRange,
 } from '@/types';
 import { useTranslations } from '@/lib/i18n';
+import { timingSegments } from '@/lib/timings';
 
 const { t } = useTranslations();
 
@@ -77,6 +86,20 @@ const showCertificate = computed(
 );
 
 const isFirstPage = computed(() => props.checks.prev_cursor === null);
+
+/** Heartbeats have no timings; older checks show a dash (ADR-050). */
+const hasTimings = computed(() => props.monitor.type !== 'heartbeat');
+const columnCount = computed(
+    () =>
+        3 +
+        (props.monitor.type === 'http' ? 1 : 0) +
+        (hasTimings.value ? 1 : 0),
+);
+const expandedCheckId = ref<string | null>(null);
+
+function toggleCheck(id: string): void {
+    expandedCheckId.value = expandedCheckId.value === id ? null : id;
+}
 const activeIncident = computed(
     () =>
         props.incidents.find((incident) => incident.status === 'open') ?? null,
@@ -212,6 +235,18 @@ const remove = () => router.visit(destroy(params.value));
                 </dt>
                 <dd class="mt-1">
                     <CheckBadge :check="monitor.latest_check" />
+                </dd>
+            </div>
+            <div
+                v-if="timingSegments(monitor.latest_check?.timings).length"
+                class="order-last sm:col-span-4"
+                data-test="latest-check-timings"
+            >
+                <dt class="mb-2 text-muted-foreground">
+                    {{ t('Latest check timings') }}
+                </dt>
+                <dd>
+                    <TimingWaterfall :timings="monitor.latest_check?.timings" />
                 </dd>
             </div>
             <div>
@@ -416,34 +451,82 @@ const remove = () => router.visit(destroy(params.value));
                             >
                                 {{ t('Redirects') }}
                             </th>
+                            <th v-if="hasTimings" class="px-4 py-2 font-medium">
+                                {{ t('Timings') }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
-                        <tr v-for="check in checks.data" :key="check.id">
-                            <td class="px-4 py-2 whitespace-nowrap">
-                                {{ formatDateTime(check.checked_at) }}
-                            </td>
-                            <td class="px-4 py-2">
-                                <span class="flex items-center gap-2">
-                                    <CheckBadge :check="check" />
-                                    <Badge
-                                        v-if="check.in_maintenance"
-                                        variant="outline"
-                                        data-test="check-maintenance"
-                                        >{{ t('Maintenance') }}</Badge
+                        <template v-for="check in checks.data" :key="check.id">
+                            <tr>
+                                <td class="px-4 py-2 whitespace-nowrap">
+                                    {{ formatDateTime(check.checked_at) }}
+                                </td>
+                                <td class="px-4 py-2">
+                                    <span class="flex items-center gap-2">
+                                        <CheckBadge :check="check" />
+                                        <Badge
+                                            v-if="check.in_maintenance"
+                                            variant="outline"
+                                            data-test="check-maintenance"
+                                            >{{ t('Maintenance') }}</Badge
+                                        >
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2">
+                                    {{ formatDuration(check.duration_ms) }}
+                                </td>
+                                <td
+                                    v-if="monitor.type === 'http'"
+                                    class="px-4 py-2"
+                                >
+                                    {{ check.redirects }}
+                                </td>
+                                <td v-if="hasTimings" class="px-4 py-2">
+                                    <button
+                                        v-if="
+                                            timingSegments(check.timings).length
+                                        "
+                                        type="button"
+                                        class="flex items-center gap-2 rounded-sm text-xs text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                        :aria-expanded="
+                                            expandedCheckId === check.id
+                                        "
+                                        :aria-label="
+                                            t('Show the timing breakdown')
+                                        "
+                                        data-test="check-timings-toggle"
+                                        @click="toggleCheck(check.id)"
                                     >
-                                </span>
-                            </td>
-                            <td class="px-4 py-2">
-                                {{ formatDuration(check.duration_ms) }}
-                            </td>
-                            <td
-                                v-if="monitor.type === 'http'"
-                                class="px-4 py-2"
+                                        <TimingWaterfall
+                                            :timings="check.timings"
+                                            compact
+                                        />
+                                        <ChevronDown
+                                            class="size-3.5 transition-transform"
+                                            :class="{
+                                                'rotate-180':
+                                                    expandedCheckId ===
+                                                    check.id,
+                                            }"
+                                            aria-hidden="true"
+                                        />
+                                    </button>
+                                    <span v-else class="text-muted-foreground"
+                                        >—</span
+                                    >
+                                </td>
+                            </tr>
+                            <tr
+                                v-if="expandedCheckId === check.id"
+                                class="bg-muted/20"
+                                data-test="check-timings-detail"
                             >
-                                {{ check.redirects }}
-                            </td>
-                        </tr>
+                                <td :colspan="columnCount" class="px-4 py-3">
+                                    <TimingWaterfall :timings="check.timings" />
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
