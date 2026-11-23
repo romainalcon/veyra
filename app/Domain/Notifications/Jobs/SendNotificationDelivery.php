@@ -7,6 +7,7 @@ use App\Domain\Notifications\Channels\SenderRegistry;
 use App\Domain\Notifications\Enums\DeliveryStatus;
 use App\Domain\Notifications\Models\NotificationDelivery;
 use App\Domain\Realtime\OrganizationUpdate;
+use App\Domain\System\Metrics\MetricsRecorder;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -77,6 +78,7 @@ class SendNotificationDelivery implements ShouldBeUnique, ShouldQueue
 
         if ($result->sent) {
             $delivery->update(['status' => DeliveryStatus::Sent, 'attempts' => $attempts, 'sent_at' => now(), 'last_error' => null]);
+            app(MetricsRecorder::class)->recordDelivery($delivery->channel->type, $delivery->event_type, sent: true);
             $this->broadcast($delivery);
 
             return;
@@ -110,6 +112,10 @@ class SendNotificationDelivery implements ShouldBeUnique, ShouldQueue
             'attempts' => $delivery->attempts,
             'last_error' => $error === null ? null : mb_substr($error, 0, 255),
         ]);
+
+        if ($status === DeliveryStatus::Failed) {
+            app(MetricsRecorder::class)->recordDelivery($delivery->channel->type, $delivery->event_type, sent: false);
+        }
 
         $this->broadcast($delivery);
     }

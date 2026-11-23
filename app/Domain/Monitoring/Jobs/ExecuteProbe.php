@@ -9,6 +9,7 @@ use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorDispatch;
 use App\Domain\Monitoring\Models\MonitorDnsConfig;
 use App\Domain\Monitoring\Probes\ProbeRegistry;
+use App\Domain\System\Metrics\MetricsRecorder;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -33,7 +34,7 @@ class ExecuteProbe implements ShouldQueue
         $this->onQueue('probes');
     }
 
-    public function handle(ProbeRegistry $probes, RecordProbeResult $recordProbeResult, RecordTlsCertificate $recordTlsCertificate): void
+    public function handle(ProbeRegistry $probes, RecordProbeResult $recordProbeResult, RecordTlsCertificate $recordTlsCertificate, MetricsRecorder $metrics): void
     {
         $dispatch = MonitorDispatch::query()->with('monitor')->find($this->dispatchId);
 
@@ -65,7 +66,9 @@ class ExecuteProbe implements ShouldQueue
             return;
         }
 
-        $recordProbeResult->handle($dispatch, $result);
+        if ($recordProbeResult->handle($dispatch, $result)) {
+            $metrics->recordProbe($monitor->type, $result->success, $result->durationMs);
+        }
 
         if ($result->certificate !== null) {
             $recordTlsCertificate->handle($monitor->id, $result->certificate);

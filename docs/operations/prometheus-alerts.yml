@@ -1,0 +1,90 @@
+# Veyra instance alerts (docs/operations/METRICS.md). Load with `rule_files`.
+# Thresholds are starting points; adjust `for:` and limits to your instance.
+groups:
+  - name: veyra
+    rules:
+      - alert: VeyraMetricsUnavailable
+        expr: up{job="veyra"} == 0 or min by (instance, collector) (veyra_metrics_collector_up) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Veyra metrics are unavailable ({{ $labels.collector }})"
+          description: "The scrape failed or a collector could not read MariaDB, Redis or Horizon. Check /health."
+
+      - alert: VeyraSchedulerStopped
+        expr: veyra_scheduler_heartbeat_age_seconds > 180
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Veyra scheduler is stopped"
+          description: "No scheduler heartbeat for {{ $value | humanizeDuration }}. No check is scheduled; monitors turn UNKNOWN."
+
+      - alert: VeyraHorizonDown
+        expr: sum(veyra_horizon_master_supervisors{status="running"}) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No Horizon master supervisor is running"
+          description: "Probes, incidents and notifications are not processed."
+
+      - alert: VeyraOutboxBacklog
+        expr: veyra_outbox_oldest_age_seconds{status="pending"} > 120
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Veyra outbox is late"
+          description: "The oldest pending dispatch is {{ $value | humanizeDuration }} late: dispatches are not pushed to Redis."
+
+      - alert: VeyraProbesStuck
+        expr: veyra_outbox_oldest_age_seconds{status="dispatched"} > 600
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Veyra probes are not completing"
+          description: "A dispatched probe has waited {{ $value | humanizeDuration }} for a result. Check the Horizon `probes` workers."
+
+      - alert: VeyraProbeQueueBacklog
+        expr: sum(veyra_queue_jobs{queue="probes", state="pending"}) > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Veyra probes queue backlog"
+          description: "{{ $value }} probe jobs are waiting. Add workers to the `probes` supervisor."
+
+      - alert: VeyraDispatchesFailing
+        expr: veyra_outbox_failed_dispatches_last_hour > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Veyra gave up scheduled checks"
+          description: "{{ $value }} dispatches failed in the last hour: those checks never ran."
+
+      - alert: VeyraNotificationFailures
+        expr: |
+          sum(increase(veyra_notification_deliveries_total{result="failed"}[15m]))
+            / sum(increase(veyra_notification_deliveries_total[15m])) > 0.2
+          and sum(increase(veyra_notification_deliveries_total{result="failed"}[15m])) >= 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Veyra notifications are failing"
+          description: "{{ $value | humanizePercentage }} of notification deliveries failed over 15 minutes."
+
+      - alert: VeyraManyMonitorsUnknown
+        expr: |
+          sum(veyra_monitors{state="unknown"}) / clamp_min(sum(veyra_monitors), 1) > 0.2
+          and sum(veyra_monitors) >= 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Many Veyra monitors are UNKNOWN"
+          description: "{{ $value | humanizePercentage }} of monitors have no recent data: probably a worker or scheduler outage, not service downtime."

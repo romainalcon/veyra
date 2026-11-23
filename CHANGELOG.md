@@ -4,6 +4,11 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+- **Prometheus metrics** — `GET /metrics` exposes the health of the instance: Redis queue sizes, outbox backlog and age, failed dispatches, scheduler heartbeat age, Horizon supervisors and failed jobs, monitors by state, probe durations (histogram by type and result) and notification deliveries (by channel type, event and result). Disabled by default; enable it with `VEYRA_METRICS_ENABLED` and protect it with `VEYRA_METRICS_TOKEN` and/or `VEYRA_METRICS_ALLOWED_IPS` (IPs or CIDR ranges). Metrics never contain organization, monitor, URL or user data (ADR-048).
+- An example Grafana dashboard and Prometheus alerting rules in `docs/operations/` (`METRICS.md`, `grafana-dashboard.json`, `prometheus-alerts.yml`).
+- `veyra:doctor` checks the metrics configuration.
+
 ## [1.8.0] — 2026-11-23
 
 ### Added

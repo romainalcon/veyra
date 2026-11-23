@@ -38,6 +38,7 @@ Then set `REVERB_HOST=127.0.0.1`, `REVERB_PORT=8080`, `REVERB_SCHEME=http` (serv
 
 ## Health checks and monitoring of the instance
 - `GET /health` returns `{status, version}` (HTTP 503 when the database is down; `degraded` when Redis, Horizon or the scheduler are stopped). Add `Authorization: Bearer $VEYRA_HEALTH_TOKEN` for details. Point an external uptime check at it — preferably from another host.
+- `GET /metrics` serves Prometheus metrics once `VEYRA_METRICS_ENABLED=true` with `VEYRA_METRICS_TOKEN` and/or `VEYRA_METRICS_ALLOWED_IPS` (the client address is resolved through `TRUSTED_PROXIES`); see `docs/operations/METRICS.md`.
 - `php8.4 artisan veyra:doctor` after each configuration change.
 
 ## Updates and rollback
