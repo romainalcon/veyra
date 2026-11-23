@@ -178,10 +178,10 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Retention: timings follow raw-check retention and aggregation; evidence follows the incident; batched purge unchanged.
 - [x] Tests: timing capture and nulls, redaction of headers and excerpt, size bounds, binary bodies skipped, tenant isolation, translations; docs MONITORING/DATABASE/SECURITY, ADR.
 
-## Next — planned, not started (1.11 → 1.12)
+## Next — planned, not started (1.12 → 1.13)
 Order of work: 24 → 25. Criteria are a starting point, refined in the sprint's plan and ADR.
 
-## Sprint 24 — Dependencies and groups (1.11)
+## Sprint 24 — Dependencies and groups (1.12)
 - [ ] Monitor dependencies: a monitor may depend on parents in the same organization (no cycles, depth limited); while a parent is confirmed DOWN, a failing child is confirmed as `IMPACTED` (or flagged on the incident) without sending its own notifications or escalation; the child alerts normally once its parents are UP. Probe results and confirmed state stay distinct; UNKNOWN parents never suppress alerts.
 - [ ] Monitor groups: named groups with an aggregated state (all UP, any DEGRADED, a configurable share of members DOWN → group DOWN); group incidents and notifications optional and deduplicated with member incidents.
 - [ ] Transitions remain concurrency-safe and idempotent when a parent and its children change state in the same scheduler window; suppressed notifications are recorded so they can be explained.
@@ -189,7 +189,7 @@ Order of work: 24 → 25. Criteria are a starting point, refined in the sprint's
 - [ ] UI: dependency picker and group management, impacted monitors shown on the parent incident, dashboard filter by group.
 - [ ] Tests: suppression and release, cycles refused, cross-organization parents refused, aggregation rules, concurrent transitions, status page snapshot, API parity, translations; docs MONITORING/DATABASE, ADR.
 
-## Sprint 25 — Multi-location confirmation (1.12)
+## Sprint 25 — Multi-location confirmation (1.13)
 - [ ] ADR first: probe locations as additional Horizon supervisors on other hosts consuming per-location queues (`probes-<location>`), same application code and image, no external agent or separate daemon; MariaDB stays the source of truth, Redis per location or shared, egress isolation per host.
 - [ ] Location registry configured by the instance (none by default: single-location behaviour unchanged); monitors choose locations within their entitlements; the outbox dispatches one job per location and check round.
 - [ ] Confirmation rule: DOWN confirmed only when a configurable number of locations fail (default 2 when several are set); a silent or stale location is UNKNOWN and never counts as a failure; per-location results kept on checks.

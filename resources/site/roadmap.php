@@ -9,20 +9,8 @@
 
 return [
     [
-        'id' => 'check-diagnostics',
-        'version' => '1.11',
-        'status' => 'planned',
-        'title' => 'Check diagnostics',
-        'summary' => 'See where the time goes in every HTTP check, and what the server answered when an outage started.',
-        'highlights' => [
-            'Timing breakdown of each check: DNS, connection, TLS, first byte and transfer.',
-            'Latency chart by phase on the monitor page.',
-            'Evidence of the first failing check on the incident: status, safe headers and an excerpt of the response, with credentials never kept.',
-        ],
-    ],
-    [
         'id' => 'dependencies-and-groups',
-        'version' => '1.11',
+        'version' => '1.12',
         'status' => 'planned',
         'title' => 'Dependencies and groups',
         'summary' => 'One alert for one cause: when a server goes down, the services behind it are marked as impacted instead of paging you again.',
@@ -34,7 +22,7 @@ return [
     ],
     [
         'id' => 'multi-location',
-        'version' => '1.12',
+        'version' => '1.13',
         'status' => 'planned',
         'title' => 'Multi-location confirmation',
         'summary' => 'Check from several locations and confirm an outage only when more than one of them sees it.',

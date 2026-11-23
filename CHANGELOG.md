@@ -4,6 +4,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.11.0] — 2026-11-23
+
 ### Added
 - **Check timings** — every HTTP check records where its time went: DNS, connection, TLS, time to first byte, transfer and redirects; TCP checks record DNS and connect time, DNS checks their query time. The monitor page shows a waterfall per check and for the latest check, and the latency chart can be stacked by phase. Checks recorded before this version and heartbeats have no breakdown. The API returns `timings` on checks (ADR-050).
 - **Failure evidence** — when an incident opens, the incident page shows what the server answered on the first failing check: status, a fixed list of safe response headers and up to 4 KiB of a text body. Cookies, credentials and other headers are never kept, binary bodies are skipped, and the evidence never appears in the API, notifications, webhooks or status pages. It is deleted with the incident (ADR-050).
@@ -159,7 +161,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/romainalcon/veyra/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/romainalcon/veyra/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/romainalcon/veyra/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/romainalcon/veyra/compare/v1.7.0...v1.8.0
