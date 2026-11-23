@@ -15,6 +15,12 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.11.0
+One additive migration, no new setting and no new scheduled command.
+- The migration appends six nullable timing columns to `monitor_checks` and five to `monitor_daily_stats`, and creates `check_evidence`. MariaDB 11.4 adds trailing nullable columns in place (`ALGORITHM=INSTANT`), so the migration does not rewrite the checks table even on large instances. Checks recorded before the upgrade have no timing breakdown.
+- Unattached failure evidence is purged by the existing `veyra:history:purge` run; attached evidence is deleted with its incident.
+- API v1: checks gain a `timings` object (additive). Failure evidence is not exposed by the API.
+
 ### 1.10.0
 No migration, no new setting and no new scheduled command.
 - With `VEYRA_LANDING_PAGE=true`, `/changelog` and `/roadmap` are new public pages, linked from the landing page header and the site footers. Without the landing page (the default) they return 404 and nothing is linked, so self-hosted instances are unchanged.
