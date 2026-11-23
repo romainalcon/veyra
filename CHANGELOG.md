@@ -4,6 +4,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-11-23
+
 ### Added
 - **Prometheus metrics** — `GET /metrics` exposes the health of the instance: Redis queue sizes, outbox backlog and age, failed dispatches, scheduler heartbeat age, Horizon supervisors and failed jobs, monitors by state, probe durations (histogram by type and result) and notification deliveries (by channel type, event and result). Disabled by default; enable it with `VEYRA_METRICS_ENABLED` and protect it with `VEYRA_METRICS_TOKEN` and/or `VEYRA_METRICS_ALLOWED_IPS` (IPs or CIDR ranges). Metrics never contain organization, monitor, URL or user data (ADR-048).
 - An example Grafana dashboard and Prometheus alerting rules in `docs/operations/` (`METRICS.md`, `grafana-dashboard.json`, `prometheus-alerts.yml`).
@@ -148,7 +150,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/romainalcon/veyra/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/romainalcon/veyra/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/romainalcon/veyra/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/romainalcon/veyra/compare/v1.5.0...v1.6.0
