@@ -6,6 +6,7 @@ use App\Domain\Incidents\Enums\IncidentEventType;
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Incidents\Models\IncidentEvent;
 use App\Domain\Monitoring\Enums\ProbeErrorCode;
+use App\Domain\Monitoring\Models\CheckEvidence;
 
 final class IncidentPresenter
 {
@@ -39,6 +40,7 @@ final class IncidentPresenter
     {
         return [
             ...self::summary($incident),
+            'evidence' => self::evidence($incident->evidence),
             'acknowledged_by' => $incident->acknowledger->name ?? self::apiTokenLabel($incident->events
                 ->firstWhere('type', IncidentEventType::Acknowledged)),
             'events' => $incident->events
@@ -68,6 +70,32 @@ final class IncidentPresenter
     /**
      * Actions taken through the API name the token (ADR-044).
      */
+    /**
+     * Failure evidence of the first failing check (ADR-050). Only the member
+     * incident page uses it: never the API, notifications or status pages.
+     *
+     * @return array{checked_at: string, status_code: int, http_version: string|null, error_code: string, error_label: string, content_type: string|null, headers: array<string, string>, body_excerpt: string|null, body_truncated: bool, body_omitted_reason: string|null}|null
+     */
+    private static function evidence(?CheckEvidence $evidence): ?array
+    {
+        if ($evidence === null) {
+            return null;
+        }
+
+        return [
+            'checked_at' => $evidence->checked_at->toIso8601String(),
+            'status_code' => $evidence->status_code,
+            'http_version' => $evidence->http_version,
+            'error_code' => $evidence->error_code->value,
+            'error_label' => (string) __($evidence->error_code->label()),
+            'content_type' => $evidence->content_type,
+            'headers' => $evidence->headers,
+            'body_excerpt' => $evidence->body_excerpt,
+            'body_truncated' => $evidence->body_truncated,
+            'body_omitted_reason' => $evidence->body_omitted_reason,
+        ];
+    }
+
     private static function apiTokenLabel(?IncidentEvent $event): ?string
     {
         $name = $event?->metadata['api_token_name'] ?? null;

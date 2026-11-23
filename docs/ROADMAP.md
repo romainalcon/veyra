@@ -171,15 +171,15 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Grafana dashboard example and alerting rules in `docs/operations/`.
 - [x] Tests: access control, metric names stable, no tenant leak.
 
-## Next — planned, not started (1.11 → 1.12)
-Order of work: 23 → 25. Criteria are a starting point, refined in the sprint's plan and ADR.
-
 ## Sprint 23 — Check diagnostics (1.11)
-- [ ] Timing breakdown per HTTP check: DNS, connect, TLS, time to first byte, transfer (from the cURL transfer info of the pinned connection), stored on the check; nullable for older checks and other types; TCP keeps connect time, DNS keeps resolution time.
-- [ ] Failure evidence on the first failing check of an incident: status, response headers (allow-list, credentials and cookies never kept), bounded body excerpt (a few KiB, within the existing response cap, text content types only), failure reason; attached to the incident, purged with it.
-- [ ] UI: waterfall of the timings on the check detail and latest checks, stacked latency chart by phase on the monitor page, evidence panel on the incident page; no evidence on public status pages, webhook payloads or the API unless explicitly redacted and documented.
-- [ ] Retention: timings follow raw-check retention and aggregation; evidence follows the incident; batched purge unchanged.
-- [ ] Tests: timing capture and nulls, redaction of headers and excerpt, size bounds, binary bodies skipped, tenant isolation, translations; docs MONITORING/DATABASE/SECURITY, ADR.
+- [x] Timing breakdown per HTTP check: DNS, connect, TLS, time to first byte, transfer (from the cURL transfer info of the pinned connection), stored on the check; nullable for older checks and other types; TCP keeps connect time, DNS keeps resolution time.
+- [x] Failure evidence on the first failing check of an incident: status, response headers (allow-list, credentials and cookies never kept), bounded body excerpt (a few KiB, within the existing response cap, text content types only), failure reason; attached to the incident, purged with it.
+- [x] UI: waterfall of the timings on the check detail and latest checks, stacked latency chart by phase on the monitor page, evidence panel on the incident page; no evidence on public status pages, webhook payloads or the API unless explicitly redacted and documented.
+- [x] Retention: timings follow raw-check retention and aggregation; evidence follows the incident; batched purge unchanged.
+- [x] Tests: timing capture and nulls, redaction of headers and excerpt, size bounds, binary bodies skipped, tenant isolation, translations; docs MONITORING/DATABASE/SECURITY, ADR.
+
+## Next — planned, not started (1.11 → 1.12)
+Order of work: 24 → 25. Criteria are a starting point, refined in the sprint's plan and ADR.
 
 ## Sprint 24 — Dependencies and groups (1.11)
 - [ ] Monitor dependencies: a monitor may depend on parents in the same organization (no cycles, depth limited); while a parent is confirmed DOWN, a failing child is confirmed as `IMPACTED` (or flagged on the incident) without sending its own notifications or escalation; the child alerts normally once its parents are UP. Probe results and confirmed state stay distinct; UNKNOWN parents never suppress alerts.

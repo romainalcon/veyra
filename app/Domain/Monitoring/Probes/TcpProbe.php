@@ -2,6 +2,7 @@
 
 namespace App\Domain\Monitoring\Probes;
 
+use App\Domain\Monitoring\DTOs\CheckTimings;
 use App\Domain\Monitoring\DTOs\ProbeResult;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Probes\Contracts\MonitorProbe;
@@ -44,12 +45,16 @@ final class TcpProbe implements MonitorProbe
             return ProbeResult::failure($exception->errorCode, $this->elapsed($startedAt));
         }
 
+        $dnsMs = $endpoint->hostIsIp ? null : CheckTimings::elapsedMs($startedAt);
+        $connectStartedAt = hrtime(true);
         $error = $this->connector->connect($endpoint->ip, $endpoint->port, $timeoutSeconds);
         $metadata = ['resolved_ip' => $endpoint->ip];
+        // A failed connection has no meaningful connect time (ADR-050).
+        $timings = new CheckTimings(dnsMs: $dnsMs, connectMs: $error === null ? CheckTimings::elapsedMs($connectStartedAt) : null);
 
         return $error === null
-            ? new ProbeResult(true, $this->elapsed($startedAt), null, null, $metadata)
-            : ProbeResult::failure($error, $this->elapsed($startedAt), null, $metadata);
+            ? new ProbeResult(true, $this->elapsed($startedAt), null, null, $metadata, timings: $timings)
+            : ProbeResult::failure($error, $this->elapsed($startedAt), null, $metadata, $timings);
     }
 
     private function elapsed(int $startedAt): int

@@ -11,6 +11,7 @@ import { CheckCheck } from '@lucide/vue';
 import { computed } from 'vue';
 import IncidentController from '@/actions/App/Http/Controllers/Incidents/IncidentController';
 import InputError from '@/components/InputError.vue';
+import EvidencePanel from '@/components/incidents/EvidencePanel.vue';
 import DeliveryStatus from '@/components/notifications/DeliveryStatus.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -149,6 +150,8 @@ const acknowledgeIncident = () =>
                 </dd>
             </div>
         </dl>
+
+        <EvidencePanel :evidence="incident.evidence" />
 
         <section class="space-y-3">
             <h2 class="text-base font-medium">{{ t('Timeline') }}</h2>

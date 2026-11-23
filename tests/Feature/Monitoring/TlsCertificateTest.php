@@ -40,15 +40,18 @@ test('missing or malformed certinfo never breaks a check', function (mixed $cert
     'garbage pem' => [[['Cert' => "-----BEGIN CERTIFICATE-----\nnope\n-----END CERTIFICATE-----"]]],
 ]);
 
-test('certificate capture enables CURLOPT_CERTINFO and on_stats only when requested', function () {
+test('certificate capture enables CURLOPT_CERTINFO only when requested', function () {
     $probe = app(HttpProbe::class);
     $destination = new Destination(new ParsedUrl('https://example.com/', 'https', 'example.com', 443, false), '93.184.215.14');
 
     $plain = $probe->requestOptions($destination, 5);
-    $capturing = $probe->requestOptions($destination, 5, fn () => null);
+    $timing = $probe->requestOptions($destination, 5, fn () => null);
+    $capturing = $probe->requestOptions($destination, 5, fn () => null, captureCertificate: true);
 
     expect($plain['curl'])->not->toHaveKey(CURLOPT_CERTINFO)
         ->and($plain)->not->toHaveKey('on_stats')
+        ->and($timing['curl'])->not->toHaveKey(CURLOPT_CERTINFO)
+        ->and($timing['on_stats'])->toBeCallable()
         ->and($capturing['curl'][CURLOPT_CERTINFO])->toBeTrue()
         ->and($capturing['on_stats'])->toBeCallable();
 });

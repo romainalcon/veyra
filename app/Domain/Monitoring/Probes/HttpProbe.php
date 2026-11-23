@@ -3,6 +3,7 @@
 namespace App\Domain\Monitoring\Probes;
 
 use App\Domain\Monitoring\Certificates\CertificateParser;
+use App\Domain\Monitoring\DTOs\CheckTimings;
 use App\Domain\Monitoring\DTOs\ExpectedStatuses;
 use App\Domain\Monitoring\DTOs\ProbeResult;
 use App\Domain\Monitoring\Enums\HttpMethod;
@@ -32,7 +33,10 @@ use Throwable;
  *   callbacks); the status code and, optionally, a keyword are evaluated;
  * - custom headers, basic auth and the request body are only sent to the
  *   monitored host; 303 (and 301/302 for methods with a body) become GET
- *   without body, as browsers do (ADR-037).
+ *   without body, as browsers do (ADR-037);
+ * - each check carries its phase timings (DNS measured around the validated
+ *   resolution, the rest from the cURL transfer info of the final hop) and a
+ *   failing response carries bounded, allow-listed evidence (ADR-050).
  */
 class HttpProbe
 {
@@ -73,7 +77,7 @@ class HttpProbe
             return $result;
         }
 
-        return new ProbeResult(true, $result->durationMs, $result->statusCode, null, $result->metadata, $result->certificate, slow: true);
+        return new ProbeResult(true, $result->durationMs, $result->statusCode, null, $result->metadata, $result->certificate, slow: true, timings: $result->timings);
     }
 
     /**
@@ -102,10 +106,24 @@ class HttpProbe
         $originHost = UrlRedactor::host($url);
         $destination = null;
         $certificate = null;
+        $dnsMs = null;
+        $redirectMs = null;
+        /** @var array<string, mixed>|null $handlerStats */
+        $handlerStats = null;
+        $timings = function () use (&$handlerStats, &$dnsMs, &$redirectMs): CheckTimings {
+            return $handlerStats === null
+                ? new CheckTimings(dnsMs: $dnsMs, redirectMs: $redirectMs)
+                : CheckTimings::fromHandlerStats($handlerStats, $dnsMs, $redirectMs);
+        };
 
         try {
             while (true) {
+                $hopStartedAt = hrtime(true);
+                $redirectMs = $redirects > 0 ? (int) round(($hopStartedAt - $startedAt) / 1_000_000) : 0;
+                $handlerStats = null;
+                $dnsMs = null;
                 $destination = $this->guard->inspect($currentUrl);
+                $dnsMs = $destination->url->hostIsIp ? null : CheckTimings::elapsedMs($hopStartedAt);
                 $sameHost = $destination->url->host === $originHost;
 
                 // Custom headers and basic auth (often credentials) are never sent to another host.
@@ -121,18 +139,24 @@ class HttpProbe
                     && $destination->url->scheme === 'https'
                     && $destination->url->host === $originHost;
 
-                $response = $this->send($destination, $method, $hopHeaders, $body, $contentType, $timeoutSeconds, $captureCertificate
-                    ? function (TransferStats $stats) use (&$certificate): void {
-                        // on_stats may fire more than once; never overwrite a parsed certificate with nothing.
-                        $certificate = CertificateParser::fromCertinfo($stats->getHandlerStats()['certinfo'] ?? null) ?? $certificate;
+                $onStats = function (TransferStats $stats) use (&$certificate, &$handlerStats, $captureCertificate): void {
+                    // on_stats may fire more than once; never overwrite measured values with nothing.
+                    $hopStats = $stats->getHandlerStats();
+                    $handlerStats = $hopStats === [] ? $handlerStats : $hopStats;
+
+                    if ($captureCertificate) {
+                        $certificate = CertificateParser::fromCertinfo($hopStats['certinfo'] ?? null) ?? $certificate;
                     }
-                    : null);
+                };
+
+                $response = $this->send($destination, $method, $hopHeaders, $body, $contentType, $timeoutSeconds, $onStats, $captureCertificate);
                 $status = $response->status();
                 $location = $response->header('Location');
 
                 if ($followRedirects && $status >= 300 && $status < 400 && $location !== '') {
                     if ($redirects >= $this->settings->maxRedirects) {
-                        return ProbeResult::failure(ProbeErrorCode::TooManyRedirects, $this->elapsed($startedAt), $status, $this->metadata($redirects, $destination, $response));
+                        return ProbeResult::failure(ProbeErrorCode::TooManyRedirects, $this->elapsed($startedAt), $status, $this->metadata($redirects, $destination, $response), $timings(),
+                            FailureEvidence::fromResponse($response, ProbeErrorCode::TooManyRedirects, $method->hasResponseBody(), self::MAX_RESPONSE_BYTES));
                     }
 
                     $redirects++;
@@ -150,22 +174,24 @@ class HttpProbe
                 $metadata = $this->metadata($redirects, $destination, $response);
 
                 if (! $expectedStatuses->contains($status)) {
-                    return new ProbeResult(false, $this->elapsed($startedAt), $status, ProbeErrorCode::UnexpectedStatus, $metadata, $certificate);
+                    return new ProbeResult(false, $this->elapsed($startedAt), $status, ProbeErrorCode::UnexpectedStatus, $metadata, $certificate, timings: $timings(),
+                        evidence: FailureEvidence::fromResponse($response, ProbeErrorCode::UnexpectedStatus, $method->hasResponseBody(), self::MAX_RESPONSE_BYTES));
                 }
 
                 $assertionFailure = $method->hasResponseBody() ? $assertion?->evaluate($response, self::MAX_RESPONSE_BYTES) : null;
+                $evidence = $assertionFailure === null ? null : FailureEvidence::fromResponse($response, $assertionFailure, true, self::MAX_RESPONSE_BYTES);
 
-                return new ProbeResult($assertionFailure === null, $this->elapsed($startedAt), $status, $assertionFailure, $metadata, $certificate);
+                return new ProbeResult($assertionFailure === null, $this->elapsed($startedAt), $status, $assertionFailure, $metadata, $certificate, timings: $timings(), evidence: $evidence);
             }
         } catch (DestinationRejected $exception) {
-            return ProbeResult::failure($exception->errorCode, $this->elapsed($startedAt), null, ['redirects' => $redirects]);
+            return ProbeResult::failure($exception->errorCode, $this->elapsed($startedAt), null, ['redirects' => $redirects], $timings());
         } catch (Throwable $exception) {
             if (self::causedBy($exception, ResponseTooLarge::class)) {
-                return ProbeResult::failure(ProbeErrorCode::ResponseTooLarge, $this->elapsed($startedAt), null, $this->metadata($redirects, $destination));
+                return ProbeResult::failure(ProbeErrorCode::ResponseTooLarge, $this->elapsed($startedAt), null, $this->metadata($redirects, $destination), $timings());
             }
 
             if ($exception instanceof ConnectionException) {
-                return ProbeResult::failure($this->classify($exception), $this->elapsed($startedAt), null, $this->metadata($redirects, $destination));
+                return ProbeResult::failure($this->classify($exception), $this->elapsed($startedAt), null, $this->metadata($redirects, $destination), $timings());
             }
 
             // Never log the exception message: cURL messages contain the full URL.
@@ -174,7 +200,7 @@ class HttpProbe
                 'exception' => $exception::class,
             ]);
 
-            return ProbeResult::failure(ProbeErrorCode::UnexpectedError, $this->elapsed($startedAt), null, $this->metadata($redirects, $destination));
+            return ProbeResult::failure(ProbeErrorCode::UnexpectedError, $this->elapsed($startedAt), null, $this->metadata($redirects, $destination), $timings());
         }
     }
 
@@ -184,14 +210,18 @@ class HttpProbe
      *
      * @return array<string, mixed>
      */
-    public function requestOptions(Destination $destination, int $timeoutSeconds, ?Closure $onStats = null): array
+    public function requestOptions(Destination $destination, int $timeoutSeconds, ?Closure $onStats = null, bool $captureCertificate = false): array
     {
         $options = PinnedConnection::options($destination, $timeoutSeconds, self::MAX_CONNECT_TIMEOUT, self::MAX_RESPONSE_BYTES);
 
         if ($onStats !== null) {
+            // Transfer info of the hop: phase timings and, when asked, the certificate chain.
+            $options['on_stats'] = $onStats;
+        }
+
+        if ($onStats !== null && $captureCertificate) {
             // Exposes the presented chain (public data) to on_stats.
             $options['curl'][CURLOPT_CERTINFO] = true;
-            $options['on_stats'] = $onStats;
         }
 
         return $options;
@@ -200,10 +230,10 @@ class HttpProbe
     /**
      * @param  array<string, string>  $headers
      */
-    private function send(Destination $destination, HttpMethod $method, array $headers, ?string $body, ?string $contentType, int $timeoutSeconds, ?Closure $onStats = null): Response
+    private function send(Destination $destination, HttpMethod $method, array $headers, ?string $body, ?string $contentType, int $timeoutSeconds, ?Closure $onStats = null, bool $captureCertificate = false): Response
     {
         $request = $this->http
-            ->withOptions($this->requestOptions($destination, $timeoutSeconds, $onStats))
+            ->withOptions($this->requestOptions($destination, $timeoutSeconds, $onStats, $captureCertificate))
             ->withUserAgent($this->settings->userAgent)
             ->withHeaders($headers);
 

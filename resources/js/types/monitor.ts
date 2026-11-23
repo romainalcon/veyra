@@ -35,6 +35,17 @@ export type MonitorCheck = {
     error_label: string | null;
     redirects: number;
     in_maintenance: boolean;
+    timings: CheckTimings;
+};
+
+/** Phase breakdown in milliseconds, null when not measured (ADR-050). */
+export type CheckTimings = {
+    dns: number | null;
+    connect: number | null;
+    tls: number | null;
+    ttfb: number | null;
+    transfer: number | null;
+    redirect: number | null;
 };
 
 export type MonitorSummary = {

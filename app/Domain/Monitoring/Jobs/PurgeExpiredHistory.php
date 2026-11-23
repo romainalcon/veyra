@@ -4,6 +4,7 @@ namespace App\Domain\Monitoring\Jobs;
 
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Enums\DispatchStatus;
+use App\Domain\Monitoring\Models\CheckEvidence;
 use App\Domain\Organizations\Models\Organization;
 use App\Domain\System\SchedulerBeatLog;
 use Carbon\CarbonImmutable;
@@ -79,6 +80,11 @@ class PurgeExpiredHistory implements ShouldBeUnique, ShouldQueue
         $this->purgeInBatches(fn () => DB::table('monitor_dispatches')
             ->whereIn('status', [DispatchStatus::Completed->value, DispatchStatus::Skipped->value, DispatchStatus::Failed->value])
             ->where('completed_at', '<', $now->subDays(self::DISPATCH_RETENTION_DAYS)), $startedAt);
+
+        // Failure evidence never attached to an incident (ADR-050); attached rows follow their incident.
+        $this->purgeInBatches(fn () => DB::table('check_evidence')
+            ->whereNull('incident_id')
+            ->where('created_at', '<', $now->subHours(CheckEvidence::UNATTACHED_RETENTION_HOURS)), $startedAt);
 
         $this->purgeInBatches(fn () => DB::table('notification_deliveries')
             ->where('created_at', '<', $now->subDays(self::DELIVERY_RETENTION_DAYS)), $startedAt);

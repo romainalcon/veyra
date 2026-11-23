@@ -883,6 +883,30 @@ components:
           $ref: '#/components/schemas/NullableString'
         redirects:
           type: integer
+        timings:
+          $ref: '#/components/schemas/CheckTimings'
+    CheckTimings:
+      type: object
+      description: >-
+        Phase breakdown in milliseconds (ADR-050). Every phase is null when it
+        was not measured: checks recorded before 1.11, heartbeats, phases a
+        failing check never reached. HTTP checks report every phase of the
+        final hop and the time spent on earlier redirects; TCP checks report
+        dns and connect; DNS checks report dns. Failure evidence (response
+        headers and body excerpts) is never exposed by the API.
+      properties:
+        dns:
+          $ref: '#/components/schemas/NullableInteger'
+        connect:
+          $ref: '#/components/schemas/NullableInteger'
+        tls:
+          $ref: '#/components/schemas/NullableInteger'
+        ttfb:
+          $ref: '#/components/schemas/NullableInteger'
+        transfer:
+          $ref: '#/components/schemas/NullableInteger'
+        redirect:
+          $ref: '#/components/schemas/NullableInteger'
     Incident:
       type: object
       properties:

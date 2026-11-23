@@ -74,3 +74,26 @@ test('HEAD requests work on the real handler', function () {
 
     expect($result->success)->toBeTrue();
 });
+
+test('real requests report the phases of the pinned connection', function () {
+    $result = $this->probe->probe("http://pinned.example.com:{$this->port}/redirect", HttpMethod::Get, [], ExpectedStatuses::parse('204'), true, 5);
+
+    expect($result->success)->toBeTrue()
+        ->and($result->timings?->connectMs)->toBeInt()
+        ->and($result->timings?->ttfbMs)->toBeInt()
+        ->and($result->timings?->transferMs)->toBeInt()
+        ->and($result->timings?->redirectMs)->toBeInt()
+        ->and($result->timings?->tlsMs)->toBeNull()
+        ->and($result->timings?->dnsMs)->toBeInt();
+});
+
+test('real failing responses carry allow-listed evidence', function () {
+    $result = $this->probe->probe("http://pinned.example.com:{$this->port}/error", HttpMethod::Get, [], ExpectedStatuses::parse('200'), true, 5);
+
+    expect($result->errorCode)->toBe(ProbeErrorCode::UnexpectedStatus)
+        ->and($result->evidence?->statusCode)->toBe(503)
+        ->and($result->evidence?->bodyExcerpt)->toBe('{"error":"database unavailable"}')
+        ->and($result->evidence?->headers)->toHaveKey('content-type')
+        ->and($result->evidence?->headers)->not->toHaveKey('set-cookie')
+        ->and($result->evidence?->headers)->not->toHaveKey('x-seen-host');
+});

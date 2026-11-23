@@ -30,7 +30,7 @@ class AggregateDailyStats
 
             $rows += DB::affectingStatement(<<<SQL
                 INSERT INTO monitor_daily_stats
-                    (monitor_id, day, checks_count, success_count, failure_count, maintenance_count, latency_avg_ms, latency_max_ms, expected_checks, updated_at)
+                    (monitor_id, day, checks_count, success_count, failure_count, maintenance_count, latency_avg_ms, latency_max_ms, dns_avg_ms, connect_avg_ms, tls_avg_ms, ttfb_avg_ms, transfer_avg_ms, expected_checks, updated_at)
                 SELECT
                     c.monitor_id,
                     ?,
@@ -40,6 +40,11 @@ class AggregateDailyStats
                     SUM(c.in_maintenance = 1),
                     ROUND(AVG(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.duration_ms END)),
                     MAX(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.duration_ms END),
+                    ROUND(AVG(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.dns_ms END)),
+                    ROUND(AVG(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.connect_ms END)),
+                    ROUND(AVG(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.tls_ms END)),
+                    ROUND(AVG(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.ttfb_ms END)),
+                    ROUND(AVG(CASE WHEN c.success = 1 AND c.in_maintenance = 0 THEN c.transfer_ms END)),
                     GREATEST(0, FLOOR(TIMESTAMPDIFF(SECOND, GREATEST(?, m.created_at), ?) / m.interval_seconds) - SUM(c.in_maintenance = 1)),
                     UTC_TIMESTAMP()
                 FROM monitor_checks c
@@ -55,6 +60,11 @@ class AggregateDailyStats
                     maintenance_count = VALUES(maintenance_count),
                     latency_avg_ms = VALUES(latency_avg_ms),
                     latency_max_ms = VALUES(latency_max_ms),
+                    dns_avg_ms = VALUES(dns_avg_ms),
+                    connect_avg_ms = VALUES(connect_avg_ms),
+                    tls_avg_ms = VALUES(tls_avg_ms),
+                    ttfb_avg_ms = VALUES(ttfb_avg_ms),
+                    transfer_avg_ms = VALUES(transfer_avg_ms),
                     expected_checks = VALUES(expected_checks),
                     updated_at = VALUES(updated_at)
                 SQL, [

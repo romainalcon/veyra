@@ -15,6 +15,11 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $failure_count
  * @property int $maintenance_count
  * @property int|null $latency_avg_ms
+ * @property int|null $dns_avg_ms phase averages over successful checks (ADR-050)
+ * @property int|null $connect_avg_ms
+ * @property int|null $tls_avg_ms
+ * @property int|null $ttfb_avg_ms
+ * @property int|null $transfer_avg_ms
  * @property int|null $latency_max_ms
  * @property int $expected_checks
  */

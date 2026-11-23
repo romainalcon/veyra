@@ -47,7 +47,7 @@ class IncidentController extends Controller
     {
         Gate::authorize('view', [$incident, $organization]);
 
-        $incident->load(['monitor:id,name,deleted_at', 'acknowledger:id,name', 'events.user:id,name']);
+        $incident->load(['monitor:id,name,deleted_at', 'acknowledger:id,name', 'events.user:id,name', 'evidence']);
 
         /** @var User $user */
         $user = $request->user();

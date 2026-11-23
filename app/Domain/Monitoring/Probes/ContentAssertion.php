@@ -51,7 +51,11 @@ final readonly class ContentAssertion
         };
     }
 
-    private static function decodedBody(Response $response, int $maxBytes): ?string
+    /**
+     * The response body, decoded from gzip or deflate under the same cap; null
+     * when it cannot be read. Shared with failure evidence (ADR-050).
+     */
+    public static function decodedBody(Response $response, int $maxBytes): ?string
     {
         $raw = $response->body();
         $encoding = strtolower(trim($response->header('Content-Encoding')));

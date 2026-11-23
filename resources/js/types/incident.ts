@@ -20,7 +20,22 @@ export type IncidentEvent = {
     created_at: string;
 };
 
+/** What the server answered on the first failing check (ADR-050). */
+export type IncidentEvidence = {
+    checked_at: string;
+    status_code: number;
+    http_version: string | null;
+    error_code: string;
+    error_label: string;
+    content_type: string | null;
+    headers: Record<string, string>;
+    body_excerpt: string | null;
+    body_truncated: boolean;
+    body_omitted_reason: 'head' | 'empty' | 'binary' | 'encoded' | null;
+};
+
 export type IncidentDetail = IncidentSummary & {
     acknowledged_by: string | null;
     events: IncidentEvent[];
+    evidence: IncidentEvidence | null;
 };

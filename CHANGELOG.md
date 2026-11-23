@@ -4,6 +4,10 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+- **Check timings** — every HTTP check records where its time went: DNS, connection, TLS, time to first byte, transfer and redirects; TCP checks record DNS and connect time, DNS checks their query time. The monitor page shows a waterfall per check and for the latest check, and the latency chart can be stacked by phase. Checks recorded before this version and heartbeats have no breakdown. The API returns `timings` on checks (ADR-050).
+- **Failure evidence** — when an incident opens, the incident page shows what the server answered on the first failing check: status, a fixed list of safe response headers and up to 4 KiB of a text body. Cookies, credentials and other headers are never kept, binary bodies are skipped, and the evidence never appears in the API, notifications, webhooks or status pages. It is deleted with the incident (ADR-050).
+
 ## [1.10.0] — 2026-11-23
 
 ### Added

@@ -20,7 +20,8 @@
 | monitor_dns_configs | monitor_id (PK), record_name, record_type, resolver, expected_values (json), match_mode, last_answers (json), last_resolved_at |
 | monitor_heartbeat_configs | monitor_id, token_hash (unique, SHA-256), grace_seconds, last_ping_at, last_ping_failed |
 | monitor_states | monitor_id, status, consecutive_failures, consecutive_successes, last_checked_at, last_changed_at, last_applied_check_at |
-| monitor_checks | id, monitor_id, scheduled_for, checked_at, success, slow, duration_ms, status_code, error_code, metadata (json) |
+| monitor_checks | id, monitor_id, scheduled_for, checked_at, success, slow, duration_ms, status_code, error_code, metadata (json), dns_ms, connect_ms, tls_ms, ttfb_ms, transfer_ms, redirect_ms |
+| check_evidence | id, organization_id, monitor_id, check_id (unique), incident_id (nullable), status_code, http_version, error_code, content_type, headers (json), body_excerpt, body_truncated, body_omitted_reason, checked_at, created_at |
 | monitor_dispatches | id, monitor_id, scheduled_for, status, dispatched_at, attempts |
 | incidents | id, monitor_id, status, started_at, resolved_at, acknowledged_at, cause |
 | incident_events | id, incident_id, type, message, created_at |
@@ -109,3 +110,8 @@
 ## Audit log and tags (Sprint 21, ADR-046, ADR-047)
 - `audit_logs` is append-only: no foreign key on the actor or the subject (their names are copied), `created_at` is `DATETIME(6)`, indexed by `(organization_id, created_at)`, `(organization_id, subject_type, created_at)` for the list and its filter, and `created_at` for the batched retention purge. Rows cascade with the organization only.
 - `tags` cascades with the organization; `monitor_tag` (PK `(monitor_id, tag_id)`, index on `tag_id`) cascades with both. Monitors are soft deleted, so their pivot rows stay until the organization is deleted; orphan tags are removed by the application. Additive only.
+
+## Check diagnostics (Sprint 23, ADR-050)
+- `monitor_checks` gains six nullable `INT UNSIGNED` phase columns (`dns_ms`, `connect_ms`, `tls_ms`, `ttfb_ms`, `transfer_ms`, `redirect_ms`), trailing columns added instantly by MariaDB 11.4 and not indexed: they are always read with the existing `(monitor_id, …)` indexes. Older checks and heartbeats keep null. They follow raw-check retention (`PurgeExpiredHistory`).
+- `monitor_daily_stats` gains the daily averages of the first five phases over successful checks outside maintenance (`*_avg_ms`), written by `AggregateDailyStats` like `latency_avg_ms`.
+- `check_evidence` cascades with the organization and with its incident (`incident_id`, nullable foreign key). `check_id` is unique without a foreign key, since raw checks are purged long before incidents. Rows are written with the check only while the monitor has no active incident; when an incident opens, the earliest evidence of its confirming streak is attached and the other unattached rows of the monitor are deleted. Unattached rows older than 24 hours are removed by the batched purge (`whereNull(incident_id)` + `created_at`), indexed by `(monitor_id, incident_id, created_at)`; `(incident_id, created_at)` serves the incident page. Additive only.
