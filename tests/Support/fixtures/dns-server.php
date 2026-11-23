@@ -10,9 +10,37 @@
  */
 
 $mode = $argv[1] ?? 'spoof-then-truncate';
-$udp = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);
-$port = (int) substr((string) strrchr((string) stream_socket_get_name($udp, false), ':'), 1);
-$tcp = stream_socket_server("tcp://127.0.0.1:{$port}", $errno, $errstr);
+
+/*
+ * The UDP port is chosen by the system; the TCP port must be the same one and
+ * may already be taken by another process (parallel test runs), so try again
+ * with a new UDP port until both are bound. Prints 0 when that never happens.
+ */
+$udp = $tcp = false;
+$port = 0;
+
+for ($attempt = 0; $attempt < 20 && $tcp === false; $attempt++) {
+    $udp = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);
+
+    if ($udp === false) {
+        continue;
+    }
+
+    $port = (int) substr((string) strrchr((string) stream_socket_get_name($udp, false), ':'), 1);
+    $tcp = @stream_socket_server("tcp://127.0.0.1:{$port}", $errno, $errstr);
+
+    if ($tcp === false) {
+        fclose($udp);
+        $udp = false;
+    }
+}
+
+if ($udp === false || $tcp === false) {
+    fwrite(STDERR, "Could not bind UDP and TCP on the same loopback port.\n");
+    fwrite(STDOUT, "0\n");
+    exit(1);
+}
+
 fwrite(STDOUT, $port."\n");
 fflush(STDOUT);
 
