@@ -153,11 +153,14 @@ describe('public navigation', function () {
         config(['veyra.landing_page' => true]);
     });
 
-    test('is empty on the Community edition', function () {
-        $this->get('/')->assertInertia(fn (Assert $page) => $page->where('publicNavigation', []));
+    test('holds only the core site links on the Community edition', function () {
+        $this->get('/')->assertInertia(fn (Assert $page) => $page
+            ->where('publicNavigation', fn ($links): bool => collect($links)->pluck('id')->all() === ['changelog', 'roadmap', 'changelog', 'roadmap']));
     });
 
     test('shares registered links, translated, with guests and signed-in users', function () {
+        // Without the core changelog and roadmap links (ADR-049).
+        $this->app->instance(PublicNavigation::class, new PublicNavigation);
         app(PublicNavigation::class)->add('pricing', 'Features', 'extension-pricing-test', 'header');
         app(PublicNavigation::class)->add('terms', 'Source code', 'extension-terms-test');
         $links = [
@@ -181,6 +184,7 @@ describe('public navigation', function () {
     });
 
     test('the same id may be used in both placements', function () {
+        $this->app->instance(PublicNavigation::class, new PublicNavigation);
         app(PublicNavigation::class)->add('pricing', 'Features', 'extension-pricing-test', 'header');
         app(PublicNavigation::class)->add('pricing', 'Features', 'extension-pricing-test', 'footer');
 

@@ -4,6 +4,9 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+- **Changelog and roadmap pages** — with `VEYRA_LANDING_PAGE=true`, `/changelog` lists every release of `CHANGELOG.md` (newest first, with a link per version) and `/roadmap` shows the upcoming milestones and the latest release, in English or French; both are linked from the landing page header and the site footers. Release notes stay in English. Without the landing page, both pages are not found and nothing is linked (ADR-049).
+
 ## [1.9.0] — 2026-11-23
 
 ### Added
