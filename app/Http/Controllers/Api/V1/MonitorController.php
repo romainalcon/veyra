@@ -10,6 +10,7 @@ use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Support\HeartbeatToken;
 use App\Domain\Organizations\Models\Organization;
+use App\Http\Controllers\Monitors\MonitorController as WebMonitorController;
 use App\Http\Requests\Api\V1\SaveMonitorRequest;
 use App\Http\Resources\Api\V1\MonitorResource;
 use Illuminate\Http\JsonResponse;
@@ -20,14 +21,17 @@ use Illuminate\Support\Facades\Gate;
 
 class MonitorController extends ApiController
 {
-    private const RELATIONS = ['httpConfig', 'tcpConfig', 'heartbeatConfig', 'dnsConfig', 'tlsCertificate', 'state', 'notificationChannels:id'];
+    private const RELATIONS = ['httpConfig', 'tcpConfig', 'heartbeatConfig', 'dnsConfig', 'tlsCertificate', 'state', 'notificationChannels:id', 'tags'];
 
     public function index(Request $request, Organization $organization): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', [Monitor::class, $organization]);
 
+        $tag = WebMonitorController::tagFilter($request);
+
         $monitors = $organization->monitors()
             ->with(self::RELATIONS)
+            ->when($tag !== null, fn ($query) => $query->taggedWith((string) $tag))
             ->orderBy('id')
             ->cursorPaginate($this->perPage($request))
             ->withQueryString();

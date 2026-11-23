@@ -2,6 +2,9 @@
 
 namespace App\Domain\Monitoring\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Incidents\Actions\ResolveIncident;
 use App\Domain\Incidents\Enums\IncidentEventType;
 use App\Domain\Incidents\Models\Incident;
@@ -13,7 +16,10 @@ use Illuminate\Support\Facades\DB;
 
 class DeleteMonitor
 {
-    public function __construct(private readonly ResolveIncident $resolveIncident) {}
+    public function __construct(
+        private readonly ResolveIncident $resolveIncident,
+        private readonly AuditLogger $audit,
+    ) {}
 
     /**
      * Soft delete: history and incidents are kept. An open incident is closed
@@ -34,7 +40,11 @@ class DeleteMonitor
 
             $state->update(['status' => MonitorStatus::Unknown, 'active_incident_id' => null]);
 
+            $this->audit->record($monitor->organization_id, AuditAction::MonitorDeleted, AuditSnapshot::monitorSubject($monitor), before: AuditSnapshot::monitor($monitor));
+
             $monitor->delete();
+
+            SyncMonitorTags::pruneOrphans($monitor->organization_id);
         });
     }
 }

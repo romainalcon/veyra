@@ -11,10 +11,12 @@ use App\Http\Controllers\Monitors\HeartbeatTokenController;
 use App\Http\Controllers\Monitors\MonitorCheckController;
 use App\Http\Controllers\Monitors\MonitorController;
 use App\Http\Controllers\Monitors\MonitorStatusController;
+use App\Http\Controllers\Monitors\MonitorTransferController;
 use App\Http\Controllers\Notifications\EscalationPolicyController;
 use App\Http\Controllers\Notifications\NotificationChannelController;
 use App\Http\Controllers\Notifications\WebhookSecretController;
 use App\Http\Controllers\Organizations\ApiTokenController;
+use App\Http\Controllers\Organizations\AuditLogController;
 use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
@@ -163,8 +165,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('api-tokens.store');
             Route::delete('api-tokens/{apiToken}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
 
+            Route::get('audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
+
             Route::get('monitors', [MonitorController::class, 'index'])->name('monitors.index');
             Route::get('monitors/create', [MonitorController::class, 'create'])->name('monitors.create');
+            Route::get('monitors/export', [MonitorTransferController::class, 'export'])
+                ->middleware('throttle:30,1')
+                ->name('monitors.export');
+            Route::get('monitors/import', [MonitorTransferController::class, 'create'])->name('monitors.import.create');
+            Route::post('monitors/import/preview', [MonitorTransferController::class, 'preview'])
+                ->middleware('throttle:monitor-imports')
+                ->name('monitors.import.preview');
+            Route::post('monitors/import', [MonitorTransferController::class, 'store'])
+                ->middleware('throttle:monitor-imports')
+                ->name('monitors.import.store');
             Route::post('monitors', [MonitorController::class, 'store'])
                 ->middleware('throttle:monitors')
                 ->name('monitors.store');

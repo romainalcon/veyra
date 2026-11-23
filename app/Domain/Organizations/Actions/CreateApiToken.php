@@ -2,6 +2,9 @@
 
 namespace App\Domain\Organizations\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Organizations\Enums\ApiTokenAbility;
 use App\Domain\Organizations\Models\ApiToken;
 use App\Domain\Organizations\Models\Organization;
@@ -13,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class CreateApiToken
 {
+    public function __construct(private readonly AuditLogger $audit) {}
+
     /**
      * Creates a token and returns it with its plain value, which is never
      * stored and must be shown once (ADR-044). The organization row is
@@ -43,6 +48,8 @@ class CreateApiToken
                 'created_by' => $creator->id,
                 'expires_at' => $expiresInDays === null ? null : CarbonImmutable::now()->addDays($expiresInDays)->startOfSecond(),
             ]);
+
+            $this->audit->record($organization, AuditAction::ApiTokenCreated, AuditSnapshot::apiTokenSubject($token), after: AuditSnapshot::apiToken($token));
 
             return [$token, $plain];
         });

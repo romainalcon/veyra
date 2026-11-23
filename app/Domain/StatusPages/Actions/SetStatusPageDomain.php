@@ -2,6 +2,9 @@
 
 namespace App\Domain\StatusPages\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\StatusPages\Models\StatusPage;
@@ -18,7 +21,10 @@ use Illuminate\Support\Str;
  */
 class SetStatusPageDomain
 {
-    public function __construct(private readonly Quota $quota) {}
+    public function __construct(
+        private readonly Quota $quota,
+        private readonly AuditLogger $audit,
+    ) {}
 
     public function handle(StatusPage $statusPage, ?string $domain): StatusPage
     {
@@ -41,6 +47,8 @@ class SetStatusPageDomain
                 'domain_checked_at' => null,
                 'domain_failures' => 0,
             ]);
+
+            $this->audit->record($statusPage->organization_id, AuditAction::StatusPageDomainChanged, AuditSnapshot::statusPageSubject($statusPage), ['custom_domain' => $previous], ['custom_domain' => $domain]);
         });
 
         CustomDomainRegistry::forget($previous);

@@ -8,6 +8,9 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 - **Escalation policies** — ordered steps (a delay and a set of channels) notify more people while an incident stays open, unacknowledged and confirmed down. Acknowledging or recovering stops the escalation; maintenance and missing data postpone it. Each monitor picks a policy or uses the organization default; Owners and Admins manage policies on the notifications page. Webhooks receive `incident.escalated`; PagerDuty re-triggers the same alert (ADR-045).
 - **Weekly report e-mail** — every member can opt in from the organization settings to receive, on Monday morning in the organization time zone and language, last week's uptime with its coverage, the monitors below 100 %, the slowest monitors and the incidents with their downtime.
 - The API reads and writes `escalation_policy_id` on monitors.
+- **Audit log** — Owners and Admins see who changed what under **Audit log**: monitors, notification channels, escalation policies, status pages, members, invitations, organization settings and API tokens, with the member, API token or system that did it and the changed fields (never secrets: only whether headers, bodies, credentials or webhook URLs were replaced). Entries cannot be edited and are kept for `VEYRA_AUDIT_RETENTION_DAYS` days (365 by default) (ADR-046).
+- **Monitor tags** — up to 10 tags per monitor to filter the monitor list, the dashboard and the API (`?tag=`, `tags` field) (ADR-047).
+- **Monitor import and export** — export the monitors (or one tag) to a versioned JSON file without secrets, and import such a file into any organization: a preview checks every monitor with the form's rules (destinations, ports, limits), skips the ones that already exist, and nothing is created unless every monitor is valid. Imports are limited to 100 monitors per file and `VEYRA_MONITOR_IMPORTS_PER_HOUR` (10) requests per member and hour (ADR-047).
 
 ## [1.7.0] — 2026-11-23
 

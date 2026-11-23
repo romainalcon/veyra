@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
-import { Activity, Plus } from '@lucide/vue';
+import { Activity, Download, Plus, Upload } from '@lucide/vue';
 import { computed } from 'vue';
 import LimitNotice from '@/components/LimitNotice.vue';
 import CheckBadge from '@/components/monitors/CheckBadge.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
+import TagFilter from '@/components/monitors/TagFilter.vue';
 import { useOrganizationLimit } from '@/composables/useOrganizationLimit';
 import { useOrganizationRealtime } from '@/composables/useOrganizationRealtime';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +16,13 @@ import {
     formatDuration,
     formatInterval,
 } from '@/lib/monitoring';
-import { create, index, show } from '@/routes/organizations/monitors';
+import {
+    create,
+    exportMethod,
+    index,
+    show,
+} from '@/routes/organizations/monitors';
+import { create as importCreate } from '@/routes/organizations/monitors/import';
 import type { CurrentOrganization, MonitorSummary, Paginated } from '@/types';
 import { useTranslations } from '@/lib/i18n';
 
@@ -24,6 +31,8 @@ const { t } = useTranslations();
 defineProps<{
     monitors: Paginated<MonitorSummary>;
     canCreate: boolean;
+    tag: string | null;
+    tagOptions: string[];
 }>();
 
 const page = usePage();
@@ -62,17 +71,44 @@ setLayoutProps({
                     }}
                 </p>
             </div>
-            <Button v-if="canCreate && limitReached" disabled>
-                <Plus class="size-4" />
-                {{ t('New monitor') }}
-            </Button>
-            <Button v-else-if="canCreate" as-child>
-                <Link :href="create(organization.slug)">
+            <div class="flex flex-wrap items-center justify-end gap-2">
+                <Button variant="outline" size="sm" as-child>
+                    <a
+                        :href="
+                            exportMethod.url(organization.slug, {
+                                query: tag ? { tag } : {},
+                            })
+                        "
+                        data-test="export-monitors"
+                    >
+                        <Download class="size-4" />
+                        {{ t('Export') }}
+                    </a>
+                </Button>
+                <Button v-if="canCreate" variant="outline" size="sm" as-child>
+                    <Link :href="importCreate(organization.slug)">
+                        <Upload class="size-4" />
+                        {{ t('Import') }}
+                    </Link>
+                </Button>
+                <Button v-if="canCreate && limitReached" disabled>
                     <Plus class="size-4" />
                     {{ t('New monitor') }}
-                </Link>
-            </Button>
+                </Button>
+                <Button v-else-if="canCreate" as-child>
+                    <Link :href="create(organization.slug)">
+                        <Plus class="size-4" />
+                        {{ t('New monitor') }}
+                    </Link>
+                </Button>
+            </div>
         </div>
+
+        <TagFilter
+            :tags="tagOptions"
+            :current="tag"
+            :href="index.url(organization.slug)"
+        />
 
         <LimitNotice
             feature="monitors"
@@ -85,7 +121,14 @@ setLayoutProps({
         />
 
         <EmptyState
-            v-if="monitors.data.length === 0"
+            v-if="monitors.data.length === 0 && tag"
+            :icon="Activity"
+            :title="t('No monitor with this tag')"
+            :description="t('Choose another tag or show all monitors.')"
+        />
+
+        <EmptyState
+            v-else-if="monitors.data.length === 0"
             :icon="Activity"
             :title="t('No monitors yet')"
             :description="
@@ -122,6 +165,18 @@ setLayoutProps({
                             class="truncate font-mono text-xs text-muted-foreground"
                         >
                             {{ monitor.target }}
+                        </p>
+                        <p
+                            v-if="monitor.tags.length > 0"
+                            class="mt-1 flex flex-wrap gap-1"
+                        >
+                            <Badge
+                                v-for="monitorTag in monitor.tags"
+                                :key="monitorTag"
+                                variant="outline"
+                                class="font-normal"
+                                >{{ monitorTag }}</Badge
+                            >
                         </p>
                     </div>
                     <div

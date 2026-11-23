@@ -17,6 +17,7 @@ use App\Domain\Monitoring\Enums\RequestContentType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorTlsCertificate;
+use App\Domain\Monitoring\Models\Tag;
 use App\Domain\Monitoring\Probes\ProbeSettings;
 use App\Domain\Notifications\Models\EscalationPolicy;
 use App\Domain\Notifications\Models\NotificationChannel;
@@ -47,6 +48,7 @@ final class MonitorPresenter
             'method' => $config?->method->value,
             'enabled' => $monitor->enabled,
             'interval_seconds' => $monitor->interval_seconds,
+            'tags' => $monitor->relationLoaded('tags') ? $monitor->tags->pluck('name')->values()->all() : [],
             'latest_check' => $monitor->latestCheck ? self::check($monitor->latestCheck) : null,
             'state' => [
                 'status' => ($monitor->state->status ?? MonitorStatus::Unknown)->value,
@@ -103,6 +105,7 @@ final class MonitorPresenter
                 : null,
             'notification_channel_ids' => $monitor->notificationChannels()->pluck('notification_channels.id')->all(),
             'escalation_policy_id' => $monitor->escalation_policy_id,
+            'tags' => $monitor->tags()->pluck('tags.name')->values()->all(),
             'next_check_at' => $monitor->next_check_at?->toIso8601String(),
             'created_at' => $monitor->created_at?->toIso8601String(),
         ];
@@ -240,6 +243,19 @@ final class MonitorPresenter
             'dnsMatchModes' => array_map(fn (DnsMatchMode $mode): string => $mode->value, DnsMatchMode::cases()),
             'maxDnsExpectedValues' => SaveMonitorRequest::MAX_DNS_EXPECTED_VALUES,
             'maxGraceMinutes' => SaveMonitorRequest::MAX_GRACE_MINUTES,
+            'tagOptions' => self::tagOptions($organization),
+            'maxTags' => Tag::MAX_PER_MONITOR,
+            'maxTagLength' => Tag::MAX_LENGTH,
         ];
+    }
+
+    /**
+     * Names of the organization's tags, for filters and suggestions (ADR-047).
+     *
+     * @return list<string>
+     */
+    public static function tagOptions(Organization $organization): array
+    {
+        return array_values($organization->tags()->orderBy('name')->pluck('name')->all());
     }
 }

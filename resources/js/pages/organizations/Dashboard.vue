@@ -5,6 +5,7 @@ import { Activity } from '@lucide/vue';
 import { computed } from 'vue';
 import IncidentsChart from '@/components/charts/IncidentsChart.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
+import TagFilter from '@/components/monitors/TagFilter.vue';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { coverageNote, formatUptime } from '@/lib/analytics';
@@ -38,6 +39,8 @@ defineProps<{
     };
     openIncidents: IncidentSummary[];
     analytics?: OrganizationAnalytics;
+    tag: string | null;
+    tagOptions: string[];
 }>();
 
 const periods = ['24h', '7d', '30d'] as const;
@@ -70,6 +73,13 @@ setLayoutProps({
     <Head :title="t('Dashboard')" />
 
     <div class="flex h-full flex-1 flex-col gap-6 p-4">
+        <div v-if="tagOptions.length > 0 || tag" class="flex justify-end">
+            <TagFilter
+                :tags="tagOptions"
+                :current="tag"
+                :href="dashboard.url(organization.slug)"
+            />
+        </div>
         <template v-if="monitorCounts.total > 0">
             <div
                 class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
@@ -78,7 +88,11 @@ setLayoutProps({
                 <Link
                     v-for="status in statuses"
                     :key="status"
-                    :href="index(organization.slug)"
+                    :href="
+                        index(organization.slug, {
+                            query: tag ? { tag } : {},
+                        })
+                    "
                     class="rounded-xl border p-4 hover:bg-muted/50"
                 >
                     <StatusBadge :status="status" />

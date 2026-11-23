@@ -136,6 +136,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('monitors', fn (Request $request): Limit => Limit::perHour((int) config('veyra.monitors.max_per_hour'))
             ->by('monitors:'.self::actorKey($request)));
 
+        // Imports validate every entry, DNS lookups included (ADR-047).
+        RateLimiter::for('monitor-imports', fn (Request $request): Limit => Limit::perHour((int) config('veyra.monitors.imports_per_hour'))
+            ->by('monitor-imports:'.self::actorKey($request)));
+
         // Per token (ADR-044); every API request also counts towards the IP limit.
         RateLimiter::for('api', function (Request $request): array {
             $token = $request->user('api');

@@ -41,6 +41,9 @@ const props = {
     ],
     dnsMatchModes: ['contains' as const, 'exact' as const],
     maxDnsExpectedValues: 20,
+    tagOptions: [],
+    maxTags: 10,
+    maxTagLength: 32,
     submitLabel: 'Create monitor',
 };
 
@@ -53,6 +56,7 @@ const tcpMonitor: MonitorDetail = {
     method: null,
     enabled: true,
     interval_seconds: 60,
+    tags: ['database'],
     latest_check: null,
     state: {
         status: 'unknown',

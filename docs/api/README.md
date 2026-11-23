@@ -87,6 +87,12 @@ curl -fsS "$VEYRA_URL/api/v1/monitors/$MONITOR_ID/checks?per_page=100" -H "Autho
 # then add &cursor=<meta.next_cursor> until next_cursor is null
 ```
 
+List the monitors carrying a tag (tags are sent as `"tags": ["production"]` on create and replace; omitted, they are kept):
+
+```sh
+curl -fsS "$VEYRA_URL/api/v1/monitors?tag=production" -H "Authorization: Bearer $VEYRA_TOKEN" -H "Accept: application/json"
+```
+
 ## Responses and errors
 | Status | Meaning |
 |---|---|

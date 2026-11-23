@@ -2,6 +2,9 @@
 
 namespace App\Domain\Notifications\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Notifications\Channels\WebhookSignature;
@@ -12,7 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class SaveNotificationChannel
 {
-    public function __construct(private readonly Quota $quota) {}
+    public function __construct(
+        private readonly Quota $quota,
+        private readonly AuditLogger $audit,
+    ) {}
 
     /**
      * @param  array{name: string, enabled: bool, is_default: bool, recipients?: list<string>, webhook_url?: string|null, token?: string|null, chat_id?: string|null}  $data
@@ -22,13 +28,17 @@ class SaveNotificationChannel
         return DB::transaction(function () use ($organization, $type, $data): NotificationChannel {
             $this->quota->ensureCanAdd($organization, Feature::NotificationChannels);
 
-            return $organization->notificationChannels()->create([
+            $channel = $organization->notificationChannels()->create([
                 'type' => $type,
                 'name' => $data['name'],
                 'enabled' => $data['enabled'],
                 'is_default' => $data['is_default'],
                 'config_encrypted' => $this->config($type, $data, []),
             ]);
+
+            $this->audit->record($organization, AuditAction::NotificationChannelCreated, AuditSnapshot::channelSubject($channel), after: AuditSnapshot::channel($channel));
+
+            return $channel;
         });
     }
 
@@ -40,14 +50,28 @@ class SaveNotificationChannel
      */
     public function update(NotificationChannel $channel, array $data): NotificationChannel
     {
-        $channel->update([
-            'name' => $data['name'],
-            'enabled' => $data['enabled'],
-            'is_default' => $data['is_default'],
-            'config_encrypted' => $this->config($channel->type, $data, $channel->config_encrypted),
-        ]);
+        return DB::transaction(function () use ($channel, $data): NotificationChannel {
+            $before = AuditSnapshot::channel($channel);
+            $replaced = array_values(array_filter(['webhook_url', 'token'], fn (string $key): bool => is_string($data[$key] ?? null) && $data[$key] !== ''));
 
-        return $channel;
+            $channel->update([
+                'name' => $data['name'],
+                'enabled' => $data['enabled'],
+                'is_default' => $data['is_default'],
+                'config_encrypted' => $this->config($channel->type, $data, $channel->config_encrypted),
+            ]);
+
+            $this->audit->record(
+                $channel->organization_id,
+                AuditAction::NotificationChannelUpdated,
+                AuditSnapshot::channelSubject($channel),
+                $before,
+                AuditSnapshot::channel($channel),
+                $replaced === [] ? [] : ['replaced_secrets' => $replaced],
+            );
+
+            return $channel;
+        });
     }
 
     /**

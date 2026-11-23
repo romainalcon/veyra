@@ -2,6 +2,9 @@
 
 namespace App\Domain\Monitoring\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Monitoring\DTOs\MonitorData;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
@@ -15,7 +18,11 @@ use LogicException;
  */
 class UpdateMonitor
 {
-    public function __construct(private readonly SyncMonitorChannels $syncMonitorChannels) {}
+    public function __construct(
+        private readonly SyncMonitorChannels $syncMonitorChannels,
+        private readonly SyncMonitorTags $syncMonitorTags,
+        private readonly AuditLogger $audit,
+    ) {}
 
     public function handle(Monitor $monitor, MonitorData $data): Monitor
     {
@@ -24,6 +31,7 @@ class UpdateMonitor
         }
 
         return DB::transaction(function () use ($monitor, $data): Monitor {
+            $before = AuditSnapshot::monitor($monitor);
             $previousOrigin = $monitor->type === MonitorType::Http ? self::origin($monitor->httpConfig?->url) : null;
             $intervalChanged = $monitor->interval_seconds !== $data->intervalSeconds;
 
@@ -66,6 +74,26 @@ class UpdateMonitor
             if ($data->notificationChannelIds !== null) {
                 $this->syncMonitorChannels->handle($monitor, $data->notificationChannelIds);
             }
+
+            if ($data->tags !== null) {
+                $this->syncMonitorTags->handle($monitor, $data->tags);
+            }
+
+            // Secrets are never recorded, only that new values were stored (removals show in body_set / basic_auth_set).
+            $replaced = array_keys(array_filter([
+                'headers' => $data->http?->headers !== null,
+                'body' => is_array($data->http?->body),
+                'basic_auth' => is_array($data->http?->basicAuth),
+            ]));
+
+            $this->audit->record(
+                $monitor->organization_id,
+                AuditAction::MonitorUpdated,
+                AuditSnapshot::monitorSubject($monitor),
+                $before,
+                AuditSnapshot::monitor($monitor),
+                $replaced === [] ? [] : ['replaced_secrets' => $replaced],
+            );
 
             return $monitor;
         });

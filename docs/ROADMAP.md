@@ -161,10 +161,10 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Tests: escalation timing, stop conditions, idempotency, report content, tenant isolation, translations.
 
 ## Sprint 21 — Organization tools (1.8)
-- [ ] Audit log of member actions (monitors, channels, status pages, members, settings, API tokens): actor, action, target, before/after without secrets; append-only, retention configurable, Owners/Admins only.
-- [ ] Monitor tags with filters on lists, dashboard and API.
-- [ ] Monitor import/export (versioned JSON, secrets excluded), import validated like the UI with quotas and SSRF rules, dry-run preview.
-- [ ] Tests: audit coverage of every action, redaction, tag filters, import validation and quotas, tenant isolation.
+- [x] Audit log of member actions (monitors, channels, status pages, members, settings, API tokens): actor, action, target, before/after without secrets; append-only, retention configurable, Owners/Admins only.
+- [x] Monitor tags with filters on lists, dashboard and API.
+- [x] Monitor import/export (versioned JSON, secrets excluded), import validated like the UI with quotas and SSRF rules, dry-run preview.
+- [x] Tests: audit coverage of every action, redaction, tag filters, import validation and quotas, tenant isolation.
 
 ## Sprint 22 — Operations (1.9)
 - [ ] Prometheus `/metrics` endpoint for the instance: queue sizes, outbox backlog and age, scheduler beat lag, probe durations, delivery failures; disabled by default, token or IP allow-list, no tenant data or labels with organization names.

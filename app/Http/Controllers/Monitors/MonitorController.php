@@ -10,6 +10,7 @@ use App\Domain\Monitoring\Actions\UpdateMonitor;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
+use App\Domain\Monitoring\Models\Tag;
 use App\Domain\Monitoring\Stats\MonitorSeries;
 use App\Domain\Monitoring\Stats\StatsRange;
 use App\Domain\Monitoring\Stats\UptimeCalculator;
@@ -32,14 +33,20 @@ class MonitorController extends Controller
     {
         Gate::authorize('viewAny', [Monitor::class, $organization]);
 
+        $tag = self::tagFilter($request);
+
         $monitors = $organization->monitors()
-            ->with(['httpConfig', 'tcpConfig', 'heartbeatConfig', 'dnsConfig', 'latestCheck', 'state'])
+            ->with(['httpConfig', 'tcpConfig', 'heartbeatConfig', 'dnsConfig', 'latestCheck', 'state', 'tags'])
+            ->when($tag !== null, fn ($query) => $query->taggedWith((string) $tag))
             ->orderBy('name')
             ->paginate(25)
+            ->withQueryString()
             ->through(fn (Monitor $monitor): array => MonitorPresenter::summary($monitor));
 
         return Inertia::render('monitors/Index', [
             'monitors' => $monitors,
+            'tag' => $tag,
+            'tagOptions' => MonitorPresenter::tagOptions($organization),
             'canCreate' => $request->user()?->can('create', [Monitor::class, $organization]) ?? false,
         ]);
     }
@@ -153,6 +160,16 @@ class MonitorController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Monitor deleted.')]);
 
         return to_route('organizations.monitors.index', $organization);
+    }
+
+    /**
+     * The normalized `?tag=` filter of lists and the dashboard (ADR-047).
+     */
+    public static function tagFilter(Request $request): ?string
+    {
+        $tag = $request->query('tag');
+
+        return is_string($tag) && trim($tag) !== '' ? Tag::normalize($tag) : null;
     }
 
     /**

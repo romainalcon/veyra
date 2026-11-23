@@ -11,15 +11,17 @@ class IncidentSeries
     /**
      * Incidents started per day (UTC) and their cumulated downtime.
      *
+     * @param  list<string>|null  $monitorIds  restrict to these monitors (tag filter); null = all
      * @return array{days: list<array{day: string, incidents: int, downtime_minutes: int}>, mttr_minutes: int|null}
      */
-    public function forOrganization(Organization $organization, int $days = 30, ?CarbonImmutable $now = null): array
+    public function forOrganization(Organization $organization, int $days = 30, ?CarbonImmutable $now = null, ?array $monitorIds = null): array
     {
         $now ??= CarbonImmutable::now();
         $first = $now->startOfDay()->subDays($days - 1);
 
         $rows = DB::table('incidents')
             ->where('organization_id', $organization->id)
+            ->when($monitorIds !== null, fn ($query) => $query->whereIn('monitor_id', $monitorIds))
             ->where('started_at', '>=', $first)
             ->selectRaw('DATE(started_at) as day, COUNT(*) as incidents')
             ->selectRaw('SUM(TIMESTAMPDIFF(SECOND, started_at, COALESCE(resolved_at, ?))) as downtime', [$now->toDateTimeString()])
@@ -29,6 +31,7 @@ class IncidentSeries
 
         $mttr = DB::table('incidents')
             ->where('organization_id', $organization->id)
+            ->when($monitorIds !== null, fn ($query) => $query->whereIn('monitor_id', $monitorIds))
             ->where('started_at', '>=', $first)
             ->whereNotNull('resolved_at')
             ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, started_at, resolved_at)) as mttr')

@@ -78,6 +78,7 @@ class MonitorResource extends JsonResource
                 fn (): array => $monitor->notificationChannels->pluck('id')->values()->all(),
             ),
             'escalation_policy_id' => $monitor->escalation_policy_id,
+            'tags' => $monitor->relationLoaded('tags') ? $monitor->tags->pluck('name')->values()->all() : $monitor->tags()->pluck('tags.name')->values()->all(),
             'created_at' => $monitor->created_at?->toIso8601String(),
             'updated_at' => $monitor->updated_at?->toIso8601String(),
         ];

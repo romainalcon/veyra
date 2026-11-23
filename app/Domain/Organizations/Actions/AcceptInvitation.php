@@ -2,6 +2,9 @@
 
 namespace App\Domain\Organizations\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\LimitReached;
 use App\Domain\Entitlements\Services\Quota;
@@ -14,7 +17,10 @@ use Illuminate\Validation\ValidationException;
 
 class AcceptInvitation
 {
-    public function __construct(private readonly Quota $quota) {}
+    public function __construct(
+        private readonly Quota $quota,
+        private readonly AuditLogger $audit,
+    ) {}
 
     /**
      * Accept an invitation for the given user. The invitation row is locked and
@@ -53,10 +59,14 @@ class AcceptInvitation
                 }
             }
 
-            $organization->members()->firstOrCreate(
+            $member = $organization->members()->firstOrCreate(
                 ['user_id' => $user->id],
                 ['role' => $invitation->role, 'joined_at' => now()],
             );
+
+            if ($member->wasRecentlyCreated) {
+                $this->audit->record($organization, AuditAction::MemberJoined, AuditSnapshot::memberSubject($member), after: ['role' => $member->role]);
+            }
 
             $invitation->delete();
 

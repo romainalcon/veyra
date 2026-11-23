@@ -43,7 +43,9 @@
 | status_page_announcements | id, organization_id, status_page_id, subject_id, event, payload (json) |
 | status_page_subscriber_deliveries | id, announcement_id, subscriber_id, status, attempts, sent_at, last_error |
 | api_tokens | id, organization_id, name, ability (read/write), token_hash (unique, SHA-256), last_four, created_by (nullable), last_used_at, expires_at, revoked_at |
-| audit_logs | id, organization_id, actor_id, action, subject_type, subject_id, metadata |
+| audit_logs | id, organization_id, actor_type, actor_id, actor_name, action, subject_type, subject_id, subject_label, changes (json), metadata (json), created_at (ADR-046) |
+| tags | id, organization_id, name — unique (organization_id, name) (ADR-047) |
+| monitor_tag | monitor_id, tag_id (PK both) |
 
 ## Constraints and indexes
 - Unique organization membership `(organization_id, user_id)`.
@@ -104,3 +106,6 @@
 - `incidents.escalation_step` and `notification_deliveries.escalation_step` are `TINYINT UNSIGNED DEFAULT 0`. The delivery key becomes `(incident_id, channel_id, event_type, escalation_step)` (`deliveries_incident_channel_event_step_unique`), created before the old `(incident_id, channel_id, event_type)` key is dropped so the `incident_id` foreign key always keeps an index; existing rows get step 0 and stay unique.
 - `organization_members.weekly_report` (boolean, default false) and `weekly_reports` (unique `(organization_id, period_start)`, cascade with the organization). Additive only.
 
+## Audit log and tags (Sprint 21, ADR-046, ADR-047)
+- `audit_logs` is append-only: no foreign key on the actor or the subject (their names are copied), `created_at` is `DATETIME(6)`, indexed by `(organization_id, created_at)`, `(organization_id, subject_type, created_at)` for the list and its filter, and `created_at` for the batched retention purge. Rows cascade with the organization only.
+- `tags` cascades with the organization; `monitor_tag` (PK `(monitor_id, tag_id)`, index on `tag_id`) cascades with both. Monitors are soft deleted, so their pivot rows stay until the organization is deleted; orphan tags are removed by the application. Additive only.

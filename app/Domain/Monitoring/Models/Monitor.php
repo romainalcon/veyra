@@ -12,8 +12,11 @@ use App\Policies\MonitorPolicy;
 use Carbon\CarbonImmutable;
 use Database\Factories\MonitorFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -46,6 +49,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read MonitorCheck|null $latestCheck
  * @property-read MonitorState|null $state
  * @property-read EscalationPolicy|null $escalationPolicy
+ * @property-read Collection<int, Tag> $tags
  */
 #[Fillable(['organization_id', 'name', 'type', 'enabled', 'interval_seconds', 'timeout_seconds', 'next_check_at', 'escalation_policy_id'])]
 #[UseFactory(MonitorFactory::class)]
@@ -198,6 +202,25 @@ class Monitor extends Model
     public function notificationChannels(): BelongsToMany
     {
         return $this->belongsToMany(NotificationChannel::class, 'monitor_notification_channels');
+    }
+
+    /**
+     * @return BelongsToMany<Tag, $this>
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'monitor_tag')->orderBy('tags.name');
+    }
+
+    /**
+     * Monitors carrying the tag (normalized name, ADR-047).
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function taggedWith(Builder $query, string $tag): void
+    {
+        $query->whereHas('tags', fn (Builder $tags) => $tags->where('tags.name', Tag::normalize($tag)));
     }
 
     /**

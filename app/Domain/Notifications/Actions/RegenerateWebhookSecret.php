@@ -2,9 +2,13 @@
 
 namespace App\Domain\Notifications\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Notifications\Channels\WebhookSignature;
 use App\Domain\Notifications\Enums\ChannelType;
 use App\Domain\Notifications\Models\NotificationChannel;
+use Illuminate\Support\Facades\DB;
 use LogicException;
 
 /**
@@ -13,6 +17,8 @@ use LogicException;
  */
 class RegenerateWebhookSecret
 {
+    public function __construct(private readonly AuditLogger $audit) {}
+
     /**
      * @return string the new secret, to be shown once
      */
@@ -24,7 +30,11 @@ class RegenerateWebhookSecret
 
         $secret = WebhookSignature::generateSecret();
 
-        $channel->update(['config_encrypted' => [...$channel->config_encrypted, 'signing_secret' => $secret]]);
+        DB::transaction(function () use ($channel, $secret): void {
+            $channel->update(['config_encrypted' => [...$channel->config_encrypted, 'signing_secret' => $secret]]);
+
+            $this->audit->record($channel->organization_id, AuditAction::SigningSecretRegenerated, AuditSnapshot::channelSubject($channel));
+        });
 
         return $secret;
     }

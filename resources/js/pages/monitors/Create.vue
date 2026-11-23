@@ -52,6 +52,9 @@ setLayoutProps({
             :dns-resolvers="dnsResolvers"
             :dns-match-modes="dnsMatchModes"
             :max-dns-expected-values="maxDnsExpectedValues"
+            :tag-options="tagOptions"
+            :max-tags="maxTags"
+            :max-tag-length="maxTagLength"
             :action="store.form(organization.slug)"
             :submit-label="t('Create monitor')"
         />

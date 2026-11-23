@@ -22,6 +22,7 @@ use App\Domain\Monitoring\Enums\MonitorInterval;
 use App\Domain\Monitoring\Enums\MonitorType;
 use App\Domain\Monitoring\Enums\RequestContentType;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Models\Tag;
 use App\Domain\Monitoring\Probes\DestinationGuard;
 use App\Domain\Monitoring\Probes\DestinationRejected;
 use App\Domain\Monitoring\Probes\ProbeSettings;
@@ -89,6 +90,13 @@ class SaveMonitorRequest extends FormRequest
     {
         $monitor = $this->route('monitor');
 
+        if (is_array($this->input('tags'))) {
+            $this->merge(['tags' => array_values(array_unique(array_filter(
+                array_map(fn (mixed $tag): string => is_string($tag) ? Tag::normalize($tag) : '', $this->input('tags')),
+                fn (string $tag): bool => $tag !== '',
+            )))]);
+        }
+
         $this->merge([
             'type' => $monitor instanceof Monitor ? $monitor->type->value : ($this->input('type') ?? MonitorType::Http->value),
             'host' => is_string($this->input('host')) ? trim($this->input('host')) : $this->input('host'),
@@ -118,6 +126,9 @@ class SaveMonitorRequest extends FormRequest
                 'distinct',
                 Rule::exists('notification_channels', 'id')->where('organization_id', $this->organization()->id),
             ],
+            'tags_submitted' => ['nullable', 'boolean'],
+            'tags' => ['array', 'max:'.Tag::MAX_PER_MONITOR],
+            'tags.*' => ['string', 'max:'.Tag::MAX_LENGTH, 'regex:'.Tag::PATTERN],
             'escalation_policy_id' => [
                 'nullable',
                 'string',
@@ -396,6 +407,7 @@ class SaveMonitorRequest extends FormRequest
         return [
             'headers.*.name' => 'header name',
             'headers.*.value' => 'header value',
+            'tags.*' => 'tag',
         ];
     }
 
@@ -427,6 +439,9 @@ class SaveMonitorRequest extends FormRequest
                 : null,
             escalationPolicySubmitted: $this->has('escalation_policy_id'),
             escalationPolicyId: $this->filled('escalation_policy_id') ? (string) $this->validated('escalation_policy_id') : null,
+            tags: $this->boolean('tags_submitted')
+                ? array_values(array_map('strval', (array) $this->validated('tags', [])))
+                : null,
         );
     }
 

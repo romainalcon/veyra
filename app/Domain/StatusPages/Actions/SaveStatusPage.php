@@ -2,6 +2,9 @@
 
 namespace App\Domain\StatusPages\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\LimitReached;
 use App\Domain\Entitlements\Services\Quota;
@@ -16,6 +19,7 @@ class SaveStatusPage
     public function __construct(
         private readonly SyncStatusPageComponents $syncStatusPageComponents,
         private readonly Quota $quota,
+        private readonly AuditLogger $audit,
     ) {}
 
     public function handle(Organization $organization, StatusPageData $data, ?StatusPage $statusPage = null): StatusPage
@@ -36,6 +40,8 @@ class SaveStatusPage
                 throw new LimitReached(Feature::StatusPageBranding, 0);
             }
 
+            $before = $statusPage === null ? null : AuditSnapshot::statusPage($statusPage);
+
             if ($statusPage === null) {
                 $this->quota->ensureCanAdd($organization, Feature::StatusPages);
 
@@ -45,6 +51,14 @@ class SaveStatusPage
             }
 
             $this->syncStatusPageComponents->handle($statusPage, $data->components);
+
+            $this->audit->record(
+                $organization,
+                $before === null ? AuditAction::StatusPageCreated : AuditAction::StatusPageUpdated,
+                AuditSnapshot::statusPageSubject($statusPage),
+                $before,
+                AuditSnapshot::statusPage($statusPage),
+            );
 
             return $statusPage;
         });

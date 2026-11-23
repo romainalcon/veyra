@@ -47,6 +47,11 @@ The exact open-source license, commercial license boundaries and trademark/domai
 ## Added in 1.7 (Sprint 19)
 - Public REST API (`/api/v1`) for monitors, checks, incidents and maintenance windows, with organization API tokens (read or read/write, optional expiry, revocable) managed by Owners and Admins.
 
+## Added in 1.8 (Sprints 20–21)
+- Escalation policies and a weekly report e-mail.
+- Audit log of member and API token actions for Owners and Admins.
+- Monitor tags with filters (list, dashboard, API); monitor import and export as versioned JSON without secrets.
+
 ## Not in V1
 Agent-based server metrics, multi-region checks, billing, SSO, enterprise SLAs.
 
