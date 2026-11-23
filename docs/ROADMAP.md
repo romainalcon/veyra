@@ -167,9 +167,9 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Tests: audit coverage of every action, redaction, tag filters, import validation and quotas, tenant isolation.
 
 ## Sprint 22 — Operations (1.9)
-- [ ] Prometheus `/metrics` endpoint for the instance: queue sizes, outbox backlog and age, scheduler beat lag, probe durations, delivery failures; disabled by default, token or IP allow-list, no tenant data or labels with organization names.
-- [ ] Grafana dashboard example and alerting rules in `docs/operations/`.
-- [ ] Tests: access control, metric names stable, no tenant leak.
+- [x] Prometheus `/metrics` endpoint for the instance: queue sizes, outbox backlog and age, scheduler beat lag, probe durations, delivery failures; disabled by default, token or IP allow-list, no tenant data or labels with organization names (ADR-048).
+- [x] Grafana dashboard example and alerting rules in `docs/operations/`.
+- [x] Tests: access control, metric names stable, no tenant leak.
 
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.

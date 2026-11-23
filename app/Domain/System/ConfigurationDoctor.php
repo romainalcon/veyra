@@ -41,8 +41,57 @@ class ConfigurationDoctor
             config('veyra.source_url') ? CheckResult::ok('source_url', (string) config('veyra.source_url')) : CheckResult::warn('source_url', 'Set VEYRA_SOURCE_URL so users can obtain the source code (AGPL-3.0 §13).'),
             config('veyra.probes.allow_private_networks') ? CheckResult::warn('probes.private_networks', 'Private networks are reachable by probes: restrict who can create monitors.') : CheckResult::ok('probes.private_networks', 'Blocked'),
             $this->entitlementsBinding(),
+            $this->metrics(),
             CheckResult::warn('egress', 'Reminder: restrict outbound traffic of Horizon workers at network level (see docs/deployment).'),
         ];
+    }
+
+    /**
+     * /metrics (ADR-048): enabled without any restriction it serves nothing;
+     * a short token or a malformed allow-list entry is a misconfiguration.
+     */
+    private function metrics(): CheckResult
+    {
+        if (! config('veyra.metrics.enabled')) {
+            return CheckResult::ok('metrics', 'Disabled');
+        }
+
+        $token = (string) config('veyra.metrics.token');
+        /** @var list<string> $allowedIps */
+        $allowedIps = (array) config('veyra.metrics.allowed_ips', []);
+
+        if ($token === '' && $allowedIps === []) {
+            return CheckResult::fail('metrics', 'VEYRA_METRICS_ENABLED is set without VEYRA_METRICS_TOKEN or VEYRA_METRICS_ALLOWED_IPS: every scrape is refused.');
+        }
+
+        if ($token !== '' && strlen($token) < 32) {
+            return CheckResult::fail('metrics', 'VEYRA_METRICS_TOKEN must be at least 32 characters.');
+        }
+
+        foreach ($allowedIps as $entry) {
+            if (! self::isIpOrCidr($entry)) {
+                return CheckResult::fail('metrics', "VEYRA_METRICS_ALLOWED_IPS contains an invalid entry: {$entry}.");
+            }
+        }
+
+        return CheckResult::ok('metrics', 'Enabled ('.implode(' + ', array_filter([$token !== '' ? 'token' : null, $allowedIps !== [] ? 'IP allow-list' : null])).')');
+    }
+
+    private static function isIpOrCidr(string $entry): bool
+    {
+        [$address, $mask] = array_pad(explode('/', $entry, 2), 2, null);
+
+        if (filter_var($address, FILTER_VALIDATE_IP) === false) {
+            return false;
+        }
+
+        if ($mask === null) {
+            return true;
+        }
+
+        $max = str_contains($address, ':') ? 128 : 32;
+
+        return ctype_digit($mask) && (int) $mask <= $max;
     }
 
     /**

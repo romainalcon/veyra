@@ -28,6 +28,7 @@ Open `http://localhost:8000` (or `VEYRA_HTTP_PORT`). After creating the operator
 
 ## Operations
 - Health: `GET /health` (used by the `web` healthcheck; details with `VEYRA_HEALTH_TOKEN`), `php artisan veyra:doctor`, `php artisan horizon:status`.
+- Metrics: `GET /metrics` for Prometheus, disabled by default (`VEYRA_METRICS_ENABLED`, `VEYRA_METRICS_TOKEN`, `VEYRA_METRICS_ALLOWED_IPS`); see `docs/operations/METRICS.md`.
 - Upgrade: pull/build the new image, `docker compose --env-file .env.docker up -d` (migrations run first through `migrate`).
 - Horizon dashboard: `/horizon`, restricted to `VEYRA_ADMIN_EMAILS`.
 - Backups: dump the `mariadb` volume regularly (`mariadb-dump`); Redis only holds transient queues/cache.

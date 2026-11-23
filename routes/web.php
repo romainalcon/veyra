@@ -32,6 +32,8 @@ use App\Http\Controllers\StatusPages\StatusPageFeedController;
 use App\Http\Controllers\StatusPages\StatusPageSubscriptionController;
 use App\Http\Controllers\StatusPages\TlsCheckController;
 use App\Http\Controllers\System\HealthController;
+use App\Http\Controllers\System\MetricsController;
+use App\Http\Middleware\AuthorizeMetricsScrape;
 use App\Http\Middleware\EnsureOrganizationTwoFactor;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandlePublicInertiaRequests;
@@ -44,6 +46,11 @@ Route::get('health', HealthController::class)
     ->middleware('throttle:60,1')
     ->withoutMiddleware(['web'])
     ->name('health');
+
+Route::get('metrics', MetricsController::class)
+    ->withoutMiddleware(['web'])
+    ->middleware(['throttle:120,1', AuthorizeMetricsScrape::class])
+    ->name('metrics');
 
 /*
  * Public status pages: no session, no cookies, no CSRF, nothing user-related

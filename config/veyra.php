@@ -242,6 +242,25 @@ return [
     'health_token' => env('VEYRA_HEALTH_TOKEN'),
 
     /*
+    |--------------------------------------------------------------------------
+    | Prometheus Metrics (ADR-048)
+    |--------------------------------------------------------------------------
+    |
+    | GET /metrics exposes instance-level metrics (queues, outbox, scheduler,
+    | probe durations, notification deliveries) in the Prometheus text format.
+    | Disabled by default. Once enabled, scrapes need the bearer token, an
+    | address from the allow-list (IPs or CIDR ranges, IPv4 or IPv6), or both
+    | when both are set; with neither, every scrape is refused.
+    |
+    */
+
+    'metrics' => [
+        'enabled' => (bool) env('VEYRA_METRICS_ENABLED', false),
+        'token' => env('VEYRA_METRICS_TOKEN'),
+        'allowed_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('VEYRA_METRICS_ALLOWED_IPS', ''))))),
+    ],
+
+    /*
     | Reverse proxies allowed to set X-Forwarded-* headers ("*" or a list).
     */
 
