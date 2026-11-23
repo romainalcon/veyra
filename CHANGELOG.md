@@ -4,6 +4,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-11-23
+
 ### Added
 - **Changelog and roadmap pages** — with `VEYRA_LANDING_PAGE=true`, `/changelog` lists every release of `CHANGELOG.md` (newest first, with a link per version) and `/roadmap` shows the upcoming milestones and the latest release, in English or French; both are linked from the landing page header and the site footers. Release notes stay in English. Without the landing page, both pages are not found and nothing is linked (ADR-049).
 
@@ -153,7 +155,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/romainalcon/veyra/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/romainalcon/veyra/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/romainalcon/veyra/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/romainalcon/veyra/compare/v1.6.0...v1.7.0
