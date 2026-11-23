@@ -2,6 +2,9 @@
 
 namespace App\Domain\Monitoring\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Enums\MonitorStatus;
@@ -14,7 +17,10 @@ use Illuminate\Support\Facades\DB;
 
 class SetMonitorEnabled
 {
-    public function __construct(private readonly Quota $quota) {}
+    public function __construct(
+        private readonly Quota $quota,
+        private readonly AuditLogger $audit,
+    ) {}
 
     /**
      * Pausing stops scheduling (queued dispatches are skipped by the probe
@@ -57,6 +63,8 @@ class SetMonitorEnabled
             if ($previous !== MonitorStatus::Unknown) {
                 MonitorStateChanged::dispatch($monitor->id, $previous, MonitorStatus::Unknown);
             }
+
+            $this->audit->record($monitor->organization_id, $enabled ? AuditAction::MonitorResumed : AuditAction::MonitorPaused, AuditSnapshot::monitorSubject($monitor));
 
             OrganizationUpdate::dispatch($monitor->organization_id, OrganizationUpdate::MONITOR_STATE_CHANGED, [
                 'monitor_id' => $monitor->id,

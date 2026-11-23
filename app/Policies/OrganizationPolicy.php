@@ -54,6 +54,14 @@ class OrganizationPolicy
         return $this->roleOf($user, $organization)?->canUpdateOrganization() ?? false;
     }
 
+    /**
+     * The audit log names members and their actions (ADR-046).
+     */
+    public function viewAuditLog(User $user, Organization $organization): bool
+    {
+        return $this->roleOf($user, $organization)?->canUpdateOrganization() ?? false;
+    }
+
     public function invite(User $user, Organization $organization, OrganizationRole $role): bool
     {
         return $this->roleOf($user, $organization)?->canAssign($role) ?? false;

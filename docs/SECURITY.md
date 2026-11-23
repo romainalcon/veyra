@@ -86,3 +86,14 @@ Broadcasts on `private-organizations.{id}` carry identifiers and enum values onl
 - Monitor and maintenance payloads go through the interface's Form Requests: same SSRF validation (every DNS answer, ports, credentials in URLs), quotas and limits. Responses are allow-listed resources without header values, bodies, basic auth passwords, ping tokens (a heartbeat's ping URL is returned once, on creation), check metadata, members' names or e-mail addresses.
 - Rate limits: 120 requests/min per token and 600/min per IP (configurable), monitor creation per hour, maintenance writes and acknowledgements 30/min, keyed by token.
 - Tokens are not subject to the organization's two-factor requirement (ADR-040); treat them like passwords and give automation the `read` ability unless it must write.
+
+## Audit log (Sprint 21, ADR-046)
+- Entries are written in the transaction of the change by the domain Actions; the model refuses updates and deletes, and rows only leave through the organization cascade or the retention purge (`VEYRA_AUDIT_RETENTION_DAYS`).
+- Snapshots are allow-lists: header values, request bodies, basic auth credentials, channel configurations (webhook URLs, tokens, recipients), signing secrets, ping and API tokens and URL query strings are never stored; only whether they are set or were replaced. A test asserts their absence from the table.
+- Only Owners and Admins read the log (it names members and their e-mail addresses); other members get 403, non-members 404.
+
+## Monitor import and export (Sprint 21, ADR-047)
+- Exports contain no secrets (headers, bodies, basic auth, ping tokens) and no internal references; they are audited. Imports never read secrets from a file.
+- Every imported entry goes through the interface's `SaveMonitorRequest` (authorization, SSRF validation with every DNS answer, ports, credentials in URLs, DNS record rules, limits), at preview and again at import; one invalid entry or a reached quota imports nothing.
+- Files are capped at 1 MiB and 100 monitors, and previews and imports at `VEYRA_MONITOR_IMPORTS_PER_HOUR` (10) per member and hour, which bounds the DNS lookups an import can trigger.
+

@@ -147,6 +147,17 @@ return [
 
     'monitors' => [
         'max_per_hour' => (int) env('VEYRA_MONITORS_PER_HOUR', 30),
+        // Import and export (ADR-047): requests per hour per member, monitors per file.
+        'imports_per_hour' => max(1, (int) env('VEYRA_MONITOR_IMPORTS_PER_HOUR', 10)),
+        'max_per_import' => 100,
+    ],
+
+    /*
+    | Audit log (ADR-046): entries older than this are purged in batches.
+    */
+
+    'audit' => [
+        'retention_days' => max(1, (int) env('VEYRA_AUDIT_RETENTION_DAYS', 365)),
     ],
 
     /*

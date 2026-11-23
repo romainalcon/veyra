@@ -6,6 +6,7 @@ use App\Domain\Incidents\Models\Incident;
 use App\Domain\Maintenance\Models\MaintenanceSeries;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Monitoring\Models\Tag;
 use App\Domain\Notifications\Models\EscalationPolicy;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\StatusPages\Models\StatusPage;
@@ -158,6 +159,14 @@ class Organization extends Model
     public function notificationChannels(): HasMany
     {
         return $this->hasMany(NotificationChannel::class);
+    }
+
+    /**
+     * @return HasMany<Tag, $this>
+     */
+    public function tags(): HasMany
+    {
+        return $this->hasMany(Tag::class);
     }
 
     /**

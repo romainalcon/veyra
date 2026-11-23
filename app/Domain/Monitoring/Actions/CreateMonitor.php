@@ -2,6 +2,9 @@
 
 namespace App\Domain\Monitoring\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\DTOs\MonitorData;
@@ -18,7 +21,9 @@ class CreateMonitor
 {
     public function __construct(
         private readonly SyncMonitorChannels $syncMonitorChannels,
+        private readonly SyncMonitorTags $syncMonitorTags,
         private readonly Quota $quota,
+        private readonly AuditLogger $audit,
     ) {}
 
     /**
@@ -27,10 +32,11 @@ class CreateMonitor
      * against the active monitor limit.
      *
      * @param  string|null  $pingToken  plain ping token of a heartbeat (only its hash is stored)
+     * @param  array<string, mixed>  $auditMetadata  context for the audit entry (e.g. an import)
      */
-    public function handle(Organization $organization, MonitorData $data, ?string $pingToken = null): Monitor
+    public function handle(Organization $organization, MonitorData $data, ?string $pingToken = null, array $auditMetadata = []): Monitor
     {
-        return DB::transaction(function () use ($organization, $data, $pingToken): Monitor {
+        return DB::transaction(function () use ($organization, $data, $pingToken, $auditMetadata): Monitor {
             $this->quota->ensureCanAdd($organization, Feature::Monitors);
 
             $graceSeconds = $data->heartbeat->graceSeconds ?? 0;
@@ -64,6 +70,12 @@ class CreateMonitor
             };
 
             $this->syncMonitorChannels->handle($monitor, $data->notificationChannelIds);
+
+            if ($data->tags !== null && $data->tags !== []) {
+                $this->syncMonitorTags->handle($monitor, $data->tags);
+            }
+
+            $this->audit->record($organization, AuditAction::MonitorCreated, AuditSnapshot::monitorSubject($monitor), after: AuditSnapshot::monitor($monitor), metadata: $auditMetadata);
 
             return $monitor;
         });

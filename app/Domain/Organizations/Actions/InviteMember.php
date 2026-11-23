@@ -2,6 +2,9 @@
 
 namespace App\Domain\Organizations\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Localization\SupportedLocales;
@@ -16,7 +19,10 @@ use Illuminate\Support\Str;
 
 class InviteMember
 {
-    public function __construct(private readonly Quota $quota) {}
+    public function __construct(
+        private readonly Quota $quota,
+        private readonly AuditLogger $audit,
+    ) {}
 
     /**
      * Create or refresh the pending invitation for this e-mail and send it.
@@ -33,7 +39,7 @@ class InviteMember
             $this->quota->ensureCanAdd($organization, Feature::Members, fn (): int => $organization->members()->count()
                 + $organization->invitations()->pending()->where('email', '!=', $data->email)->count());
 
-            return OrganizationInvitation::updateOrCreate(
+            $invitation = OrganizationInvitation::updateOrCreate(
                 ['organization_id' => $organization->id, 'email' => $data->email],
                 [
                     'role' => $data->role,
@@ -42,6 +48,10 @@ class InviteMember
                     'expires_at' => now()->addHours((int) config('veyra.invitations.ttl_hours')),
                 ],
             );
+
+            $this->audit->record($organization, AuditAction::MemberInvited, AuditSnapshot::invitationSubject($invitation), after: ['email' => $invitation->email, 'role' => $invitation->role]);
+
+            return $invitation;
         });
 
         Notification::route('mail', $data->email)

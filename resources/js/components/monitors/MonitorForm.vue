@@ -5,6 +5,7 @@ import { computed, ref, watch } from 'vue';
 import InputError from '@/components/InputError.vue';
 import HeadersEditor from '@/components/monitors/HeadersEditor.vue';
 import HttpRequestOptions from '@/components/monitors/HttpRequestOptions.vue';
+import TagInput from '@/components/monitors/TagInput.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ const props = defineProps<
 >();
 
 const isEdit = computed(() => props.monitor !== undefined);
+const tags = ref<string[]>([...(props.monitor?.tags ?? [])]);
 const monitorType = ref<MonitorType>(props.monitor?.type ?? 'http');
 const isHttp = computed(() => monitorType.value === 'http');
 const isTcp = computed(() => monitorType.value === 'tcp');
@@ -205,6 +207,24 @@ const methodOptions = computed(() =>
                 :default-value="monitor?.name"
             />
             <InputError :message="errors.name" />
+        </div>
+
+        <div class="grid gap-2">
+            <Label for="tags">{{ t('Tags') }}</Label>
+            <TagInput
+                v-model="tags"
+                :suggestions="tagOptions"
+                :max="maxTags"
+                :max-length="maxTagLength"
+                :error="errors.tags ?? errors['tags.0']"
+            />
+            <p class="text-xs text-muted-foreground">
+                {{
+                    t(
+                        'Group monitors to filter lists, the dashboard and the API. Press Enter to add a tag.',
+                    )
+                }}
+            </p>
         </div>
 
         <p

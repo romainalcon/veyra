@@ -46,6 +46,7 @@ export type MonitorSummary = {
     method: HttpMethod | null;
     enabled: boolean;
     interval_seconds: number;
+    tags: string[];
     latest_check: MonitorCheck | null;
     state: MonitorState;
 };
@@ -137,6 +138,9 @@ export type MonitorFormOptions = {
     dnsResolvers: DnsResolverOption[];
     dnsMatchModes: DnsMatchMode[];
     maxDnsExpectedValues: number;
+    tagOptions: string[];
+    maxTags: number;
+    maxTagLength: number;
 };
 
 export type PaginationLink = {
@@ -159,4 +163,29 @@ export type CursorPaginated<T> = {
     prev_cursor: string | null;
     next_page_url: string | null;
     prev_page_url: string | null;
+};
+
+/** One entry of an import dry run (ADR-047). */
+export type ImportPreviewRow = {
+    index: number;
+    name: string;
+    type: string;
+    target: string | null;
+    status: 'valid' | 'duplicate' | 'invalid';
+    errors: string[];
+    excluded: string[];
+    enabled: boolean;
+    tags: string[];
+};
+
+export type ImportPreview = {
+    rows: ImportPreviewRow[];
+    summary: {
+        total: number;
+        valid: number;
+        duplicates: number;
+        invalid: number;
+    };
+    quota: { used: number; limit: number } | null;
+    fitsQuota: boolean;
 };

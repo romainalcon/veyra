@@ -6,6 +6,7 @@ import {
     Globe,
     KeyRound,
     LayoutGrid,
+    ScrollText,
     Settings,
     Siren,
     Users,
@@ -25,6 +26,7 @@ import { extensionIcon } from '@/lib/extension-icons';
 import { useTranslations } from '@/lib/i18n';
 import { dashboard, edit } from '@/routes/organizations';
 import { index as apiTokens } from '@/routes/organizations/api-tokens';
+import { index as auditLog } from '@/routes/organizations/audit-log';
 import { index as incidents } from '@/routes/organizations/incidents';
 import { index as maintenance } from '@/routes/organizations/maintenance';
 import { index as members } from '@/routes/organizations/members';
@@ -94,6 +96,16 @@ const mainNavItems = computed<NavItem[]>(() => {
                       title: t('API tokens'),
                       href: apiTokens(organization.slug),
                       icon: KeyRound,
+                  },
+              ]
+            : []),
+        ...(organization.can.viewAuditLog
+            ? [
+                  {
+                      id: 'audit-log',
+                      title: t('Audit log'),
+                      href: auditLog(organization.slug),
+                      icon: ScrollText,
                   },
               ]
             : []),

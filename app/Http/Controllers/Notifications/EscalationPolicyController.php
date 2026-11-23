@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Notifications;
 
+use App\Domain\Notifications\Actions\DeleteEscalationPolicy;
 use App\Domain\Notifications\Actions\SaveEscalationPolicy;
 use App\Domain\Notifications\Models\EscalationPolicy;
 use App\Domain\Organizations\Models\Organization;
@@ -42,11 +43,11 @@ class EscalationPolicyController extends Controller
      * Monitors using the policy fall back to the organization default
      * (`monitors.escalation_policy_id` is nulled by the foreign key).
      */
-    public function destroy(Organization $organization, EscalationPolicy $escalationPolicy): RedirectResponse
+    public function destroy(Organization $organization, EscalationPolicy $escalationPolicy, DeleteEscalationPolicy $deleteEscalationPolicy): RedirectResponse
     {
         Gate::authorize('delete', [$escalationPolicy, $organization]);
 
-        $escalationPolicy->delete();
+        $deleteEscalationPolicy->handle($escalationPolicy);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Escalation policy deleted.')]);
 

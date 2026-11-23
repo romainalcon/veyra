@@ -42,6 +42,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/PerPage'
+        - name: tag
+          in: query
+          description: Only monitors carrying this tag (case-insensitive, ADR-047).
+          schema:
+            type: string
+            maxLength: 32
       responses:
         '200':
           description: Monitors, oldest first.
@@ -139,8 +145,9 @@ paths:
         Secrets are never returned, so HTTP monitors keep their stored headers,
         body and basic auth unless `headers_mode`, `body_mode` or `auth_mode`
         is `replace` (`headers_mode` is required). Notification channels are
-        replaced only when `notification_channel_ids` is sent, and the
-        escalation policy only when `escalation_policy_id` is sent.
+        replaced only when `notification_channel_ids` is sent, the
+        escalation policy only when `escalation_policy_id` is sent, and tags
+        only when `tags` is sent.
       requestBody:
         required: true
         content:
@@ -628,6 +635,13 @@ components:
           type: [string, 'null']
           format: uuid
           description: Escalation policy of the organization (ADR-045); null uses the organization default. Omitted on update, the current one is kept.
+        tags:
+          type: array
+          maxItems: 10
+          description: 'Tags (ADR-047): lower-cased, letters, digits, spaces and `. _ : / -`, starting with a letter or a digit. Omitted on update, the current ones are kept; an empty list removes them.'
+          items:
+            type: string
+            maxLength: 32
         url:
           type: string
           description: 'http: an http(s) URL on an allowed port with a public destination.'
@@ -832,6 +846,11 @@ components:
           type: [string, 'null']
           format: uuid
           description: null when the monitor uses the organization default policy (ADR-045).
+        tags:
+          type: array
+          description: Tag names, sorted (ADR-047).
+          items:
+            type: string
         created_at:
           type: string
           format: date-time

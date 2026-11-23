@@ -2,6 +2,9 @@
 
 namespace App\Domain\Organizations\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Localization\SupportedLocales;
 use App\Domain\Organizations\DTOs\OrganizationData;
 use App\Domain\Organizations\Enums\OrganizationRole;
@@ -12,6 +15,8 @@ use Illuminate\Support\Str;
 
 class CreateOrganization
 {
+    public function __construct(private readonly AuditLogger $audit) {}
+
     /**
      * Create an organization and make the creator its first owner. Without an
      * explicit choice, the organization takes the language of the request.
@@ -31,6 +36,8 @@ class CreateOrganization
                 'role' => OrganizationRole::Owner,
                 'joined_at' => now(),
             ]);
+
+            $this->audit->record($organization, AuditAction::OrganizationCreated, AuditSnapshot::organizationSubject($organization), after: AuditSnapshot::organization($organization));
 
             return $organization;
         });

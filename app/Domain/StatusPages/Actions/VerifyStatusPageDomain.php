@@ -2,6 +2,9 @@
 
 namespace App\Domain\StatusPages\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\StatusPages\Contracts\TxtResolver;
 use App\Domain\StatusPages\Models\StatusPage;
 use App\Domain\StatusPages\Services\CustomDomainRegistry;
@@ -18,7 +21,10 @@ class VerifyStatusPageDomain
 {
     public const REVOKE_AFTER_FAILURES = 3;
 
-    public function __construct(private readonly TxtResolver $txtResolver) {}
+    public function __construct(
+        private readonly TxtResolver $txtResolver,
+        private readonly AuditLogger $audit,
+    ) {}
 
     public function handle(StatusPage $statusPage, ?CarbonImmutable $now = null): bool
     {
@@ -40,6 +46,10 @@ class VerifyStatusPageDomain
             }
 
             if ($found) {
+                if ($locked->domain_verified_at === null) {
+                    $this->audit->record($locked->organization_id, AuditAction::StatusPageDomainVerified, AuditSnapshot::statusPageSubject($locked), metadata: ['custom_domain' => $domain]);
+                }
+
                 $locked->update([
                     'domain_verified_at' => $locked->domain_verified_at ?? $now,
                     'domain_checked_at' => $now,

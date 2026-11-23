@@ -2,6 +2,9 @@
 
 namespace App\Domain\Notifications\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Notifications\DTOs\EscalationPolicyData;
 use App\Domain\Notifications\Models\EscalationPolicy;
 use App\Domain\Notifications\Models\NotificationChannel;
@@ -17,6 +20,8 @@ use Illuminate\Support\Facades\DB;
  */
 class SaveEscalationPolicy
 {
+    public function __construct(private readonly AuditLogger $audit) {}
+
     public function handle(Organization $organization, EscalationPolicyData $data, ?EscalationPolicy $policy = null): EscalationPolicy
     {
         return DB::transaction(function () use ($organization, $data, $policy): EscalationPolicy {
@@ -30,6 +35,7 @@ class SaveEscalationPolicy
             }
 
             $attributes = ['name' => $data->name, 'is_default' => $data->isDefault];
+            $before = $policy === null ? null : AuditSnapshot::escalationPolicy($policy);
 
             if ($policy === null) {
                 $policy = $organization->escalationPolicies()->create($attributes);
@@ -50,6 +56,14 @@ class SaveEscalationPolicy
                         ->all(),
                 );
             }
+
+            $this->audit->record(
+                $organization,
+                $before === null ? AuditAction::EscalationPolicyCreated : AuditAction::EscalationPolicyUpdated,
+                AuditSnapshot::escalationPolicySubject($policy),
+                $before,
+                AuditSnapshot::escalationPolicy($policy),
+            );
 
             return $policy;
         });

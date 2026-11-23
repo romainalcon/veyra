@@ -15,6 +15,7 @@ final readonly class MonitorData
      * @param  list<string>|null  $notificationChannelIds  null keeps the current channels (or the defaults on creation)
      * @param  bool  $escalationPolicySubmitted  false keeps the current escalation policy (ADR-045)
      * @param  string|null  $escalationPolicyId  null = the organization default policy
+     * @param  list<string>|null  $tags  normalized tag names; null keeps the current tags (none on creation, ADR-047)
      */
     public function __construct(
         public MonitorType $type,
@@ -28,5 +29,6 @@ final readonly class MonitorData
         public ?array $notificationChannelIds = null,
         public bool $escalationPolicySubmitted = false,
         public ?string $escalationPolicyId = null,
+        public ?array $tags = null,
     ) {}
 }

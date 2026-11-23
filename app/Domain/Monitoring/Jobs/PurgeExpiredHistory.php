@@ -103,6 +103,10 @@ class PurgeExpiredHistory implements ShouldBeUnique, ShouldQueue
         $this->purgeInBatches(fn () => DB::table('status_page_announcements')
             ->where('created_at', '<', $announcementCutoff), $startedAt);
 
+        // Audit log (ADR-046): the only deletion path besides the organization cascade.
+        $this->purgeInBatches(fn () => DB::table('audit_logs')
+            ->where('created_at', '<', $now->subDays((int) config('veyra.audit.retention_days', 365))), $startedAt);
+
         do {
             $deleted = SchedulerBeatLog::purge($now, self::BATCH_SIZE);
         } while ($deleted === self::BATCH_SIZE && ! $this->outOfTime($startedAt));

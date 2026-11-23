@@ -2,6 +2,9 @@
 
 namespace App\Domain\StatusPages\Actions;
 
+use App\Domain\Audit\Enums\AuditAction;
+use App\Domain\Audit\Services\AuditLogger;
+use App\Domain\Audit\Services\AuditSnapshot;
 use App\Domain\Entitlements\Enums\Feature;
 use App\Domain\Entitlements\LimitReached;
 use App\Domain\Entitlements\Services\Quota;
@@ -19,7 +22,10 @@ use InvalidArgumentException;
  */
 class StoreStatusPageAsset
 {
-    public function __construct(private readonly Quota $quota) {}
+    public function __construct(
+        private readonly Quota $quota,
+        private readonly AuditLogger $audit,
+    ) {}
 
     /**
      * @throws LimitReached when the organization may not brand its pages
@@ -38,6 +44,12 @@ class StoreStatusPageAsset
             }
 
             StatusPage::query()->whereKey($statusPage->id)->lockForUpdate()->value('id');
+
+            $this->audit->record($statusPage->organization_id, AuditAction::StatusPageAssetUploaded, AuditSnapshot::statusPageSubject($statusPage), metadata: [
+                'kind' => $kind->value,
+                'mime' => $image['mime'],
+                'bytes' => strlen($bytes),
+            ]);
 
             return StatusPageAsset::query()->updateOrCreate(
                 ['status_page_id' => $statusPage->id, 'kind' => $kind],

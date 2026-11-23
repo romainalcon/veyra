@@ -11,11 +11,12 @@
 ## Domain layout
 ```
 app/Domain/
+  Audit/           Audit log entries, AuditLogger, allow-listed snapshots (ADR-046)
   Identity/        Fortify actions, validation concerns, RegistrationGate, DeleteUser, Impersonation contract (ADR-038)
   Organizations/   Actions, DTOs, Enums (OrganizationRole), Models, Notifications, Services
   Entitlements/    Entitlements contract, Community implementation (no limits), Quota (ADR-029)
   Extensions/      Extension points such as OrganizationNavigation (ADR-030)
-  Monitoring/      Probes, outbox, confirmed state, statistics
+  Monitoring/      Probes, outbox, confirmed state, statistics, tags and import/export (Transfer, ADR-047)
   Incidents/       Incidents, timeline events, public updates
   Notifications/   Channels, deliveries, reminders, escalation policies (ADR-045)
   Reports/         Weekly report e-mails (Sprint 20)

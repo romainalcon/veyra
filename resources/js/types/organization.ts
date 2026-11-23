@@ -36,6 +36,7 @@ export type CurrentOrganization = OrganizationSummary & {
         delete: boolean;
         manageMembers: boolean;
         manageApiTokens: boolean;
+        viewAuditLog: boolean;
     };
     /** Only limited features are present; empty on the Community edition. */
     limits: Partial<Record<LimitFeature, LimitUsage>>;
@@ -78,4 +79,20 @@ export type ApiTokenSummary = {
     last_used_at: string | null;
     expires_at: string | null;
     expired: boolean;
+};
+
+/** One audit log entry (ADR-046): allow-listed, secret-free fields only. */
+export type AuditLogEntry = {
+    id: string;
+    action: string;
+    label: string;
+    category: string;
+    actor: { type: 'user' | 'api_token' | 'system'; name: string | null };
+    subject: { type: string; label: string | null } | null;
+    changes: {
+        before?: Record<string, unknown>;
+        after?: Record<string, unknown>;
+    } | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
 };

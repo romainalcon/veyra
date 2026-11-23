@@ -15,7 +15,9 @@ use App\Domain\Organizations\Actions\DeleteOrganization;
 use App\Domain\Organizations\Actions\UpdateOrganization;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Monitors\MonitorController;
 use App\Http\Presenters\IncidentPresenter;
+use App\Http\Presenters\MonitorPresenter;
 use App\Http\Requests\Organizations\SaveOrganizationRequest;
 use App\Models\User;
 use DateTimeZone;
@@ -43,11 +45,16 @@ class OrganizationController extends Controller
         return to_route('organizations.dashboard', $organization);
     }
 
-    public function dashboard(Organization $organization, UptimeCalculator $uptimeCalculator, IncidentSeries $incidentSeries): Response
+    public function dashboard(Request $request, Organization $organization, UptimeCalculator $uptimeCalculator, IncidentSeries $incidentSeries): Response
     {
         Gate::authorize('view', $organization);
 
-        $statusCounts = $organization->monitors()
+        // Optional tag filter (ADR-047): every figure covers the tagged monitors only.
+        $tag = MonitorController::tagFilter($request);
+        $monitors = fn () => $organization->monitors()->when($tag !== null, fn ($query) => $query->taggedWith((string) $tag));
+        $monitorIds = $tag === null ? null : array_values($monitors()->pluck('id')->map(fn (mixed $id): string => (string) $id)->all());
+
+        $statusCounts = $monitors()
             ->where('monitors.enabled', true)
             ->leftJoin('monitor_states', 'monitor_states.monitor_id', '=', 'monitors.id')
             ->selectRaw("COALESCE(monitor_states.status, 'unknown') as status, COUNT(*) as aggregate")
@@ -56,6 +63,7 @@ class OrganizationController extends Controller
 
         $openIncidents = $organization->incidents()
             ->where('status', IncidentStatus::Open)
+            ->when($monitorIds !== null, fn ($query) => $query->whereIn('monitor_id', $monitorIds))
             ->with('monitor:id,name,deleted_at')
             ->orderByDesc('started_at')
             ->limit(5)
@@ -64,16 +72,18 @@ class OrganizationController extends Controller
             ->all();
 
         return Inertia::render('organizations/Dashboard', [
+            'tag' => $tag,
+            'tagOptions' => MonitorPresenter::tagOptions($organization),
             'monitorCounts' => [
-                'total' => $organization->monitors()->count(),
-                'paused' => $organization->monitors()->where('enabled', false)->count(),
+                'total' => $monitors()->count(),
+                'paused' => $monitors()->where('enabled', false)->count(),
                 'byStatus' => collect(MonitorStatus::cases())
                     ->mapWithKeys(fn (MonitorStatus $status): array => [$status->value => (int) ($statusCounts[$status->value] ?? 0)])
                     ->all(),
             ],
             'openIncidents' => $openIncidents,
-            'analytics' => Inertia::defer(function () use ($organization, $uptimeCalculator, $incidentSeries): array {
-                $monitors = $organization->monitors()->with('state')->orderBy('name')->get();
+            'analytics' => Inertia::defer(function () use ($organization, $uptimeCalculator, $incidentSeries, $monitors, $monitorIds): array {
+                $monitors = $monitors()->with('state')->orderBy('name')->get();
                 $weekly = $uptimeCalculator->forMonitors($monitors, StatsRange::Week);
                 $daily = $uptimeCalculator->forMonitors($monitors, StatsRange::Day);
                 $latency = DB::table('monitor_checks')
@@ -102,7 +112,7 @@ class OrganizationController extends Controller
                         ->sortBy(fn (array $row): float => $row['uptime_7d'] ?? 101.0)
                         ->values()
                         ->all(),
-                    'incidents' => $incidentSeries->forOrganization($organization, 30),
+                    'incidents' => $incidentSeries->forOrganization($organization, 30, monitorIds: $monitorIds),
                 ];
             }),
         ]);

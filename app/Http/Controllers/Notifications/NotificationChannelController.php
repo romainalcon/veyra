@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Notifications;
 
+use App\Domain\Notifications\Actions\DeleteNotificationChannel;
 use App\Domain\Notifications\Actions\SaveNotificationChannel;
 use App\Domain\Notifications\Actions\SendTestNotification;
 use App\Domain\Notifications\Enums\ChannelType;
@@ -120,11 +121,11 @@ class NotificationChannelController extends Controller
         return to_route('organizations.notification-channels.index', $organization);
     }
 
-    public function destroy(Organization $organization, NotificationChannel $notificationChannel): RedirectResponse
+    public function destroy(Organization $organization, NotificationChannel $notificationChannel, DeleteNotificationChannel $deleteNotificationChannel): RedirectResponse
     {
         Gate::authorize('delete', [$notificationChannel, $organization]);
 
-        $notificationChannel->delete();
+        $deleteNotificationChannel->handle($notificationChannel);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Notification channel deleted.')]);
 

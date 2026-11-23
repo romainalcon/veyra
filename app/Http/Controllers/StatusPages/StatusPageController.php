@@ -5,6 +5,7 @@ namespace App\Http\Controllers\StatusPages;
 use App\Domain\Entitlements\Services\Quota;
 use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Organizations\Models\Organization;
+use App\Domain\StatusPages\Actions\DeleteStatusPage;
 use App\Domain\StatusPages\Actions\SaveStatusPage;
 use App\Domain\StatusPages\Models\StatusPage;
 use App\Domain\StatusPages\Services\StatusPageSnapshot;
@@ -81,12 +82,11 @@ class StatusPageController extends Controller
         return to_route('organizations.status-pages.edit', [$organization, $statusPage]);
     }
 
-    public function destroy(Organization $organization, StatusPage $statusPage): RedirectResponse
+    public function destroy(Organization $organization, StatusPage $statusPage, DeleteStatusPage $deleteStatusPage): RedirectResponse
     {
         Gate::authorize('delete', [$statusPage, $organization]);
 
-        StatusPageSnapshot::forget($statusPage);
-        $statusPage->delete();
+        $deleteStatusPage->handle($statusPage);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Status page deleted.')]);
 
