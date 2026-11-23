@@ -88,6 +88,21 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureDefaults();
         $this->configureRateLimiting();
+        $this->configurePublicNavigation();
+    }
+
+    /**
+     * Changelog and roadmap links, only where the landing page advertises Veyra (ADR-049).
+     */
+    protected function configurePublicNavigation(): void
+    {
+        $navigation = $this->app->make(PublicNavigation::class);
+        $landingPage = fn (): bool => (bool) config('veyra.landing_page');
+
+        foreach (['header', 'footer'] as $placement) {
+            $navigation->add('changelog', 'Changelog', 'changelog', $placement, $landingPage);
+            $navigation->add('roadmap', 'Roadmap', 'roadmap', $placement, $landingPage);
+        }
     }
 
     /**

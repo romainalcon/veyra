@@ -22,6 +22,8 @@ use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
 use App\Http\Controllers\Organizations\TwoFactorRequirementController;
 use App\Http\Controllers\Organizations\WeeklyReportController;
+use App\Http\Controllers\Site\ChangelogController;
+use App\Http\Controllers\Site\RoadmapController;
 use App\Http\Controllers\StatusPages\PublicStatusPageAssetController;
 use App\Http\Controllers\StatusPages\PublicStatusPageController;
 use App\Http\Controllers\StatusPages\StatusPageAssetController;
@@ -41,6 +43,10 @@ use App\Http\Middleware\ResolveOrganization;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Public site pages, shown with the landing page only (ADR-049).
+Route::get('changelog', ChangelogController::class)->name('changelog');
+Route::get('roadmap', RoadmapController::class)->name('roadmap');
 
 Route::get('health', HealthController::class)
     ->middleware('throttle:60,1')

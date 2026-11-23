@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import SiteLayout from '@/layouts/SiteLayout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { setLocale } from '@/lib/i18n';
 import { buildPageRegistry } from '@/lib/pages';
@@ -57,6 +58,8 @@ void createInertiaApp({
                 return AuthLayout;
             case name.startsWith('status/'):
                 return PublicLayout;
+            case name.startsWith('site/'):
+                return SiteLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
             default:

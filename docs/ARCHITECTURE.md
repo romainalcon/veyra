@@ -22,7 +22,7 @@ app/Domain/
   Reports/         Weekly report e-mails (Sprint 20)
   Maintenance/     Planned maintenance windows and state transitions (Sprint 6)
   StatusPages/     Public status pages, snapshot, custom domains (Sprint 6)
-  Realtime/, System/
+  Realtime/, System/   System/Site: public changelog and roadmap pages (ADR-049)
 app/Http/{Controllers,Requests,Middleware}/
 app/Policies/
 app/Models/User.php            # kept in the conventional location (Fortify/auth)

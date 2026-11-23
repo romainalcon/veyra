@@ -171,8 +171,33 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Grafana dashboard example and alerting rules in `docs/operations/`.
 - [x] Tests: access control, metric names stable, no tenant leak.
 
+## Next — planned, not started (1.10 → 1.11)
+Order of work: 23 → 25. Criteria are a starting point, refined in the sprint's plan and ADR.
+
+## Sprint 23 — Check diagnostics (1.10)
+- [ ] Timing breakdown per HTTP check: DNS, connect, TLS, time to first byte, transfer (from the cURL transfer info of the pinned connection), stored on the check; nullable for older checks and other types; TCP keeps connect time, DNS keeps resolution time.
+- [ ] Failure evidence on the first failing check of an incident: status, response headers (allow-list, credentials and cookies never kept), bounded body excerpt (a few KiB, within the existing response cap, text content types only), failure reason; attached to the incident, purged with it.
+- [ ] UI: waterfall of the timings on the check detail and latest checks, stacked latency chart by phase on the monitor page, evidence panel on the incident page; no evidence on public status pages, webhook payloads or the API unless explicitly redacted and documented.
+- [ ] Retention: timings follow raw-check retention and aggregation; evidence follows the incident; batched purge unchanged.
+- [ ] Tests: timing capture and nulls, redaction of headers and excerpt, size bounds, binary bodies skipped, tenant isolation, translations; docs MONITORING/DATABASE/SECURITY, ADR.
+
+## Sprint 24 — Dependencies and groups (1.10)
+- [ ] Monitor dependencies: a monitor may depend on parents in the same organization (no cycles, depth limited); while a parent is confirmed DOWN, a failing child is confirmed as `IMPACTED` (or flagged on the incident) without sending its own notifications or escalation; the child alerts normally once its parents are UP. Probe results and confirmed state stay distinct; UNKNOWN parents never suppress alerts.
+- [ ] Monitor groups: named groups with an aggregated state (all UP, any DEGRADED, a configurable share of members DOWN → group DOWN); group incidents and notifications optional and deduplicated with member incidents.
+- [ ] Transitions remain concurrency-safe and idempotent when a parent and its children change state in the same scheduler window; suppressed notifications are recorded so they can be explained.
+- [ ] Status pages may publish a group as one component; API v1, import/export and audit log cover dependencies and groups; entitlements for groups (Community limits nothing).
+- [ ] UI: dependency picker and group management, impacted monitors shown on the parent incident, dashboard filter by group.
+- [ ] Tests: suppression and release, cycles refused, cross-organization parents refused, aggregation rules, concurrent transitions, status page snapshot, API parity, translations; docs MONITORING/DATABASE, ADR.
+
+## Sprint 25 — Multi-location confirmation (1.11)
+- [ ] ADR first: probe locations as additional Horizon supervisors on other hosts consuming per-location queues (`probes-<location>`), same application code and image, no external agent or separate daemon; MariaDB stays the source of truth, Redis per location or shared, egress isolation per host.
+- [ ] Location registry configured by the instance (none by default: single-location behaviour unchanged); monitors choose locations within their entitlements; the outbox dispatches one job per location and check round.
+- [ ] Confirmation rule: DOWN confirmed only when a configurable number of locations fail (default 2 when several are set); a silent or stale location is UNKNOWN and never counts as a failure; per-location results kept on checks.
+- [ ] UI and analytics: results and latency per location, location shown in incidents; metrics endpoint exposes per-location queue lag and beat without tenant data.
+- [ ] Tests: quorum rules, stale location, location outage not reported as downtime, idempotent rounds, upgrade from single location; Docker Compose and Vito Deploy guides for a second location.
+
 ## Done means
 A clean install can register, create an organization and HTTP monitor, execute scheduled checks, detect confirmed downtime, notify, recover, and display history. A probe-worker outage must not masquerade as monitored-service downtime.
 
 ## Explicitly deferred
-Agents, multi-region checks, billing in the core (Cloud extension only) and SSO.
+External probe agents, billing in the core (Cloud extension only) and SSO. Multi-location checks are planned only as Horizon workers (Sprint 25), never as agents.
