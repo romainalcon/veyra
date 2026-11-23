@@ -15,6 +15,12 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.9.0
+No migration and no new scheduled command.
+- `GET /metrics` (Prometheus) is new and **disabled by default**: nothing is exposed until you set `VEYRA_METRICS_ENABLED=true` together with `VEYRA_METRICS_TOKEN` (32+ characters) and/or `VEYRA_METRICS_ALLOWED_IPS` (IPs or CIDR ranges). With Docker, add the three variables to `.env.docker` (see `deploy/docker/.env.docker.example`). Behind a reverse proxy, list it in `TRUSTED_PROXIES` so the allow-list sees the client address. Run `php artisan veyra:doctor` afterwards. See `docs/operations/METRICS.md` for the Prometheus job, the Grafana dashboard and the alerting rules.
+- Probe duration and notification delivery counters start at zero when metrics are enabled; they are not rebuilt from history.
+- For extension authors: `ExecuteProbe::handle()` takes a `MetricsRecorder` argument (resolved by the container) and `MetricsRecorder::recordDelivery()` records finished deliveries; custom senders need no change.
+
 ### 1.8.0
 Two migrations run automatically; take a backup first as usual. Both are additive.
 - `create_escalation_and_weekly_report_tables` creates the escalation policy tables and `weekly_reports`, and adds `monitors.escalation_policy_id`, `incidents.escalation_step`, `notification_deliveries.escalation_step` and `organization_members.weekly_report` (all defaulted). It replaces the delivery idempotency key `(incident_id, channel_id, event_type)` with `(incident_id, channel_id, event_type, escalation_step)`; the new key is built before the old one is dropped, so on a large `notification_deliveries` table the migration takes a little longer. Nothing escalates until an Owner or Admin creates a policy, and no report is sent until a member opts in.
