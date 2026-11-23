@@ -48,13 +48,13 @@ class NtfySender implements ChannelSender
             'title' => mb_substr($message->title(), 0, 250),
             'message' => mb_substr($message->plainText()."\n\n".$message->organizationName, 0, 4000),
             'priority' => match ($message->event) {
-                NotificationEvent::Opened, NotificationEvent::Reminder, NotificationEvent::CertificateExpired, NotificationEvent::DomainExpired => 5,
+                NotificationEvent::Opened, NotificationEvent::Reminder, NotificationEvent::Escalated, NotificationEvent::CertificateExpired, NotificationEvent::DomainExpired => 5,
                 NotificationEvent::CertificateExpiring, NotificationEvent::DomainExpiring => 4,
                 NotificationEvent::Resolved, NotificationEvent::Acknowledged => 3,
                 NotificationEvent::Test => 2,
             },
             'tags' => [match ($message->event) {
-                NotificationEvent::Opened, NotificationEvent::Reminder => 'rotating_light',
+                NotificationEvent::Opened, NotificationEvent::Reminder, NotificationEvent::Escalated => 'rotating_light',
                 NotificationEvent::Resolved => 'white_check_mark',
                 NotificationEvent::Acknowledged => 'eyes',
                 NotificationEvent::CertificateExpiring, NotificationEvent::CertificateExpired, NotificationEvent::DomainExpiring, NotificationEvent::DomainExpired => 'warning',

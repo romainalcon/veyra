@@ -31,6 +31,7 @@ class UpdateMonitor
                 'name' => $data->name,
                 'interval_seconds' => $data->intervalSeconds,
                 'timeout_seconds' => $data->timeoutSeconds,
+                ...($data->escalationPolicySubmitted ? ['escalation_policy_id' => $data->escalationPolicyId] : []),
             ]);
 
             match ($monitor->type) {

@@ -119,6 +119,7 @@ class OrganizationController extends Controller
             'organization' => $organization->only(['id', 'name', 'slug', 'locale', 'timezone', 'require_two_factor']),
             'locales' => SupportedLocales::options(),
             'timezones' => DateTimeZone::listIdentifiers(DateTimeZone::ALL),
+            'weeklyReport' => (bool) $organization->members()->where('user_id', $user->id)->value('weekly_report'),
             'twoFactor' => [
                 'canRequire' => $user->can('requireTwoFactor', $organization),
                 'ownEnabled' => $user->hasEnabledTwoFactorAuthentication(),

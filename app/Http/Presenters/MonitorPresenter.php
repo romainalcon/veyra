@@ -18,6 +18,7 @@ use App\Domain\Monitoring\Models\Monitor;
 use App\Domain\Monitoring\Models\MonitorCheck;
 use App\Domain\Monitoring\Models\MonitorTlsCertificate;
 use App\Domain\Monitoring\Probes\ProbeSettings;
+use App\Domain\Notifications\Models\EscalationPolicy;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
 use App\Http\Requests\Monitors\SaveMonitorRequest;
@@ -101,6 +102,7 @@ final class MonitorPresenter
                 ? self::certificate($monitor->tlsCertificate)
                 : null,
             'notification_channel_ids' => $monitor->notificationChannels()->pluck('notification_channels.id')->all(),
+            'escalation_policy_id' => $monitor->escalation_policy_id,
             'next_check_at' => $monitor->next_check_at?->toIso8601String(),
             'created_at' => $monitor->created_at?->toIso8601String(),
         ];
@@ -209,6 +211,12 @@ final class MonitorPresenter
                     'is_default' => $channel->is_default,
                     'enabled' => $channel->enabled,
                 ])
+                ->all(),
+            'escalationPolicies' => $organization->escalationPolicies()
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get(['id', 'name', 'is_default'])
+                ->map(fn (EscalationPolicy $policy): array => ['id' => $policy->id, 'name' => $policy->name, 'is_default' => $policy->is_default])
                 ->all(),
             'intervals' => array_values(array_filter(
                 MonitorInterval::options(),

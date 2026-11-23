@@ -4,6 +4,7 @@ use App\Domain\Incidents\Models\Incident;
 use App\Domain\Maintenance\Models\MaintenanceSeries;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Notifications\Models\EscalationPolicy;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\ApiToken;
 use App\Domain\Organizations\Models\OrganizationInvitation;
@@ -31,6 +32,7 @@ test('every tenant route is unreachable for non-members', function () {
         'invitation' => OrganizationInvitation::factory()->create(['organization_id' => $victim->id])->id,
         'incident' => Incident::factory()->create(['monitor_id' => $monitor->id])->id,
         'notificationChannel' => NotificationChannel::factory()->create(['organization_id' => $victim->id])->id,
+        'escalationPolicy' => EscalationPolicy::factory()->create(['organization_id' => $victim->id])->id,
         'maintenanceWindow' => MaintenanceWindow::factory()->create(['organization_id' => $victim->id])->id,
         'maintenanceSeries' => MaintenanceSeries::factory()->create(['organization_id' => $victim->id])->id,
         'statusPage' => StatusPage::factory()->create(['organization_id' => $victim->id])->id,

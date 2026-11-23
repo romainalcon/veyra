@@ -5,6 +5,7 @@ namespace App\Domain\Monitoring\Models;
 use App\Domain\Incidents\Models\Incident;
 use App\Domain\Monitoring\Enums\HeartbeatPeriod;
 use App\Domain\Monitoring\Enums\MonitorType;
+use App\Domain\Notifications\Models\EscalationPolicy;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Organizations\Models\Organization;
 use App\Policies\MonitorPolicy;
@@ -31,6 +32,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $interval_seconds
  * @property int $timeout_seconds
  * @property CarbonImmutable|null $next_check_at
+ * @property string|null $escalation_policy_id null = organization default policy (ADR-045)
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property CarbonImmutable|null $deleted_at
@@ -43,8 +45,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read MonitorTlsCertificate|null $tlsCertificate
  * @property-read MonitorCheck|null $latestCheck
  * @property-read MonitorState|null $state
+ * @property-read EscalationPolicy|null $escalationPolicy
  */
-#[Fillable(['organization_id', 'name', 'type', 'enabled', 'interval_seconds', 'timeout_seconds', 'next_check_at'])]
+#[Fillable(['organization_id', 'name', 'type', 'enabled', 'interval_seconds', 'timeout_seconds', 'next_check_at', 'escalation_policy_id'])]
 #[UseFactory(MonitorFactory::class)]
 #[UsePolicy(MonitorPolicy::class)]
 class Monitor extends Model
@@ -195,6 +198,14 @@ class Monitor extends Model
     public function notificationChannels(): BelongsToMany
     {
         return $this->belongsToMany(NotificationChannel::class, 'monitor_notification_channels');
+    }
+
+    /**
+     * @return BelongsTo<EscalationPolicy, $this>
+     */
+    public function escalationPolicy(): BelongsTo
+    {
+        return $this->belongsTo(EscalationPolicy::class);
     }
 
     /**

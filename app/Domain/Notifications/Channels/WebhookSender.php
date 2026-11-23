@@ -131,6 +131,9 @@ class WebhookSender implements ChannelSender
                 'duration_seconds' => $message->durationSeconds,
                 'cause' => $message->rawCause,
             ],
+            'escalation' => $message->escalationStep === null ? null : [
+                'step' => $message->escalationStep,
+            ],
             'certificate' => $message->certificateExpiresAt === null ? null : [
                 'expires_at' => self::iso($message->certificateExpiresAt),
                 'issuer' => $message->certificateIssuer,

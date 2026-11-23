@@ -139,7 +139,8 @@ paths:
         Secrets are never returned, so HTTP monitors keep their stored headers,
         body and basic auth unless `headers_mode`, `body_mode` or `auth_mode`
         is `replace` (`headers_mode` is required). Notification channels are
-        replaced only when `notification_channel_ids` is sent.
+        replaced only when `notification_channel_ids` is sent, and the
+        escalation policy only when `escalation_policy_id` is sent.
       requestBody:
         required: true
         content:
@@ -623,6 +624,10 @@ components:
           items:
             type: string
             format: uuid
+        escalation_policy_id:
+          type: [string, 'null']
+          format: uuid
+          description: Escalation policy of the organization (ADR-045); null uses the organization default. Omitted on update, the current one is kept.
         url:
           type: string
           description: 'http: an http(s) URL on an allowed port with a public destination.'
@@ -823,6 +828,10 @@ components:
           items:
             type: string
             format: uuid
+        escalation_policy_id:
+          type: [string, 'null']
+          format: uuid
+          description: null when the monitor uses the organization default policy (ADR-045).
         created_at:
           type: string
           format: date-time

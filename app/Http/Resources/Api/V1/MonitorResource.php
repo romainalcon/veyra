@@ -77,6 +77,7 @@ class MonitorResource extends JsonResource
                 'notificationChannels',
                 fn (): array => $monitor->notificationChannels->pluck('id')->values()->all(),
             ),
+            'escalation_policy_id' => $monitor->escalation_policy_id,
             'created_at' => $monitor->created_at?->toIso8601String(),
             'updated_at' => $monitor->updated_at?->toIso8601String(),
         ];

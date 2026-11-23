@@ -114,6 +114,7 @@ export type MonitorDetail = MonitorSummary & {
     domain: MonitorDomain | null;
     certificate: MonitorCertificate | null;
     notification_channel_ids: string[];
+    escalation_policy_id: string | null;
     next_check_at: string | null;
     created_at: string | null;
 };
@@ -122,6 +123,7 @@ export type IntervalOption = { value: number; label: string };
 
 export type MonitorFormOptions = {
     channels: ChannelOption[];
+    escalationPolicies: { id: string; name: string; is_default: boolean }[];
     intervals: IntervalOption[];
     methods: HttpMethod[];
     contentTypes: string[];

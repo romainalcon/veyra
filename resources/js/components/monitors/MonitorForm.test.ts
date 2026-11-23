@@ -6,6 +6,7 @@ import type { MonitorDetail } from '@/types';
 const props = {
     action: { action: '/o/acme/monitors', method: 'post' as const },
     channels: [],
+    escalationPolicies: [],
     intervals: [{ value: 60, label: '1 minute' }],
     methods: [
         'GET' as const,
@@ -75,6 +76,7 @@ const tcpMonitor: MonitorDetail = {
     domain: null,
     certificate: null,
     notification_channel_ids: [],
+    escalation_policy_id: null,
     next_check_at: null,
     created_at: null,
 };

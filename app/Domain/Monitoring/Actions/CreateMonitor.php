@@ -42,6 +42,7 @@ class CreateMonitor
                 'interval_seconds' => $data->intervalSeconds,
                 'timeout_seconds' => $data->timeoutSeconds,
                 'next_check_at' => CheckSchedule::initial($data->type, $data->intervalSeconds, $graceSeconds),
+                'escalation_policy_id' => $data->escalationPolicyId,
             ]);
 
             MonitorState::ensureFor($monitor->id);

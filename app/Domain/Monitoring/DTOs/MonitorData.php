@@ -13,6 +13,8 @@ final readonly class MonitorData
 {
     /**
      * @param  list<string>|null  $notificationChannelIds  null keeps the current channels (or the defaults on creation)
+     * @param  bool  $escalationPolicySubmitted  false keeps the current escalation policy (ADR-045)
+     * @param  string|null  $escalationPolicyId  null = the organization default policy
      */
     public function __construct(
         public MonitorType $type,
@@ -24,5 +26,7 @@ final readonly class MonitorData
         public ?HeartbeatTargetData $heartbeat = null,
         public ?DnsTargetData $dns = null,
         public ?array $notificationChannelIds = null,
+        public bool $escalationPolicySubmitted = false,
+        public ?string $escalationPolicyId = null,
     ) {}
 }

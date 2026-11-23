@@ -46,6 +46,28 @@ const selectedChannels = ref<string[]>(
             .map((channel) => channel.id),
 );
 
+const escalationPolicyId = ref<string>(
+    props.monitor?.escalation_policy_id ?? '',
+);
+const escalationOptions = computed(() => {
+    const fallback = props.escalationPolicies.find(
+        (policy) => policy.is_default,
+    );
+
+    return [
+        {
+            value: '',
+            label: fallback
+                ? t('Organization default (:name)', { name: fallback.name })
+                : t('None'),
+        },
+        ...props.escalationPolicies.map((policy) => ({
+            value: policy.id,
+            label: policy.name,
+        })),
+    ];
+});
+
 const statusesValid = computed(
     () => parseExpectedStatuses(expectedStatuses.value) !== null,
 );
@@ -525,6 +547,27 @@ const methodOptions = computed(() =>
             </label>
             <InputError :message="errors.notification_channel_ids" />
         </fieldset>
+
+        <div class="grid gap-2">
+            <Label for="escalation_policy_id">{{
+                t('Escalation policy')
+            }}</Label>
+            <NativeSelect
+                id="escalation_policy_id"
+                v-model="escalationPolicyId"
+                name="escalation_policy_id"
+                :options="escalationOptions"
+                data-test="escalation-policy-select"
+            />
+            <p class="text-xs text-muted-foreground">
+                {{
+                    t(
+                        'Notifies more channels while an incident stays unacknowledged. Policies are managed on the notifications page.',
+                    )
+                }}
+            </p>
+            <InputError :message="errors.escalation_policy_id" />
+        </div>
 
         <Button
             type="submit"

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Notifications;
 use App\Domain\Notifications\Actions\SaveNotificationChannel;
 use App\Domain\Notifications\Actions\SendTestNotification;
 use App\Domain\Notifications\Enums\ChannelType;
+use App\Domain\Notifications\Models\EscalationPolicy;
+use App\Domain\Notifications\Models\EscalationPolicyStep;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\Notifications\Models\NotificationDelivery;
 use App\Domain\Organizations\Models\Organization;
@@ -62,8 +64,28 @@ class NotificationChannelController extends Controller
                 'sent_at' => $delivery->sent_at?->toIso8601String(),
             ]);
 
+        $escalationPolicies = $organization->escalationPolicies()
+            ->with('steps.channels:id,name')
+            ->withCount('monitors')
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (EscalationPolicy $policy): array => [
+                'id' => $policy->id,
+                'name' => $policy->name,
+                'is_default' => $policy->is_default,
+                'monitors_count' => $policy->monitors_count,
+                'steps' => array_map(fn (EscalationPolicyStep $step): array => [
+                    'delay_minutes' => $step->delay_minutes,
+                    'channels' => array_map(fn (NotificationChannel $channel): array => ['id' => $channel->id, 'name' => $channel->name], $step->channels->all()),
+                ], $policy->steps->all()),
+            ]);
+
         return Inertia::render('notifications/Index', [
             'channels' => $channels,
+            'escalationPolicies' => $escalationPolicies,
+            'canManageEscalation' => $user->can('create', [EscalationPolicy::class, $organization]),
+            'escalationLimits' => ['maxSteps' => EscalationPolicy::MAX_STEPS, 'maxDelayMinutes' => EscalationPolicy::MAX_DELAY_MINUTES],
             'deliveries' => $deliveries,
             'canManage' => $canManage,
             'types' => array_map(fn (ChannelType $type): array => ['value' => $type->value, 'label' => $type->label()], ChannelType::cases()),

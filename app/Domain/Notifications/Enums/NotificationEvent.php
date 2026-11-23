@@ -8,6 +8,8 @@ enum NotificationEvent: string
     case Resolved = 'resolved';
     case Acknowledged = 'acknowledged';
     case Reminder = 'reminder';
+    /** An escalation step of the incident's policy was reached (ADR-045). */
+    case Escalated = 'escalated';
     /** Manual "send test" from the channel settings (no incident). */
     case Test = 'test';
     /** TLS certificate of an HTTPS monitor close to expiry (no incident). */
@@ -25,7 +27,7 @@ enum NotificationEvent: string
      */
     public function isIncidentEvent(): bool
     {
-        return in_array($this, [self::Opened, self::Resolved, self::Acknowledged, self::Reminder], true);
+        return in_array($this, [self::Opened, self::Resolved, self::Acknowledged, self::Reminder, self::Escalated], true);
     }
 
     public function headline(?string $locale = null): string
@@ -35,6 +37,7 @@ enum NotificationEvent: string
             self::Resolved => 'RESOLVED',
             self::Acknowledged => 'ACKNOWLEDGED',
             self::Reminder => 'STILL DOWN',
+            self::Escalated => 'ESCALATED',
             self::Test => 'TEST',
             self::CertificateExpiring => 'CERTIFICATE EXPIRES SOON',
             self::CertificateExpired => 'CERTIFICATE EXPIRED',
@@ -53,6 +56,7 @@ enum NotificationEvent: string
             self::Resolved => 'incident.resolved',
             self::Acknowledged => 'incident.acknowledged',
             self::Reminder => 'incident.reminder',
+            self::Escalated => 'incident.escalated',
             self::Test => 'test',
             self::CertificateExpiring => 'certificate.expiring',
             self::CertificateExpired => 'certificate.expired',
@@ -67,7 +71,7 @@ enum NotificationEvent: string
     public function color(): int
     {
         return match ($this) {
-            self::Opened, self::Reminder, self::CertificateExpired, self::DomainExpired => 0xDC2626,
+            self::Opened, self::Reminder, self::Escalated, self::CertificateExpired, self::DomainExpired => 0xDC2626,
             self::Resolved => 0x16A34A,
             self::Acknowledged, self::CertificateExpiring, self::DomainExpiring => 0xD97706,
             self::Test => 0x6B7280,

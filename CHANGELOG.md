@@ -4,6 +4,11 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+- **Escalation policies** — ordered steps (a delay and a set of channels) notify more people while an incident stays open, unacknowledged and confirmed down. Acknowledging or recovering stops the escalation; maintenance and missing data postpone it. Each monitor picks a policy or uses the organization default; Owners and Admins manage policies on the notifications page. Webhooks receive `incident.escalated`; PagerDuty re-triggers the same alert (ADR-045).
+- **Weekly report e-mail** — every member can opt in from the organization settings to receive, on Monday morning in the organization time zone and language, last week's uptime with its coverage, the monitors below 100 %, the slowest monitors and the incidents with their downtime.
+- The API reads and writes `escalation_policy_id` on monitors.
+
 ## [1.7.0] — 2026-11-23
 
 ### Added

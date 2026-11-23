@@ -17,7 +17,8 @@ app/Domain/
   Extensions/      Extension points such as OrganizationNavigation (ADR-030)
   Monitoring/      Probes, outbox, confirmed state, statistics
   Incidents/       Incidents, timeline events, public updates
-  Notifications/   Channels, deliveries, reminders
+  Notifications/   Channels, deliveries, reminders, escalation policies (ADR-045)
+  Reports/         Weekly report e-mails (Sprint 20)
   Maintenance/     Planned maintenance windows and state transitions (Sprint 6)
   StatusPages/     Public status pages, snapshot, custom domains (Sprint 6)
   Realtime/, System/

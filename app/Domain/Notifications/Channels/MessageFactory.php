@@ -14,7 +14,11 @@ use Illuminate\Support\Str;
 
 final class MessageFactory
 {
-    public static function forIncident(Incident $incident, NotificationEvent $event, ?string $deliveryId = null): NotificationMessage
+    /**
+     * @param  int|null  $escalationStep  step of an escalation delivery (ADR-045)
+     * @param  CarbonImmutable|null  $queuedAt  when an escalation delivery was queued, stable across retries
+     */
+    public static function forIncident(Incident $incident, NotificationEvent $event, ?string $deliveryId = null, ?int $escalationStep = null, ?CarbonImmutable $queuedAt = null): NotificationMessage
     {
         $incident->loadMissing(['monitor', 'organization', 'acknowledger']);
 
@@ -22,6 +26,7 @@ final class MessageFactory
             NotificationEvent::Resolved => $incident->resolved_at,
             NotificationEvent::Acknowledged => $incident->acknowledged_at,
             NotificationEvent::Reminder => $incident->reminder_sent_at,
+            NotificationEvent::Escalated => $queuedAt,
             default => $incident->started_at,
         } ?? CarbonImmutable::now();
 
@@ -45,6 +50,7 @@ final class MessageFactory
             rawCause: $incident->cause,
             acknowledgedAt: $incident->acknowledged_at?->toDateTimeString(),
             occurredAt: $occurredAt->toDateTimeString(),
+            escalationStep: $event === NotificationEvent::Escalated ? $escalationStep : null,
         );
     }
 
