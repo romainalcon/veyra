@@ -22,6 +22,8 @@ import AppearanceToggle from '@/components/AppearanceToggle.vue';
 import AppLogoMark from '@/components/AppLogoMark.vue';
 import UptimeBars from '@/components/charts/UptimeBars.vue';
 import StatusBadge from '@/components/monitors/StatusBadge.vue';
+import SiteNavMenu from '@/components/SiteNavMenu.vue';
+import type { SiteNavItem } from '@/components/SiteNavMenu.vue';
 import { Button } from '@/components/ui/button';
 import { usePublicNavigation } from '@/composables/usePublicNavigation';
 import { formatUptime } from '@/lib/analytics';
@@ -184,6 +186,20 @@ const demoMonitors = computed<
 const repositoryUrl = computed(
     () => props.sourceUrl ?? 'https://github.com/romainalcon/veyra',
 );
+/*
+ * Every header link, for the compact menu shown when they do not fit inline.
+ */
+const menuItems = computed<SiteNavItem[]>(() => [
+    { label: t('Features'), href: '#features', kind: 'anchor' },
+    { label: t('How it works'), href: '#how-it-works', kind: 'anchor' },
+    { label: t('Self-hosting'), href: '#self-hosting', kind: 'anchor' },
+    ...headerLinks.value.map((link): SiteNavItem => ({
+        label: link.title,
+        href: link.href,
+        kind: 'page',
+    })),
+    { label: 'GitHub', href: repositoryUrl.value, kind: 'external' },
+]);
 const installGuideUrl = computed(
     () => `${repositoryUrl.value}/blob/main/docs/INSTALL.md`,
 );
@@ -229,13 +245,10 @@ const copyCommands = async () => {
                 </Link>
 
                 <div
-                    class="ml-6 hidden items-center gap-6 text-sm text-muted-foreground md:flex"
+                    class="ml-6 hidden items-center gap-5 text-sm whitespace-nowrap text-muted-foreground xl:flex"
                 >
                     <a href="#features" class="hover:text-foreground">{{
                         t('Features')
-                    }}</a>
-                    <a href="#how-it-works" class="hover:text-foreground">{{
-                        t('How it works')
                     }}</a>
                     <a href="#self-hosting" class="hover:text-foreground">{{
                         t('Self-hosting')
@@ -257,6 +270,9 @@ const copyCommands = async () => {
                 </div>
 
                 <div class="ml-auto flex items-center gap-2">
+                    <div class="xl:hidden">
+                        <SiteNavMenu :items="menuItems" />
+                    </div>
                     <AppearanceToggle />
                     <Button variant="ghost" size="sm" as-child>
                         <Link :href="login()" data-test="landing-login">{{

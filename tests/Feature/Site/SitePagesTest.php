@@ -78,9 +78,9 @@ test('the changelog and roadmap are linked only with the landing page', function
     $this->withHeader('Accept-Language', 'fr')
         ->get(route('login'))
         ->assertInertia(fn (Assert $page) => $page->where('publicNavigation', [
-            ['id' => 'changelog', 'title' => 'Journal des modifications', 'href' => route('changelog'), 'placement' => 'header'],
+            ['id' => 'changelog', 'title' => 'Nouveautés', 'href' => route('changelog'), 'placement' => 'header'],
             ['id' => 'roadmap', 'title' => 'Feuille de route', 'href' => route('roadmap'), 'placement' => 'header'],
-            ['id' => 'changelog', 'title' => 'Journal des modifications', 'href' => route('changelog'), 'placement' => 'footer'],
+            ['id' => 'changelog', 'title' => 'Nouveautés', 'href' => route('changelog'), 'placement' => 'footer'],
             ['id' => 'roadmap', 'title' => 'Feuille de route', 'href' => route('roadmap'), 'placement' => 'footer'],
         ]));
 });

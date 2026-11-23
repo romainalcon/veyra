@@ -3,6 +3,8 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import AppearanceToggle from '@/components/AppearanceToggle.vue';
 import AppLogoMark from '@/components/AppLogoMark.vue';
+import SiteNavMenu from '@/components/SiteNavMenu.vue';
+import type { SiteNavItem } from '@/components/SiteNavMenu.vue';
 import { Button } from '@/components/ui/button';
 import { usePublicNavigation } from '@/composables/usePublicNavigation';
 import { useTranslations } from '@/lib/i18n';
@@ -20,6 +22,23 @@ const footerLinks = usePublicNavigation('footer');
 const signedIn = computed(() => page.props.auth?.user != null);
 const canRegister = computed(() => page.props.canRegister === true);
 const sourceUrl = computed(() => page.props.system?.sourceUrl ?? null);
+
+const menuItems = computed<SiteNavItem[]>(() => [
+    ...headerLinks.value.map((link): SiteNavItem => ({
+        label: link.title,
+        href: link.href,
+        kind: 'page',
+    })),
+    ...(sourceUrl.value
+        ? [
+              {
+                  label: 'GitHub',
+                  href: sourceUrl.value,
+                  kind: 'external',
+              } satisfies SiteNavItem,
+          ]
+        : []),
+]);
 
 function isCurrent(href: string): boolean {
     return (
@@ -46,7 +65,7 @@ function isCurrent(href: string): boolean {
                 </Link>
 
                 <div
-                    class="ml-6 hidden items-center gap-6 text-sm text-muted-foreground md:flex"
+                    class="ml-6 hidden items-center gap-5 text-sm whitespace-nowrap text-muted-foreground lg:flex"
                 >
                     <Link
                         v-for="link in headerLinks"
@@ -72,6 +91,9 @@ function isCurrent(href: string): boolean {
                 </div>
 
                 <div class="ml-auto flex items-center gap-2">
+                    <div v-if="menuItems.length > 0" class="lg:hidden">
+                        <SiteNavMenu :items="menuItems" />
+                    </div>
                     <AppearanceToggle />
                     <Button v-if="signedIn" size="sm" as-child>
                         <Link :href="dashboard()">{{ t('Dashboard') }}</Link>
