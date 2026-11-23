@@ -13,6 +13,10 @@ function startDnsServer(string $mode): array
     $process = proc_open([PHP_BINARY, base_path('tests/Support/fixtures/dns-server.php'), $mode], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
     $port = (int) trim((string) fgets($pipes[1]));
 
+    if ($port === 0) {
+        throw new RuntimeException('The loopback DNS server could not start: '.trim((string) stream_get_contents($pipes[2])));
+    }
+
     return [$process, $port];
 }
 
