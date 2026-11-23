@@ -4,6 +4,14 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-11-23
+
+### Added
+- **Public REST API** (`/api/v1`) — list, read, create, replace, delete, pause and resume monitors; read their checks; list, read and acknowledge incidents; schedule, replace, cancel and end maintenance windows. Requests are JSON, lists use cursor pagination, and validation, quotas and destination (SSRF) rules are exactly those of the interface. The reference is `docs/api/openapi.yaml` (OpenAPI 3.1), with examples in `docs/api/README.md` (ADR-044).
+- **Organization API tokens** — Owners and Admins create tokens under **API tokens**: read-only (acts as a Viewer) or read and write (acts as a Member), optionally expiring after 30, 90 or 365 days, revocable at once, with their last use shown. A token belongs to the organization, so it keeps working when the member who created it leaves. It is shown once and stored as a hash only.
+- Incident timelines name the API token that acknowledged an incident.
+- Rate limits for the API: 120 requests per minute per token and 600 per IP (`VEYRA_API_REQUESTS_PER_MINUTE`, `VEYRA_API_REQUESTS_PER_MINUTE_PER_IP`); monitor creation and write limits apply per token.
+
 ## [1.6.0] — 2026-11-22
 
 ### Added
@@ -125,7 +133,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/romainalcon/veyra/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/romainalcon/veyra/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/romainalcon/veyra/compare/v1.3.0...v1.5.0
 [1.3.0]: https://github.com/romainalcon/veyra/compare/v1.2.0...v1.3.0

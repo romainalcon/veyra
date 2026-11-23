@@ -15,6 +15,13 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.7.0
+One migration runs automatically; take a backup first as usual.
+- `create_api_tokens_table` creates the `api_tokens` table. It is additive: nothing changes until an Owner or Admin creates a token.
+- The API is served under `/api/v1` by the existing application. Reverse proxies must pass `/api/*` and the `Authorization` header through (the bundled Nginx configurations do). Keep `TRUSTED_PROXIES` accurate so that the per-IP limit sees the real client address. On verified custom status page domains, `/api/*` stays 404.
+- Optional: `VEYRA_API_REQUESTS_PER_MINUTE` (default 120 per token) and `VEYRA_API_REQUESTS_PER_MINUTE_PER_IP` (default 600).
+- For extension authors: the monitor, incident and maintenance window policies now take an `OrganizationActor` (a `User` or an `ApiToken`) as first argument, and `IncidentAcknowledged::$userId` and `incidents.acknowledged_by` are null when an API token acknowledged the incident (the token is recorded in the event metadata).
+
 ### 1.6.0
 Two migrations run automatically; take a backup first as usual.
 - `create_maintenance_series_tables` adds `organizations.timezone` (default `UTC`), creates the recurring maintenance tables and adds two nullable columns and a foreign key to `maintenance_windows`. Existing windows and organizations are unchanged; set the organization time zone before creating recurring maintenance. New scheduled command `veyra:maintenance:materialize` (hourly) runs through the existing scheduler.
