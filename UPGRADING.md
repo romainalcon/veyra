@@ -15,6 +15,12 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.10.0
+No migration, no new setting and no new scheduled command.
+- With `VEYRA_LANDING_PAGE=true`, `/changelog` and `/roadmap` are new public pages, linked from the landing page header and the site footers. Without the landing page (the default) they return 404 and nothing is linked, so self-hosted instances are unchanged.
+- The changelog page reads the `CHANGELOG.md` shipped with the application: keep it in the image or the deployed directory (it is by default).
+- For extension authors: `PublicNavigation::add()` takes an optional fifth argument, a closure deciding on each request whether the link is shown; existing calls need no change. `publicNavigation` now also holds the core `changelog` and `roadmap` links when the landing page is enabled.
+
 ### 1.9.0
 No migration and no new scheduled command.
 - `GET /metrics` (Prometheus) is new and **disabled by default**: nothing is exposed until you set `VEYRA_METRICS_ENABLED=true` together with `VEYRA_METRICS_TOKEN` (32+ characters) and/or `VEYRA_METRICS_ALLOWED_IPS` (IPs or CIDR ranges). With Docker, add the three variables to `.env.docker` (see `deploy/docker/.env.docker.example`). Behind a reverse proxy, list it in `TRUSTED_PROXIES` so the allow-list sees the client address. Run `php artisan veyra:doctor` afterwards. See `docs/operations/METRICS.md` for the Prometheus job, the Grafana dashboard and the alerting rules.
