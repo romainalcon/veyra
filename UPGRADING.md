@@ -15,6 +15,15 @@ Rollback: restore the backup taken in step 1 with the previous `VEYRA_VERSION` (
 Deploy the new tag with the site's deployment script (`deploy/vito/deploy.sh`): it installs dependencies, builds assets, migrates, caches the configuration and restarts Horizon and Reverb. Take a database backup first.
 
 ## Version notes
+### 1.8.0
+Two migrations run automatically; take a backup first as usual. Both are additive.
+- `create_escalation_and_weekly_report_tables` creates the escalation policy tables and `weekly_reports`, and adds `monitors.escalation_policy_id`, `incidents.escalation_step`, `notification_deliveries.escalation_step` and `organization_members.weekly_report` (all defaulted). It replaces the delivery idempotency key `(incident_id, channel_id, event_type)` with `(incident_id, channel_id, event_type, escalation_step)`; the new key is built before the old one is dropped, so on a large `notification_deliveries` table the migration takes a little longer. Nothing escalates until an Owner or Admin creates a policy, and no report is sent until a member opts in.
+- `create_audit_logs_and_tags_tables` creates `audit_logs`, `tags` and `monitor_tag`. The audit log starts empty: actions before the upgrade are not recorded.
+- New scheduled commands run through the existing scheduler: `veyra:incidents:escalate` (every minute) and `veyra:reports:weekly` (hourly; Monday 08:00 in each organization's time zone). Weekly reports use the existing mail configuration (`MAIL_*`).
+- Optional: `VEYRA_AUDIT_RETENTION_DAYS` (default 365; old entries are purged by `veyra:history:purge`) and `VEYRA_MONITOR_IMPORTS_PER_HOUR` (default 10 import previews or imports per member and hour).
+- For API clients: monitors gain `escalation_policy_id` and `tags`; `GET /api/v1/monitors` accepts `?tag=`. Both fields are kept when omitted from a replacement, so existing clients are unaffected.
+- For extension authors: deleting a notification channel, an escalation policy or a status page, and changing the two-factor requirement, now go through Actions (`DeleteNotificationChannel`, `DeleteEscalationPolicy`, `DeleteStatusPage`, `SetTwoFactorRequirement`) that write the audit log; call them rather than deleting models directly. `CreateMonitor::handle()` takes an optional `$auditMetadata` argument and `IncidentSeries::forOrganization()` an optional `$monitorIds` filter.
+
 ### 1.7.0
 One migration runs automatically; take a backup first as usual.
 - `create_api_tokens_table` creates the `api_tokens` table. It is additive: nothing changes until an Owner or Admin creates a token.

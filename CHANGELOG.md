@@ -4,6 +4,8 @@ All notable changes to Veyra are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-11-23
+
 ### Added
 - **Escalation policies** — ordered steps (a delay and a set of channels) notify more people while an incident stays open, unacknowledged and confirmed down. Acknowledging or recovering stops the escalation; maintenance and missing data postpone it. Each monitor picks a policy or uses the organization default; Owners and Admins manage policies on the notifications page. Webhooks receive `incident.escalated`; PagerDuty re-triggers the same alert (ADR-045).
 - **Weekly report e-mail** — every member can opt in from the organization settings to receive, on Monday morning in the organization time zone and language, last week's uptime with its coverage, the monitors below 100 %, the slowest monitors and the incidents with their downtime.
@@ -141,7 +143,8 @@ First Community release.
 ### Security
 - Tenant isolation on every route, policy and broadcast channel; secrets encrypted at rest and never sent to the browser; security headers (CSP, HSTS); rate limits on sensitive actions. See `docs/SECURITY_REVIEW.md`.
 
-[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/romainalcon/veyra/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/romainalcon/veyra/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/romainalcon/veyra/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/romainalcon/veyra/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/romainalcon/veyra/compare/v1.3.0...v1.5.0
