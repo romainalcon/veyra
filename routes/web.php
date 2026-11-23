@@ -11,6 +11,7 @@ use App\Http\Controllers\Monitors\HeartbeatTokenController;
 use App\Http\Controllers\Monitors\MonitorCheckController;
 use App\Http\Controllers\Monitors\MonitorController;
 use App\Http\Controllers\Monitors\MonitorStatusController;
+use App\Http\Controllers\Notifications\EscalationPolicyController;
 use App\Http\Controllers\Notifications\NotificationChannelController;
 use App\Http\Controllers\Notifications\WebhookSecretController;
 use App\Http\Controllers\Organizations\ApiTokenController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Organizations\InvitationController;
 use App\Http\Controllers\Organizations\MemberController;
 use App\Http\Controllers\Organizations\OrganizationController;
 use App\Http\Controllers\Organizations\TwoFactorRequirementController;
+use App\Http\Controllers\Organizations\WeeklyReportController;
 use App\Http\Controllers\StatusPages\PublicStatusPageAssetController;
 use App\Http\Controllers\StatusPages\PublicStatusPageController;
 use App\Http\Controllers\StatusPages\StatusPageAssetController;
@@ -141,6 +143,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('settings', [OrganizationController::class, 'edit'])->name('edit');
             Route::patch('settings', [OrganizationController::class, 'update'])->name('update');
             Route::put('settings/two-factor', [TwoFactorRequirementController::class, 'update'])->name('two-factor.update');
+            Route::put('settings/weekly-report', [WeeklyReportController::class, 'update'])
+                ->middleware('throttle:30,1')
+                ->name('weekly-report.update');
             Route::delete('/', [OrganizationController::class, 'destroy'])->name('destroy');
 
             Route::get('members', [MemberController::class, 'index'])->name('members.index');
@@ -254,6 +259,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('notification-channels/{notificationChannel}/signing-secret', [WebhookSecretController::class, 'store'])
                 ->middleware('throttle:webhook-secrets')
                 ->name('notification-channels.signing-secret.store');
+
+            Route::post('escalation-policies', [EscalationPolicyController::class, 'store'])
+                ->middleware('throttle:30,1')
+                ->name('escalation-policies.store');
+            Route::put('escalation-policies/{escalationPolicy}', [EscalationPolicyController::class, 'update'])
+                ->middleware('throttle:30,1')
+                ->name('escalation-policies.update');
+            Route::delete('escalation-policies/{escalationPolicy}', [EscalationPolicyController::class, 'destroy'])->name('escalation-policies.destroy');
         });
 });
 

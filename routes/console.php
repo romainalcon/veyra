@@ -51,6 +51,16 @@ Schedule::command('veyra:domains:check')->hourly()->withoutOverlapping()->onOneS
 Schedule::command('veyra:incidents:remind')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
 
 /*
+ * Escalation policies: notify due steps of unacknowledged incidents (ADR-045).
+ */
+Schedule::command('veyra:incidents:escalate')->everyMinute()->withoutOverlapping(expiresAt: 5)->onOneServer();
+
+/*
+ * Weekly report e-mails, Monday morning in each organization's time zone.
+ */
+Schedule::command('veyra:reports:weekly')->hourly()->withoutOverlapping()->onOneServer();
+
+/*
  * Analytics and retention (jobs run on the `maintenance` queue).
  */
 Schedule::command('veyra:stats:aggregate')->everyTenMinutes()->onOneServer();

@@ -80,6 +80,7 @@ const notificationEventLabels: Record<string, string> = {
     resolved: 'Resolved',
     acknowledged: 'Acknowledged',
     reminder: 'Still down',
+    escalated: 'Escalated',
     test: 'Test',
     certificate_expiring: 'Certificate expires soon',
     certificate_expired: 'Certificate expired',

@@ -98,3 +98,9 @@
 ## API tokens (Sprint 19, ADR-044)
 - `api_tokens.token_hash` is unique (the authentication lookup); `(organization_id, revoked_at)` serves the management list and the per-organization cap. Rows cascade with the organization and are never deleted otherwise (revocation sets `revoked_at`); `created_by` is `ON DELETE SET NULL`. Additive only.
 - API acknowledgements store the token in `incident_events.metadata` (`api_token_id`, `api_token_name`); no column was added to `incidents`.
+
+## Escalation and weekly reports (Sprint 20, ADR-045)
+- `escalation_policies` (indexed by `(organization_id, is_default)`), `escalation_policy_steps` (unique `(policy_id, position)`) and the `escalation_step_channels` pivot cascade with their parents; `monitors.escalation_policy_id` is `ON DELETE SET NULL`, so deleting a policy sends its monitors back to the organization default.
+- `incidents.escalation_step` and `notification_deliveries.escalation_step` are `TINYINT UNSIGNED DEFAULT 0`. The delivery key becomes `(incident_id, channel_id, event_type, escalation_step)` (`deliveries_incident_channel_event_step_unique`), created before the old `(incident_id, channel_id, event_type)` key is dropped so the `incident_id` foreign key always keeps an index; existing rows get step 0 and stay unique.
+- `organization_members.weekly_report` (boolean, default false) and `weekly_reports` (unique `(organization_id, period_start)`, cascade with the organization). Additive only.
+

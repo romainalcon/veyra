@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $domain_alert_id set for domain warnings (exactly one subject is set)
  * @property string $channel_id
  * @property NotificationEvent $event_type
+ * @property int $escalation_step escalation step of an `escalated` delivery, 0 otherwise
  * @property DeliveryStatus $status
  * @property int $attempts
  * @property string|null $last_error
@@ -32,7 +33,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read DomainExpiryAlert|null $domainAlert
  * @property-read NotificationChannel $channel
  */
-#[Fillable(['organization_id', 'incident_id', 'certificate_alert_id', 'domain_alert_id', 'channel_id', 'event_type', 'status', 'attempts', 'last_error', 'sent_at'])]
+#[Fillable(['organization_id', 'incident_id', 'certificate_alert_id', 'domain_alert_id', 'channel_id', 'event_type', 'escalation_step', 'status', 'attempts', 'last_error', 'sent_at'])]
 class NotificationDelivery extends Model
 {
     use HasUuids;
@@ -45,6 +46,7 @@ class NotificationDelivery extends Model
         return [
             'event_type' => NotificationEvent::class,
             'status' => DeliveryStatus::class,
+            'escalation_step' => 'integer',
             'attempts' => 'integer',
             'sent_at' => 'datetime',
         ];

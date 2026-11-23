@@ -42,6 +42,7 @@ setLayoutProps({
         <Heading :title="t('Edit monitor')" />
         <MonitorForm
             :channels="channels"
+            :escalation-policies="escalationPolicies"
             :intervals="intervals"
             :methods="methods"
             :content-types="contentTypes"

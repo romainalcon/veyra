@@ -30,13 +30,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $acknowledged_by
  * @property string|null $cause
  * @property CarbonImmutable|null $reminder_sent_at
+ * @property int $escalation_step last escalation step queued (0 = none, ADR-045)
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Monitor|null $monitor
  * @property-read Organization $organization
  * @property-read User|null $acknowledger
  */
-#[Fillable(['organization_id', 'monitor_id', 'status', 'started_at', 'resolved_at', 'acknowledged_at', 'acknowledged_by', 'cause', 'reminder_sent_at'])]
+#[Fillable(['organization_id', 'monitor_id', 'status', 'started_at', 'resolved_at', 'acknowledged_at', 'acknowledged_by', 'cause', 'reminder_sent_at', 'escalation_step'])]
 #[UseFactory(IncidentFactory::class)]
 #[UsePolicy(IncidentPolicy::class)]
 class Incident extends Model
@@ -55,6 +56,7 @@ class Incident extends Model
             'resolved_at' => 'datetime',
             'acknowledged_at' => 'datetime',
             'reminder_sent_at' => 'datetime',
+            'escalation_step' => 'integer',
         ];
     }
 

@@ -13,6 +13,8 @@ enum IncidentEventType: string
     case DataRestored = 'data_restored';
     case MaintenanceStarted = 'maintenance_started';
     case MaintenanceEnded = 'maintenance_ended';
+    /** An escalation step was reached; metadata holds its position (ADR-045). */
+    case Escalated = 'escalated';
     case Resolved = 'resolved';
     case MonitorDeleted = 'monitor_deleted';
 
@@ -27,6 +29,7 @@ enum IncidentEventType: string
             self::DataRestored => 'Monitoring data restored',
             self::MaintenanceStarted => 'Planned maintenance started',
             self::MaintenanceEnded => 'Planned maintenance ended',
+            self::Escalated => 'Escalated',
             self::Resolved => 'Resolved',
             self::MonitorDeleted => 'Monitor deleted',
         });

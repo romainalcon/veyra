@@ -11,6 +11,7 @@ use App\Domain\Notifications\Enums\NotificationEvent;
  *
  * The identifiers, `rawCause` (English source label) and `occurredAt` (UTC,
  * stable across retries) feed the machine-readable webhook payload (ADR-033).
+ * `escalationStep` is set for escalation notifications only (ADR-045).
  */
 final readonly class NotificationMessage
 {
@@ -38,6 +39,7 @@ final readonly class NotificationMessage
         public ?string $rawCause = null,
         public ?string $acknowledgedAt = null,
         public ?string $occurredAt = null,
+        public ?int $escalationStep = null,
     ) {}
 
     public function title(): string
@@ -60,6 +62,7 @@ final readonly class NotificationMessage
             NotificationEvent::Resolved => ':monitor is back up after :duration.',
             NotificationEvent::Acknowledged => ':person acknowledged the incident on :monitor.',
             NotificationEvent::Reminder => ':monitor has been down for :duration and the incident is not acknowledged.',
+            NotificationEvent::Escalated => ':monitor has been down for :duration and nobody acknowledged the incident: it is escalated to you.',
             NotificationEvent::Test => 'This is a test notification from :organization.',
             NotificationEvent::CertificateExpiring => 'The TLS certificate of :monitor expires in :duration. Renew it before visitors get errors.',
             NotificationEvent::CertificateExpired => 'The TLS certificate of :monitor has expired. HTTPS checks fail until it is renewed.',

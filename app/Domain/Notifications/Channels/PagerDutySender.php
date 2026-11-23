@@ -16,7 +16,8 @@ use Throwable;
  * alert through a stable dedup key: opening triggers it, acknowledgement
  * acknowledges it and recovery resolves it, so retries and replays never
  * create duplicates. Reminders are never queued for PagerDuty, which runs
- * its own escalations. Certificate and domain warnings trigger an alert of their own;
+ * its own escalations; an escalation step that targets PagerDuty triggers the
+ * incident's alert (a no-op when it is already triggered, ADR-045). Certificate and domain warnings trigger an alert of their own;
  * a test triggers then resolves a throwaway alert.
  */
 class PagerDutySender implements ChannelSender
@@ -49,7 +50,7 @@ class PagerDutySender implements ChannelSender
 
         // Messages reflect the incident at send time: a retried trigger or acknowledgement
         // arriving after recovery would otherwise open an alert that nothing resolves.
-        if ($message->resolvedAt !== null && in_array($message->event, [NotificationEvent::Opened, NotificationEvent::Acknowledged], true)) {
+        if ($message->resolvedAt !== null && in_array($message->event, [NotificationEvent::Opened, NotificationEvent::Escalated, NotificationEvent::Acknowledged], true)) {
             return SendResult::permanent('Incident already resolved; PagerDuty event skipped.');
         }
 
@@ -91,7 +92,7 @@ class PagerDutySender implements ChannelSender
                 'summary' => mb_substr($message->title(), 0, 1024),
                 'source' => mb_substr($message->monitorName, 0, 255),
                 'severity' => match ($message->event) {
-                    NotificationEvent::Opened => 'critical',
+                    NotificationEvent::Opened, NotificationEvent::Escalated => 'critical',
                     NotificationEvent::CertificateExpired, NotificationEvent::DomainExpired => 'error',
                     NotificationEvent::CertificateExpiring, NotificationEvent::DomainExpiring => 'warning',
                     default => 'info',

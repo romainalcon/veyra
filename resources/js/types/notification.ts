@@ -41,3 +41,21 @@ export type Delivery = {
     incident_id?: string | null;
     created_at?: string | null;
 };
+
+export type EscalationStep = {
+    delay_minutes: number;
+    channels: { id: string; name: string }[];
+};
+
+export type EscalationPolicySummary = {
+    id: string;
+    name: string;
+    is_default: boolean;
+    monitors_count: number;
+    steps: EscalationStep[];
+};
+
+export type EscalationLimits = {
+    maxSteps: number;
+    maxDelayMinutes: number;
+};

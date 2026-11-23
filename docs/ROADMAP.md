@@ -156,9 +156,9 @@ Order of work: 14 → 22. Criteria are a starting point, refined in the sprint's
 - [x] Tests: authentication, abilities, tenant isolation, quotas, rate limits, validation parity with the UI.
 
 ## Sprint 20 — Escalation and reports (1.8)
-- [ ] Escalation policies: ordered steps (channel set + delay) per monitor or organization default; a step fires only while the incident is open and unacknowledged; acknowledgement or recovery stops the chain; idempotent under retries and concurrent workers.
-- [ ] Weekly report e-mail per organization (opt-in per member): uptime, incidents, slowest monitors, in the organization language and time zone.
-- [ ] Tests: escalation timing, stop conditions, idempotency, report content, tenant isolation, translations.
+- [x] Escalation policies: ordered steps (channel set + delay) per monitor or organization default; a step fires only while the incident is open and unacknowledged; acknowledgement or recovery stops the chain; idempotent under retries and concurrent workers.
+- [x] Weekly report e-mail per organization (opt-in per member): uptime, incidents, slowest monitors, in the organization language and time zone.
+- [x] Tests: escalation timing, stop conditions, idempotency, report content, tenant isolation, translations.
 
 ## Sprint 21 — Organization tools (1.8)
 - [ ] Audit log of member actions (monitors, channels, status pages, members, settings, API tokens): actor, action, target, before/after without secrets; append-only, retention configurable, Owners/Admins only.

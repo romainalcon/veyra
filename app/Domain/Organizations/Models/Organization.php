@@ -6,6 +6,7 @@ use App\Domain\Incidents\Models\Incident;
 use App\Domain\Maintenance\Models\MaintenanceSeries;
 use App\Domain\Maintenance\Models\MaintenanceWindow;
 use App\Domain\Monitoring\Models\Monitor;
+use App\Domain\Notifications\Models\EscalationPolicy;
 use App\Domain\Notifications\Models\NotificationChannel;
 use App\Domain\StatusPages\Models\StatusPage;
 use App\Models\User;
@@ -40,6 +41,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, MaintenanceWindow> $maintenanceWindows
  * @property-read Collection<int, MaintenanceSeries> $maintenanceSeries
  * @property-read Collection<int, StatusPage> $statusPages
+ * @property-read Collection<int, EscalationPolicy> $escalationPolicies
  */
 #[Fillable(['name', 'slug', 'locale', 'timezone', 'settings', 'require_two_factor'])]
 #[UseFactory(OrganizationFactory::class)]
@@ -156,5 +158,13 @@ class Organization extends Model
     public function notificationChannels(): HasMany
     {
         return $this->hasMany(NotificationChannel::class);
+    }
+
+    /**
+     * @return HasMany<EscalationPolicy, $this>
+     */
+    public function escalationPolicies(): HasMany
+    {
+        return $this->hasMany(EscalationPolicy::class);
     }
 }

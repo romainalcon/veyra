@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property string $organization_id
  * @property string $user_id
  * @property OrganizationRole $role
+ * @property bool $weekly_report the member receives the weekly report e-mail
  * @property Carbon $joined_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -26,7 +27,7 @@ use Illuminate\Support\Carbon;
  * @property-read User $user
  */
 #[Table('organization_members')]
-#[Fillable(['organization_id', 'user_id', 'role', 'joined_at'])]
+#[Fillable(['organization_id', 'user_id', 'role', 'weekly_report', 'joined_at'])]
 #[UseFactory(OrganizationMemberFactory::class)]
 class OrganizationMember extends Pivot
 {
@@ -42,6 +43,7 @@ class OrganizationMember extends Pivot
     {
         return [
             'role' => OrganizationRole::class,
+            'weekly_report' => 'boolean',
             'joined_at' => 'datetime',
         ];
     }

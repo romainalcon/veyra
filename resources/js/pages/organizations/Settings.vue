@@ -3,6 +3,7 @@ import { Form, Head, Link, setLayoutProps, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import OrganizationController from '@/actions/App/Http/Controllers/Organizations/OrganizationController';
 import TwoFactorRequirementController from '@/actions/App/Http/Controllers/Organizations/TwoFactorRequirementController';
+import WeeklyReportController from '@/actions/App/Http/Controllers/Organizations/WeeklyReportController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
@@ -40,6 +41,7 @@ const props = defineProps<{
         ownEnabled: boolean;
         membersWithout: number | null;
     };
+    weeklyReport: boolean;
 }>();
 
 const { t, tc } = useTranslations();
@@ -166,6 +168,49 @@ setLayoutProps({
                 >
                     {{ t('Save') }}
                 </Button>
+            </Form>
+        </section>
+
+        <section class="space-y-6" data-test="weekly-report">
+            <Heading
+                variant="small"
+                :title="t('Weekly report')"
+                :description="
+                    t(
+                        'An e-mail every Monday morning with last week\'s uptime, incidents and slowest monitors. Only for you; every member chooses.',
+                    )
+                "
+            />
+            <Form
+                v-bind="WeeklyReportController.update.form(organization.slug)"
+                :options="{ preserveScroll: true }"
+                class="space-y-3"
+                v-slot="{ errors, processing }"
+            >
+                <input
+                    type="hidden"
+                    name="weekly_report"
+                    :value="weeklyReport ? '0' : '1'"
+                />
+                <p class="text-sm">
+                    {{
+                        weeklyReport
+                            ? t('You receive the weekly report.')
+                            : t('You do not receive the weekly report.')
+                    }}
+                </p>
+                <Button
+                    :variant="weeklyReport ? 'outline' : 'default'"
+                    :disabled="processing"
+                    data-test="toggle-weekly-report"
+                >
+                    {{
+                        weeklyReport
+                            ? t('Stop sending me the weekly report')
+                            : t('Send me the weekly report')
+                    }}
+                </Button>
+                <InputError :message="errors.weekly_report" />
             </Form>
         </section>
 

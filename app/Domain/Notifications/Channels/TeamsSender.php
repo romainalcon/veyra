@@ -91,7 +91,7 @@ class TeamsSender implements ChannelSender
     private function color(NotificationEvent $event): string
     {
         return match ($event) {
-            NotificationEvent::Opened, NotificationEvent::Reminder, NotificationEvent::CertificateExpired, NotificationEvent::DomainExpired => 'Attention',
+            NotificationEvent::Opened, NotificationEvent::Reminder, NotificationEvent::Escalated, NotificationEvent::CertificateExpired, NotificationEvent::DomainExpired => 'Attention',
             NotificationEvent::Resolved => 'Good',
             NotificationEvent::Acknowledged, NotificationEvent::CertificateExpiring, NotificationEvent::DomainExpiring => 'Warning',
             NotificationEvent::Test => 'Default',

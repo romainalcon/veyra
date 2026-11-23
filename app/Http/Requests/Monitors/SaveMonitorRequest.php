@@ -118,6 +118,12 @@ class SaveMonitorRequest extends FormRequest
                 'distinct',
                 Rule::exists('notification_channels', 'id')->where('organization_id', $this->organization()->id),
             ],
+            'escalation_policy_id' => [
+                'nullable',
+                'string',
+                'uuid',
+                Rule::exists('escalation_policies', 'id')->where('organization_id', $this->organization()->id),
+            ],
         ];
 
         $probed = [
@@ -419,6 +425,8 @@ class SaveMonitorRequest extends FormRequest
             notificationChannelIds: $this->boolean('notification_channels_submitted')
                 ? array_values(array_map('strval', (array) $this->validated('notification_channel_ids', [])))
                 : null,
+            escalationPolicySubmitted: $this->has('escalation_policy_id'),
+            escalationPolicyId: $this->filled('escalation_policy_id') ? (string) $this->validated('escalation_policy_id') : null,
         );
     }
 

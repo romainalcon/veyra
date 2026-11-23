@@ -59,7 +59,7 @@ class SendNotificationDelivery implements ShouldBeUnique, ShouldQueue
         }
 
         $message = match (true) {
-            $delivery->incident !== null => MessageFactory::forIncident($delivery->incident, $delivery->event_type, $delivery->id),
+            $delivery->incident !== null => MessageFactory::forIncident($delivery->incident, $delivery->event_type, $delivery->id, $delivery->escalation_step, $delivery->created_at),
             $delivery->certificateAlert !== null => MessageFactory::forCertificateAlert($delivery->certificateAlert, $delivery->id),
             $delivery->domainAlert !== null => MessageFactory::forDomainAlert($delivery->domainAlert, $delivery->id),
             default => null,

@@ -38,6 +38,7 @@ setLayoutProps({
         />
         <MonitorForm
             :channels="channels"
+            :escalation-policies="escalationPolicies"
             :intervals="intervals"
             :methods="methods"
             :content-types="contentTypes"

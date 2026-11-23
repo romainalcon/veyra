@@ -49,7 +49,15 @@ final class IncidentPresenter
                     'type' => $event->type->value,
                     'label' => $event->type->label(),
                     // The opening event carries the stored (English) cause.
-                    'message' => $event->type === IncidentEventType::Opened ? ProbeErrorCode::translateCause($event->message) : $event->message,
+                    'message' => match ($event->type) {
+                        IncidentEventType::Opened => ProbeErrorCode::translateCause($event->message),
+                        IncidentEventType::Escalated => (string) __('Step :step of :policy, :count notification(s) queued.', [
+                            'step' => (int) ($event->metadata['step'] ?? 0),
+                            'policy' => (string) ($event->metadata['policy'] ?? ''),
+                            'count' => (int) ($event->metadata['deliveries'] ?? 0),
+                        ]),
+                        default => $event->message,
+                    },
                     'user' => $event->user->name ?? self::apiTokenLabel($event),
                     'created_at' => $event->created_at->toIso8601String(),
                 ])
